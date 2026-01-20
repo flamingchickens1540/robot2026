@@ -1,4 +1,4 @@
-package org.team1540.robot.util;
+package org.team1540.robot2026.util;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
-import org.team1540.robot.Constants;
+import org.team1540.robot2026.Constants;
 
 // NOTE this file is available at:
 // https://github.com/Mechanical-Advantage/RobotCode2025Public/blob/main/src/main/java/org/littletonrobotics/frc2025/util/LoggedTunableNumber.java

@@ -1,4 +1,4 @@
-package org.team1540.robot.commands;
+package org.team1540.robot2026.commands;
 
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.function.DoubleConsumer;
 import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.Logger;
-import org.team1540.robot.util.LoggedTunableNumber;
-import org.team1540.robot.util.math.PolynomialRegression;
+import org.team1540.robot2026.util.LoggedTunableNumber;
+import org.team1540.robot2026.util.math.PolynomialRegression;
 
 public class CharacterizationCommands {
     private static final double START_DELAY_SECS = 1.0;
