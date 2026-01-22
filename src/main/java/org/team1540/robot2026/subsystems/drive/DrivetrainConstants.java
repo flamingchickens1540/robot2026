@@ -2,6 +2,7 @@ package org.team1540.robot2026.subsystems.drive;
 
 import static edu.wpi.first.units.Units.MetersPerSecond;
 
+import com.ctre.phoenix6.CANBus;
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.RobotConfig;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -11,7 +12,7 @@ import org.team1540.robot2026.generated.TunerConstants;
 
 public class DrivetrainConstants {
     public static final double ODOMETRY_FREQUENCY = 250.0;
-    public static final String CAN_BUS = TunerConstants.kCANBus.getName();
+    public static final CANBus CAN_BUS = TunerConstants.kCANBus;
 
     public static final double DRIVEBASE_RADIUS = Math.max(
             Math.max(
