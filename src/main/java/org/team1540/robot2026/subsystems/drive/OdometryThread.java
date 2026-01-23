@@ -1,5 +1,7 @@
 package org.team1540.robot2026.subsystems.drive;
 
+import static org.team1540.robot2026.subsystems.drive.DrivetrainConstants.*;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import edu.wpi.first.units.measure.Angle;
@@ -12,8 +14,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.DoubleSupplier;
 import org.team1540.robot2026.generated.TunerConstants;
-
-import static org.team1540.robot2026.subsystems.drive.DrivetrainConstants.*;
 
 /**
  * Provides an interface for asynchronously reading high-frequency measurements to a set of queues.

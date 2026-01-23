@@ -1,5 +1,7 @@
 package org.team1540.robot2026.subsystems.drive;
 
+import static org.team1540.robot2026.subsystems.drive.DrivetrainConstants.*;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.StatusSignal;
@@ -9,22 +11,22 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import java.util.Objects;
 import java.util.Queue;
 import org.team1540.robot2026.generated.TunerConstants;
 
-import static org.team1540.robot2026.subsystems.drive.DrivetrainConstants.*;
-
 /** IO implementation for Pigeon 2. */
 public class GyroIOPigeon2 implements GyroIO {
-    private final Pigeon2 pigeon =
-            new Pigeon2(TunerConstants.DrivetrainConstants.Pigeon2Id, CAN_BUS);
+    private final Pigeon2 pigeon = new Pigeon2(TunerConstants.DrivetrainConstants.Pigeon2Id, CAN_BUS);
     private final StatusSignal<Angle> yaw = pigeon.getYaw();
     private final Queue<Double> yawPositionQueue;
     private final Queue<Double> yawTimestampQueue;
     private final StatusSignal<AngularVelocity> yawVelocity = pigeon.getAngularVelocityZWorld();
 
     public GyroIOPigeon2() {
-        pigeon.getConfigurator().apply(new Pigeon2Configuration());
+        pigeon.getConfigurator()
+                .apply(Objects.requireNonNullElse(
+                        TunerConstants.DrivetrainConstants.Pigeon2Configs, new Pigeon2Configuration()));
         pigeon.getConfigurator().setYaw(0.0);
         yaw.setUpdateFrequency(ODOMETRY_FREQUENCY);
         yawVelocity.setUpdateFrequency(50.0);

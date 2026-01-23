@@ -1,5 +1,7 @@
 package org.team1540.robot2026.subsystems.drive;
 
+import static org.team1540.robot2026.subsystems.drive.DrivetrainConstants.*;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.StatusSignal;
@@ -11,15 +13,12 @@ import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
-import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.*;
 import java.util.Queue;
 import org.team1540.robot2026.util.PhoenixUtil;
 import org.team1540.robot2026.util.swerve.ModuleHWConfigs;
-
-import static org.team1540.robot2026.subsystems.drive.DrivetrainConstants.*;
 
 /**
  * Module IO implementation for Talon FX drive motor controller, Talon FX turn motor controller, and
@@ -72,11 +71,6 @@ public class ModuleIOTalonFX implements ModuleIO {
     private final StatusSignal<Current> turnSupplyCurrent;
     private final StatusSignal<Current> turnStatorCurrent;
     private final StatusSignal<Temperature> turnTemp;
-
-    // Connection debouncers
-    private final Debouncer driveConnectedDebounce = new Debouncer(0.5);
-    private final Debouncer turnConnectedDebounce = new Debouncer(0.5);
-    private final Debouncer turnEncoderConnectedDebounce = new Debouncer(0.5);
 
     public ModuleIOTalonFX(
             SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants) {
