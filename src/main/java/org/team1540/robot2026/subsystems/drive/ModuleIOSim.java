@@ -17,13 +17,6 @@ import org.ironmaple.simulation.motorsims.SimulatedBattery;
 import org.ironmaple.simulation.motorsims.SimulatedMotorController;
 import org.team1540.robot2026.SimState;
 
-/**
- * Physics sim implementation of module IO.
- *
- * <p>Uses two DC motor sims for the drive and turn motors, with the absolute position initialized
- * to a random value. The flywheel sims are not physically accurate, but provide a decent
- * approximation for the behavior of the module.
- */
 public class ModuleIOSim implements ModuleIO {
     private final SwerveModuleSimulation moduleSim;
     private final SimulatedMotorController.GenericMotorController driveMotor;

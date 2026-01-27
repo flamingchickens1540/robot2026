@@ -16,7 +16,7 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.Arrays;
 import java.util.concurrent.locks.Lock;
@@ -177,7 +177,7 @@ public class Drivetrain extends SubsystemBase {
                     new SwerveModuleState());
         }
 
-        // Update tunable numbers
+        // Update tunable PID constants
         LoggedTunableNumber.ifChanged(
                 hashCode(),
                 () -> trajectoryController.setTranslationPID(
@@ -198,9 +198,16 @@ public class Drivetrain extends SubsystemBase {
         // Update alerts
         gyroDisconnectedAlert.set(!gyroInputs.connected);
 
+        // Log active command
+        Command activeCmd = CommandScheduler.getInstance().requiring(this);
+        Logger.recordOutput(
+                "Drivetrain/ActiveCommand",
+                activeCmd != null ? activeCmd.getName() + "_" + activeCmd.hashCode() : "None");
+
         LoggedTracer.record("Drivetrain");
     }
 
+    /** Runs the drivetrain at the given velocity */
     public void runVelocity(ChassisSpeeds velocity) {
         SwerveModuleState[] setpoints =
                 kinematics.toSwerveModuleStates(ChassisSpeeds.discretize(velocity, Constants.LOOP_PERIOD_SECS));
@@ -212,11 +219,13 @@ public class Drivetrain extends SubsystemBase {
         Logger.recordOutput("Drivetrain/SwerveStates/Setpoints", setpoints);
     }
 
+    /** Runs the drivetrain such that it follows the given trajectory sample */
     public void followTrajectory(SwerveSample trajectorySample) {
         RobotState.getInstance().setTrajectoryTarget(trajectorySample.getPose());
         runVelocity(trajectoryController.calculate(RobotState.getInstance().getEstimatedPose(), trajectorySample));
     }
 
+    /** Align all modules forward and runs the drive at the given open-loop input for FF characterization*/
     public void runCharacterization(double input) {
         for (Module module : modules) {
             module.runCharacterization(input);
@@ -235,10 +244,12 @@ public class Drivetrain extends SubsystemBase {
                 .toArray();
     }
 
+    /** Stops the drivetrain */
     public void stop() {
         runVelocity(new ChassisSpeeds());
     }
 
+    /** Stops the drivetrain with wheels pointed in an X pattern */
     public void stopWithX() {
         Rotation2d[] headings = new Rotation2d[4];
         Translation2d[] modulePositions = getModuleTranslations();
@@ -256,11 +267,13 @@ public class Drivetrain extends SubsystemBase {
         return states;
     }
 
+    /** Zeros the drivetrain's field orientation based on the robot's estimated heading */
     public void zeroFieldOrientation() {
         fieldOrientationOffset = rawGyroRotation.minus(
                 AllianceFlipUtil.apply(RobotState.getInstance().getRobotHeading()));
     }
 
+    /** Manually zero the drivetrain's field orientation to where the robot is pointing*/
     public void zeroFieldOrientationManual() {
         fieldOrientationOffset = rawGyroRotation;
     }
@@ -275,26 +288,27 @@ public class Drivetrain extends SubsystemBase {
 
     public Command percentDriveCommand(
             Supplier<Translation2d> translationPercent, DoubleSupplier omegaPercent, BooleanSupplier fieldRelative) {
-        return Commands.run(
-                        () -> {
-                            ChassisSpeeds velocity = new ChassisSpeeds(
-                                    translationPercent.get().getX() * MAX_LINEAR_SPEED_MPS,
-                                    translationPercent.get().getY() * MAX_LINEAR_SPEED_MPS,
-                                    omegaPercent.getAsDouble() * MAX_ANGULAR_SPEED_RAD_PER_SEC);
-                            if (fieldRelative.getAsBoolean()) {
-                                velocity = ChassisSpeeds.fromFieldRelativeSpeeds(
-                                        velocity, rawGyroRotation.minus(fieldOrientationOffset));
-                            }
-                            runVelocity(velocity);
-                        },
-                        this)
-                .finallyDo(this::stop);
+        return run(() -> {
+                    ChassisSpeeds velocity = new ChassisSpeeds(
+                            translationPercent.get().getX() * MAX_LINEAR_SPEED_MPS,
+                            translationPercent.get().getY() * MAX_LINEAR_SPEED_MPS,
+                            omegaPercent.getAsDouble() * MAX_ANGULAR_SPEED_RAD_PER_SEC);
+                    if (fieldRelative.getAsBoolean()) {
+                        velocity = ChassisSpeeds.fromFieldRelativeSpeeds(
+                                velocity, rawGyroRotation.minus(fieldOrientationOffset));
+                    }
+                    runVelocity(velocity);
+                })
+                .finallyDo(this::stop)
+                .withName("PercentDriveCommand");
     }
 
     public Command teleopDriveCommand(XboxController controller) {
         return percentDriveCommand(
-                () -> JoystickUtil.deadzonedJoystickTranslation(-controller.getLeftY(), -controller.getLeftX(), 0.1),
-                () -> JoystickUtil.smartDeadzone(-controller.getRightX(), 0.1));
+                        () -> JoystickUtil.deadzonedJoystickTranslation(
+                                -controller.getLeftY(), -controller.getLeftX(), 0.1),
+                        () -> JoystickUtil.smartDeadzone(-controller.getRightX(), 0.1))
+                .withName("TeleopDriveCommand");
     }
 
     public static Drivetrain createReal() {

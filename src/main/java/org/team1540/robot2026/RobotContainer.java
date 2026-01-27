@@ -18,8 +18,9 @@ public class RobotContainer {
     private final CommandXboxController copilot = new CommandXboxController(1);
 
     private final Drivetrain drivetrain;
-
     private final LoggedAutoChooser autoChooser = new LoggedAutoChooser("Auto Chooser");
+
+    private final RobotState robotState = RobotState.getInstance();
 
     /** The container for the robot. Contains subsystems, IO devices, and commands. */
     public RobotContainer() {
@@ -76,9 +77,9 @@ public class RobotContainer {
     }
 
     private void configurePeriodicCallbacks() {
-        addPeriodicCallback(autoChooser::update, "Auto chooser update");
+        addPeriodicCallback(autoChooser::update, "AutoChooserUpdate");
         if (Constants.CURRENT_MODE == Constants.Mode.SIM) {
-            addPeriodicCallback(SimState.getInstance()::update, "Simulation update");
+            addPeriodicCallback(SimState.getInstance()::update, "SimulationUpdate");
         }
     }
 

@@ -2,7 +2,6 @@ package org.team1540.robot2026;
 
 import au.grapplerobotics.CanBridge;
 import edu.wpi.first.wpilibj.Threads;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import org.littletonrobotics.junction.LogFileUtil;
@@ -71,7 +70,16 @@ public class Robot extends LoggedRobot {
         // Start AdvantageKit logger
         Logger.start();
 
-        SmartDashboard.putData(CommandScheduler.getInstance());
+        // Set up command logging
+        CommandScheduler.getInstance()
+                .onCommandInitialize(cmd -> Logger.recordOutput(
+                        "Commands/" + cmd.getName() + "_" + Integer.toHexString(cmd.hashCode()), true));
+        CommandScheduler.getInstance()
+                .onCommandFinish(cmd -> Logger.recordOutput(
+                        "Commands/" + cmd.getName() + "_" + Integer.toHexString(cmd.hashCode()), false));
+        CommandScheduler.getInstance()
+                .onCommandInterrupt(cmd -> Logger.recordOutput(
+                        "Commands/" + cmd.getName() + "_" + Integer.toHexString(cmd.hashCode()), false));
 
         // Instantiate our RobotContainer. This will perform all our button bindings,
         // and put our autonomous chooser on the dashboard.
