@@ -23,4 +23,4 @@ public final class Main {
 
 
 
-/** Preparing to add comands*/
+/* Preparing to add commands */
