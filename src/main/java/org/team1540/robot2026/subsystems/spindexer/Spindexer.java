@@ -8,6 +8,7 @@ public class Spindexer extends SubsystemBase {
 
     private double feederSetpointRPM = 0.0;
 
+
     private static boolean hasInstance = false;
 
     private Spindexer(SpindexerIO io) {

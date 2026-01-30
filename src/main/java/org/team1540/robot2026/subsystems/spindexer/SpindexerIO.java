@@ -9,6 +9,7 @@ public interface SpindexerIO {
         public double intakeCurrentAmps = 0.01;
         public double intakeVelocityRPM = 0.0;
         public double intakeTempCelsius = 0.0;
+
         public double feederVoltage = 0.0;
         public double feederCurrentAmps = 0.0;
         public double feederVelocityRPM = 0.0;
