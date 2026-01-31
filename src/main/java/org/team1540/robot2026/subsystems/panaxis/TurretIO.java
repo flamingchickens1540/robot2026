@@ -5,7 +5,7 @@ import org.littletonrobotics.junction.AutoLog;
 
 public interface TurretIO {
     @AutoLog
-    class DriveIOInputs {
+    class TurretIOInputs {
         // Drive Motor
         public boolean driveConnected = false;
         public double drivePositionRads = 0.0;

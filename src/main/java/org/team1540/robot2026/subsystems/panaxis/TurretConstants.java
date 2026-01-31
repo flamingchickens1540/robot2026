@@ -7,4 +7,5 @@ public class TurretConstants {
     public static final int EXTRA_GEAR_TEETH_COUNT = 13;
     public static final int EXTRA2_GEAR_TEETH_COUNT = 14;
     public static final int DRIVE_ID = 1;
+    public static final double UPDATE_HRTZ = 50;
 }
