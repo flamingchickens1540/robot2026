@@ -26,5 +26,15 @@ public interface TurretIO {
         public double[] odometryTimestamps = new double[] {};
         public double[] odometryEncoderPositionsRads = new double[] {};
     }
+    default void updateInputs(TurretIOInputs inputs) {}
 
+    default void setVoltage(double volts) {}
+
+    default void setRotation(double rotation) {}
+
+    default void setBrakeMode(boolean brakeMode) {}
+
+    default void configPID(double kP, double kI, double kD) {}
+
+    default void configFF(double kS, double kV, double kG) {}
 }

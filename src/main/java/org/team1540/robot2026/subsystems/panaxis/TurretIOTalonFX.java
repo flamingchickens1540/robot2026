@@ -11,7 +11,7 @@ import jdk.jshell.Snippet;
 import static org.team1540.robot2026.subsystems.panaxis.TurretConstants.DRIVE_ID;
 import static org.team1540.robot2026.subsystems.panaxis.TurretConstants.UPDATE_HRTZ;
 
-public class TurretIOTalonFX {
+public class TurretIOTalonFX implements TurretIO{
     // Drive Motor
     private final TalonFX driveMotor = new TalonFX(DRIVE_ID);
     private final StatusSignal<AngularVelocity> driveVelocity = driveMotor.getVelocity();
@@ -52,5 +52,7 @@ public class TurretIOTalonFX {
         inputs.driveVelocityRadPerSec = driveVelocity.getValueAsDouble();
 
 
+
     }
+
 }
