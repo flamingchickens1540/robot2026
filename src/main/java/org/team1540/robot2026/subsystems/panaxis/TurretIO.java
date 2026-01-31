@@ -3,7 +3,7 @@ package org.team1540.robot2026.subsystems.panaxis;
 import edu.wpi.first.math.geometry.Rotation2d;
 import org.littletonrobotics.junction.AutoLog;
 
-public interface DriveIO {
+public interface TurretIO {
     @AutoLog
     class DriveIOInputs {
         // Drive Motor
@@ -14,12 +14,17 @@ public interface DriveIO {
         public double driveSupplyCurrentAmps = 0.0;
         public double driveStatorCurrentAmps = 0.0;
         public double driveTempCelsius = 0.0;
-        // Cancoder
+
+        // Cancoder Extra
         public boolean driveEncoderConnected = false;
         public Rotation2d driveEncoderAbsolutePosition = Rotation2d.kZero;
 
+        // Cancoder Extra
+        public boolean extraEncoderConnected = false;
+        public Rotation2d extraEncoderAbsolutePosition = Rotation2d.kZero;
+
         public double[] odometryTimestamps = new double[] {};
-        public double[] odometryDrivePositionsRads = new double[] {};
+        public double[] odometryEncoderPositionsRads = new double[] {};
     }
-    }
+
 }
