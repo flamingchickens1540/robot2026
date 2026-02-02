@@ -1,4 +1,5 @@
 package org.team1540.robot2026.subsystems.climber;
+import static org.team1540.robot2026.subsystems.climber.ClimberConstants.*;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
@@ -16,8 +17,6 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.wpilibj.motorcontrol.Talon;
-
 public class ClimberIOReal implements ClimberIO {
     private final TalonFX leftMotor = new TalonFX(0);
     private final StatusSignal<Angle> leftPosition = leftMotor.getPosition();
@@ -42,12 +41,12 @@ public class ClimberIOReal implements ClimberIO {
         leftConfig.CurrentLimits.SupplyCurrentLimit = 40.0;
         leftConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         leftConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-        leftConfig.Feedback.SensorToMechanismRatio = idk;
+        leftConfig.Feedback.SensorToMechanismRatio = GEAR_RATIO;
         rightConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         rightConfig.CurrentLimits.SupplyCurrentLimit = 40.0;
         rightConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         rightConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        rightConfig.Feedback.SensorToMechanismRatio = idk;
+        rightConfig.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
 
         Slot0Configs Gains = leftConfig.Slot0;
@@ -62,11 +61,11 @@ public class ClimberIOReal implements ClimberIO {
         MotionMagicConfigs leftMotionMagicConfigs = leftConfig.MotionMagic;
         MotionMagicConfigs rightMotionMagicConfigs = rightConfig.MotionMagic;
 
-        leftMotionMagicConfigs.MotionMagicCruiseVelocity = CRUISE_VELOCITY_RPS;
-        leftMotionMagicConfigs.MotionMagicAcceleration = ACCELERATION_RPS2;
+        leftMotionMagicConfigs.MotionMagicCruiseVelocity = CRUISE_VELOCITY_MPS;
+        leftMotionMagicConfigs.MotionMagicAcceleration = ACCELERATION_MPS2;
 
-        rightMotionMagicConfigs.MotionMagicCruiseVelocity = CRUISE_VELOCITY_RPS;
-        rightMotionMagicConfigs.MotionMagicAcceleration = ACCELERATION_RPS2;
+        rightMotionMagicConfigs.MotionMagicCruiseVelocity = CRUISE_VELOCITY_MPS;
+        rightMotionMagicConfigs.MotionMagicAcceleration = ACCELERATION_MPS2;
 
         leftMotor.getConfigurator().apply(leftConfig);
         rightMotor.getConfigurator().apply(rightConfig);
