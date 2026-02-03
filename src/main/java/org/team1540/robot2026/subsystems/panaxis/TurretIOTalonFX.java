@@ -1,20 +1,30 @@
 package org.team1540.robot2026.subsystems.panaxis;
 
+import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.CAN;
 import jdk.jshell.Snippet;
 
+import static edu.wpi.first.units.Units.Rotations;
 import static org.team1540.robot2026.subsystems.panaxis.TurretConstants.*;
 
 public class TurretIOTalonFX implements TurretIO{
+    // Magic Motion
+    private final MotionMagicVoltage profiledPositionControl = new MotionMagicVoltage(0.0).withEnableFOC(true);
+
     // Drive Motor
     private final TalonFX driveMotor = new TalonFX(DRIVE_ID);
     private final StatusSignal<AngularVelocity> driveVelocity = driveMotor.getVelocity();
@@ -28,7 +38,10 @@ public class TurretIOTalonFX implements TurretIO{
     private final Debouncer leaderDebouncer = new Debouncer(0.5);
 
     public TurretIOTalonFX () {
-        //TalonFXConfigurator config = new TalonFXConfigurator(); TODO Config Stuff
+        TalonFXConfiguration config = new TalonFXConfiguration();
+
+        config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 UPDATE_HRTZ,
@@ -55,4 +68,32 @@ public class TurretIOTalonFX implements TurretIO{
 
     }
 
+
+    public void setVoltage(double volts) {
+        driveMotor.setVoltage(volts);
+    }
+    public void setRotation(double rotation) {
+        driveMotor.setControl(profiledPositionControl.withPosition(Rotations.of(rotation)));
+    }
+
+    public void setBrakeMode(boolean brakeMode) {
+        driveMotor.setNeutralMode(brakeMode ? NeutralModeValue.Brake : NeutralModeValue.Coast);
+    }
+    public void configPID(double kP, double kI, double kD) {
+        Slot0Configs configs = new Slot0Configs();
+        driveMotor.getConfigurator().refresh(configs);
+        configs.kP = kP;
+        configs.kI = kI;
+        configs.kD = kD;
+        driveMotor.getConfigurator().apply(configs);
+    }
+
+    public void configFF(double kS, double kV, double kG) {
+        Slot0Configs configs = new Slot0Configs();
+        driveMotor.getConfigurator().refresh(configs);
+        configs.kS = kS;
+        configs.kV = kV;
+        configs.kG = kG;
+        driveMotor.getConfigurator().apply(configs);
+    }
 }
