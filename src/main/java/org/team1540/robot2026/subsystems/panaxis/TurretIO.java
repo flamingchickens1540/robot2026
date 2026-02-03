@@ -15,13 +15,13 @@ public interface TurretIO {
         public double driveStatorCurrentAmps = 0.0;
         public double driveTempCelsius = 0.0;
 
-        // Cancoder Extra
-        public boolean driveEncoderConnected = false;
-        public Rotation2d driveEncoderAbsolutePosition = Rotation2d.kZero;
+        // Cancoder 13
+        public boolean mainEncoderConnected = false;
+        public Rotation2d mainEncoderAbsolutePosition = Rotation2d.kZero;
 
-        // Cancoder Extra
-        public boolean extraEncoderConnected = false;
-        public Rotation2d extraEncoderAbsolutePosition = Rotation2d.kZero;
+        // Cancoder 14
+        public boolean secondaryEncoderConnected = false;
+        public Rotation2d secondaryEncoderAbsolutePosition = Rotation2d.kZero;
 
         public double[] odometryTimestamps = new double[] {};
         public double[] odometryEncoderPositionsRads = new double[] {};

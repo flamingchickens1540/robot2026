@@ -4,12 +4,15 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
+import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.*;
+import edu.wpi.first.wpilibj.CAN;
 import jdk.jshell.Snippet;
 
-import static org.team1540.robot2026.subsystems.panaxis.TurretConstants.DRIVE_ID;
-import static org.team1540.robot2026.subsystems.panaxis.TurretConstants.UPDATE_HRTZ;
+import static org.team1540.robot2026.subsystems.panaxis.TurretConstants.*;
 
 public class TurretIOTalonFX implements TurretIO{
     // Drive Motor
@@ -21,12 +24,11 @@ public class TurretIOTalonFX implements TurretIO{
     private final StatusSignal<Temperature> driveMotorTemp = driveMotor.getDeviceTemp();
     private final StatusSignal<Current> driveMotorStatorCurrent = driveMotor.getStatorCurrent();
 
-    // CANcoder 1
-
-    // CANcoder 2
+    // Debouncer
+    private final Debouncer leaderDebouncer = new Debouncer(0.5);
 
     public TurretIOTalonFX () {
-        //TalonFXConfigurator config = new TalonFXConfigurator();
+        //TalonFXConfigurator config = new TalonFXConfigurator(); TODO Config Stuff
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 UPDATE_HRTZ,
@@ -43,15 +45,13 @@ public class TurretIOTalonFX implements TurretIO{
                 driveMotorTemp, driveMotorStatorCurrent
         );
 
-        // inputs.driveConnected = driveMotor TODO Debouncer Something
+        inputs.driveConnected = leaderDebouncer.calculate(driveStatus.isOK());
         inputs.driveSupplyCurrentAmps = driveMotorSupplyCurrent.getValueAsDouble();
         inputs.driveAppliedVolts = driveAppliedVoltage.getValueAsDouble();
         inputs.driveTempCelsius = driveMotorTemp.getValueAsDouble();
         inputs.driveStatorCurrentAmps = driveMotorStatorCurrent.getValueAsDouble();
         inputs.drivePositionRads = drivePosition.getValueAsDouble();
         inputs.driveVelocityRadPerSec = driveVelocity.getValueAsDouble();
-
-
 
     }
 
