@@ -1,27 +1,21 @@
 package org.team1540.robot2026.subsystems.panaxis;
 
-import com.ctre.phoenix.motorcontrol.NeutralMode;
+import static edu.wpi.first.units.Units.Rotations;
+import static org.team1540.robot2026.subsystems.panaxis.TurretConstants.*;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
-import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.filter.Debouncer;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.*;
-import edu.wpi.first.wpilibj.CAN;
-import jdk.jshell.Snippet;
 
-import static edu.wpi.first.units.Units.Rotations;
-import static org.team1540.robot2026.subsystems.panaxis.TurretConstants.*;
-
-public class TurretIOTalonFX implements TurretIO{
+public class TurretIOTalonFX implements TurretIO {
     // Magic Motion
     private final MotionMagicVoltage profiledPositionControl = new MotionMagicVoltage(0.0).withEnableFOC(true);
 
@@ -37,7 +31,7 @@ public class TurretIOTalonFX implements TurretIO{
     // Debouncer
     private final Debouncer leaderDebouncer = new Debouncer(0.5);
 
-    public TurretIOTalonFX () {
+    public TurretIOTalonFX() {
         TalonFXConfiguration config = new TalonFXConfiguration();
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
@@ -45,18 +39,19 @@ public class TurretIOTalonFX implements TurretIO{
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 UPDATE_HRTZ,
-                drivePosition, driveVelocity,
-                driveAppliedVoltage, driveMotorSupplyCurrent,
-                driveMotorTemp, driveMotorStatorCurrent
-        );
+                drivePosition,
+                driveVelocity,
+                driveAppliedVoltage,
+                driveMotorSupplyCurrent,
+                driveMotorTemp,
+                driveMotorStatorCurrent);
     }
 
-    public void updateInputs (TurretIO.TurretIOInputs inputs) {
+    public void updateInputs(TurretIO.TurretIOInputs inputs) {
         StatusCode driveStatus = BaseStatusSignal.refreshAll(
                 drivePosition, driveVelocity,
                 driveAppliedVoltage, driveMotorSupplyCurrent,
-                driveMotorTemp, driveMotorStatorCurrent
-        );
+                driveMotorTemp, driveMotorStatorCurrent);
 
         inputs.driveConnected = leaderDebouncer.calculate(driveStatus.isOK());
         inputs.driveSupplyCurrentAmps = driveMotorSupplyCurrent.getValueAsDouble();
@@ -65,13 +60,12 @@ public class TurretIOTalonFX implements TurretIO{
         inputs.driveStatorCurrentAmps = driveMotorStatorCurrent.getValueAsDouble();
         inputs.drivePositionRads = drivePosition.getValueAsDouble();
         inputs.driveVelocityRadPerSec = driveVelocity.getValueAsDouble();
-
     }
-
 
     public void setVoltage(double volts) {
         driveMotor.setVoltage(volts);
     }
+
     public void setRotation(double rotation) {
         driveMotor.setControl(profiledPositionControl.withPosition(Rotations.of(rotation)));
     }
@@ -79,6 +73,7 @@ public class TurretIOTalonFX implements TurretIO{
     public void setBrakeMode(boolean brakeMode) {
         driveMotor.setNeutralMode(brakeMode ? NeutralModeValue.Brake : NeutralModeValue.Coast);
     }
+
     public void configPID(double kP, double kI, double kD) {
         Slot0Configs configs = new Slot0Configs();
         driveMotor.getConfigurator().refresh(configs);
