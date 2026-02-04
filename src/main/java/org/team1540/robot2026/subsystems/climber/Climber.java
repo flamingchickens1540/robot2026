@@ -2,6 +2,8 @@ package org.team1540.robot2026.subsystems.climber;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.RobotState;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import static org.team1540.robot2026.subsystems.climber.ClimberConstants.*;
@@ -94,6 +96,14 @@ public class Climber extends SubsystemBase {
 
     public void holdPosition() {
         io.setSetPoint(inputs.leftMotorPosition);
+    }
+
+    public Command raise() {
+        return Commands.run(() -> setPosition(MAX_HEIGHT_M), this);
+    }
+
+    public Command lower() {
+        return Commands.run(() -> setPosition(0.0), this);
     }
 
     public static Climber createReal() {
