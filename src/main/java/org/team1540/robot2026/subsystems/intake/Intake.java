@@ -1,8 +1,7 @@
-package org.team1540.robot2026.subsystems;
+package org.team1540.robot2026.subsystems.intake;
 
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import org.team1540.robot2026.subsystems.intake.IntakeIO;
 
 public class Intake extends SubsystemBase {
 

@@ -1,5 +1,6 @@
 package org.team1540.robot2026.subsystems.intake;
 
+import edu.wpi.first.math.geometry.Rotation2d;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface IntakeIO {
@@ -17,14 +18,13 @@ public interface IntakeIO {
         public double pivotMotorAppliedVolts = 0;
         public double pivotSupplyCurrentAmps = 0;
         public double pivotStatorCurrentAmps = 0;
-
     }
-
-    default void setIntakeVoltage(double voltage) {}
 
     default void updateInputs(IntakeInputs inputs) {}
 
-    default void setPitvotPosition(Rotation2d pitvotPosition) {}
+    default void setIntakeVoltage(double voltage) {}
+
+    default void setPivotPosition(Rotation2d pivotPosition) {}
 
     default void setPivotAppliedVoltage(double voltage) {}
 }
