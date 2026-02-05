@@ -36,7 +36,7 @@ public class SimState {
             throw new IllegalStateException("SimState should only be used in simulation");
 
         Arena2026Rebuilt arena = new Arena2026Rebuilt(false);
-        arena.setEfficiencyMode(false);
+        arena.setEfficiencyMode(true);
         SimulatedArena.overrideInstance(arena);
         SimulatedArena.getInstance().resetFieldForAuto();
 

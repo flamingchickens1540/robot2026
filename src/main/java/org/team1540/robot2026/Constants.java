@@ -35,6 +35,6 @@ public final class Constants {
     public static final double ROBOT_MASS_KG = Units.lbsToKilograms(135.0);
     public static final double ROBOT_MOI_KGM2 = 7.0; // TODO: find more accurate value from CAD
 
-    public static final double BUMPER_LENGTH_X_METERS = Units.inchesToMeters(40.0);
-    public static final double BUMPER_LENGTH_Y_METERS = Units.inchesToMeters(34.5);
+    public static final double BUMPER_LENGTH_X_METERS = Units.inchesToMeters(38.0);
+    public static final double BUMPER_LENGTH_Y_METERS = Units.inchesToMeters(32.0);
 }
