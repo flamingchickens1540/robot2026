@@ -29,7 +29,7 @@ public interface ClimberIO {
 
     default void setVoltage(double voltage) {}
 
-    default void setSetPoint(double setPointMeters) {}
+    default void setSetpoint(double setpointMeters) {}
 
     default void configPID(double kP, double kI, double kD) {}
 

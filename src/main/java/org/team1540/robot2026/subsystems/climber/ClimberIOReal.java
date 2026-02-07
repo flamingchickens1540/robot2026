@@ -134,7 +134,7 @@ public class ClimberIOReal implements ClimberIO {
     }
 
     @Override
-    public void setSetPoint(double setpointMeters) {
+    public void setSetpoint(double setpointMeters) {
         leftMotor.setControl(profiledPositionControl.withPosition(setpointMeters));
         rightMotor.setControl(profiledPositionControl.withPosition(setpointMeters));
     }

@@ -26,7 +26,7 @@ public class Climber extends SubsystemBase {
 
     private final ClimberIO io;
     private final ClimberIOInputsAutoLogged inputs = new ClimberIOInputsAutoLogged();
-    private double setPointMeters;
+    private double setpointMeters;
 
     private Climber(ClimberIO io) {
         if (hasInstance) throw new IllegalStateException("Instance of climber already exists");
@@ -51,14 +51,14 @@ public class Climber extends SubsystemBase {
 
     public void setPosition(double positionMeters) {
         positionMeters = MathUtil.clamp(positionMeters, 0.0, MAX_HEIGHT_M);
-        setPointMeters = positionMeters;
-        io.setSetPoint(setPointMeters);
+        setpointMeters = positionMeters;
+        io.setSetpoint(setpointMeters);
     }
 
     @AutoLogOutput(key = "Climber/AtSetpoint")
     public boolean isAtSetpoint() {
-        return (MathUtil.isNear(setPointMeters, inputs.leftMotorPosition, POS_ERR_TOLERANCE_M) && MathUtil.isNear(setPointMeters, inputs.rightMotorPosition, POS_ERR_TOLERANCE_M))
-                || (inputs.atLowerLimit && setPointMeters <= 0);
+        return (MathUtil.isNear(setpointMeters, inputs.leftMotorPosition, POS_ERR_TOLERANCE_M) && MathUtil.isNear(setpointMeters, inputs.rightMotorPosition, POS_ERR_TOLERANCE_M))
+                || (inputs.atLowerLimit && setpointMeters <= 0);
     }
 
     public void setVoltage(double voltage) {
@@ -71,7 +71,7 @@ public class Climber extends SubsystemBase {
 
     @AutoLogOutput(key = "Climber/Setpoint")
     public double getSetpoint() {
-        return setPointMeters;
+        return setpointMeters;
     }
 
     public double[] getPosition() {
@@ -95,7 +95,7 @@ public class Climber extends SubsystemBase {
     }
 
     public void holdPosition() {
-        io.setSetPoint(inputs.leftMotorPosition);
+        io.setSetpoint(inputs.leftMotorPosition);
     }
 
     public Command raise() {
