@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import org.team1540.robot2026.commands.CharacterizationCommands;
 import org.team1540.robot2026.subsystems.drive.Drivetrain;
+import org.team1540.robot2026.subsystems.shooter.Shooter;
 import org.team1540.robot2026.util.auto.LoggedAutoChooser;
 
 public class RobotContainer {
@@ -18,6 +19,7 @@ public class RobotContainer {
     private final CommandXboxController copilot = new CommandXboxController(1);
 
     private final Drivetrain drivetrain;
+    private final Shooter shooter;
     private final LoggedAutoChooser autoChooser = new LoggedAutoChooser("Auto Chooser");
 
     private final RobotState robotState = RobotState.getInstance();
@@ -28,16 +30,19 @@ public class RobotContainer {
             case REAL -> {
                 // Initialize physical hardware IOs
                 drivetrain = Drivetrain.createReal();
+                shooter = Shooter.createReal();
             }
             case SIM -> {
                 // Initialize simulated hardware IOs
                 drivetrain = Drivetrain.createSim();
+                shooter = Shooter.createSim();
 
                 RobotState.getInstance().resetPose(new Pose2d(3.0, 3.0, Rotation2d.kZero));
             }
             default -> {
                 // Initialize no-op hardware IOs for replay
                 drivetrain = Drivetrain.createDummy();
+                shooter = Shooter.createDummy();
             }
         }
 
@@ -67,6 +72,9 @@ public class RobotContainer {
                             () -> RobotState.getInstance().getRobotHeading().getRadians(),
                             drivetrain::getWheelRadiusCharacterizationPositions,
                             drivetrain));
+            autoChooser.addCmd(
+                    "Shooter FF Characterization",
+                    () -> CharacterizationCommands.feedforward(shooter::setVoltage, () -> shooter.getVelocityRPM() / 60.0, shooter));
         }
     }
 
