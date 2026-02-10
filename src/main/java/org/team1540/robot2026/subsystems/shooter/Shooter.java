@@ -1,20 +1,19 @@
 package org.team1540.robot2026.subsystems.shooter;
 
+import static org.team1540.robot2026.subsystems.shooter.ShooterConstants.*;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.Constants;
 import org.team1540.robot2026.util.LoggedTracer;
 import org.team1540.robot2026.util.LoggedTunableNumber;
-
-import java.util.function.DoubleSupplier;
-
-import static org.team1540.robot2026.subsystems.shooter.ShooterConstants.*;
 
 public class Shooter extends SubsystemBase {
     private static boolean hasInstance = false;
@@ -47,11 +46,14 @@ public class Shooter extends SubsystemBase {
         io.updateInputs(inputs);
         Logger.processInputs("Shooter", inputs);
 
-        Logger.recordOutput("Shooter/FilteredVelocity", velocityFilter.calculate((inputs.velocityRPM[0] + inputs.velocityRPM[1]) / 2.0));
+        Logger.recordOutput(
+                "Shooter/FilteredVelocity",
+                velocityFilter.calculate((inputs.velocityRPM[0] + inputs.velocityRPM[1]) / 2.0));
 
         if (DriverStation.isDisabled()) stop();
 
-        LoggedTunableNumber.ifChanged(hashCode(), () -> io.configPID(kP.get(), kI.get(), kD.get(), kS.get(), kV.get()), kP, kI, kD, kS, kV);
+        LoggedTunableNumber.ifChanged(
+                hashCode(), () -> io.configPID(kP.get(), kI.get(), kD.get(), kS.get(), kV.get()), kP, kI, kD, kS, kV);
 
         leaderDisconnectedAlert.set(!inputs.leaderConnected);
         followerDisconnectedAlert.set(!inputs.followerConnected);
@@ -110,6 +112,6 @@ public class Shooter extends SubsystemBase {
         if (Constants.CURRENT_MODE == Constants.Mode.REAL) {
             DriverStation.reportWarning("Using dummy shooter on real robot", false);
         }
-        return new Shooter(new ShooterIO(){});
+        return new Shooter(new ShooterIO() {});
     }
 }
