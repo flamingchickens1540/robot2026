@@ -28,6 +28,7 @@ public class TurretIOTalonFX implements TurretIO {
     private final StatusSignal<Temperature> driveMotorTemp = driveMotor.getDeviceTemp();
     private final StatusSignal<Current> driveMotorStatorCurrent = driveMotor.getStatorCurrent();
 
+
     // Debouncer
     private final Debouncer leaderDebouncer = new Debouncer(0.5);
 
@@ -66,8 +67,9 @@ public class TurretIOTalonFX implements TurretIO {
         driveMotor.setVoltage(volts);
     }
 
-    public void setRotation(double rotation) {
-        driveMotor.setControl(profiledPositionControl.withPosition(Rotations.of(rotation)));
+    public void setRotation(double rotationDegrees) {
+        driveMotor.setControl(profiledPositionControl.withPosition(
+                Rotations.of(SUN_TO_DRIVE_RATIO * rotationDegrees)));
     }
 
     public void setBrakeMode(boolean brakeMode) {
