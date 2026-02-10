@@ -1,5 +1,7 @@
 package org.team1540.robot2026.subsystems.Shooter;
 
+import static org.team1540.robot2026.subsystems.Shooter.ShooterConstants.Flywheels.*;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
@@ -13,31 +15,20 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
 
-import static org.team1540.robot2026.subsystems.Shooter.ShooterConstants.Flywheels.*;
-
-public class FlyWheelsIOTalonFX implements FlyWheelsIO{
+public class FlywheelsIOTalonFX implements FlywheelsIO {
     private final TalonFX motor = new TalonFX(ID);
 
-    private final StatusSignal<AngularVelocity> velocity;
-    private final StatusSignal<Voltage> appliedVoltage;
-    private final StatusSignal<Current> statorCurrent;
-    private final StatusSignal<Current> supplyCurrent ;
-    private final StatusSignal<Temperature> temperature ;
+    private final StatusSignal<AngularVelocity> velocity = motor.getVelocity();
+    private final StatusSignal<Voltage> appliedVoltage = motor.getMotorVoltage();
+    private final StatusSignal<Current> statorCurrent = motor.getStatorCurrent();
+    private final StatusSignal<Current> supplyCurrent = motor.getSupplyCurrent();
+    private final StatusSignal<Temperature> temperature = motor.getDeviceTemp();
 
-
-
-
-    private final VelocityVoltage velocityCtrlReq=
+    private final VelocityVoltage velocityCtrlReq =
             new VelocityVoltage(0).withEnableFOC(true).withSlot(0);
     private final VoltageOut voltageCtrlReq = new VoltageOut(0).withEnableFOC(true);
 
-
-    public FlyWheelsIOTalonFX() {
-        velocity = motor.getVelocity();
-        appliedVoltage = motor.getMotorVoltage();
-        statorCurrent = motor.getStatorCurrent();
-        supplyCurrent = motor.getSupplyCurrent();
-        temperature = motor.getDeviceTemp();
+    public FlywheelsIOTalonFX() {
 
         TalonFXConfiguration config = new TalonFXConfiguration();
 
@@ -51,45 +42,34 @@ public class FlyWheelsIOTalonFX implements FlyWheelsIO{
         motor.getConfigurator().apply(config);
 
         BaseStatusSignal.setUpdateFrequencyForAll(
-                50,
-                velocity,
-                appliedVoltage,
-                statorCurrent,
-                supplyCurrent,
-                temperature);
+                50, velocity, appliedVoltage, statorCurrent, supplyCurrent, temperature);
 
         motor.optimizeBusUtilization();
     }
 
     @Override
     public void updateInputs(FlywheelsIOInputs inputs) {
-        BaseStatusSignal.refreshAll(
-                velocity,
-                appliedVoltage,
-                statorCurrent,
-                supplyCurrent,
-                temperature
-        );
+        BaseStatusSignal.refreshAll(velocity, appliedVoltage, statorCurrent, supplyCurrent, temperature);
 
         inputs.velocityRPM = velocity.getValueAsDouble();
         inputs.appliedVolts = appliedVoltage.getValueAsDouble();
-        inputs.statorCurrentAmps=statorCurrent.getValueAsDouble();
-        inputs.tempCelsius= temperature.getValueAsDouble();
+        inputs.statorCurrentAmps = statorCurrent.getValueAsDouble();
+        inputs.tempCelsius = temperature.getValueAsDouble();
         inputs.supplyCurrentAmps = supplyCurrent.getValueAsDouble();
     }
 
-
     @Override
-    public void setSpeeds(double RPM){
-        motor.setControl(velocityCtrlReq.withVelocity(RPM/60));
+    public void setSpeeds(double RPM) {
+        motor.setControl(velocityCtrlReq.withVelocity(RPM / 60));
     }
 
     @Override
     public void setVoltage(double volts) {
         motor.setControl(voltageCtrlReq.withOutput(volts));
     }
+
     @Override
-    public void configPID(double kP, double kI, double kD, double kV, double kS){
+    public void configPID(double kP, double kI, double kD, double kV, double kS) {
         Slot0Configs pidConfigs = new Slot0Configs();
         motor.getConfigurator().refresh(pidConfigs);
         pidConfigs.kP = kP;

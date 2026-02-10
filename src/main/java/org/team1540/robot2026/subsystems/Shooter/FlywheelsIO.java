@@ -2,7 +2,7 @@ package org.team1540.robot2026.subsystems.Shooter;
 
 import org.littletonrobotics.junction.AutoLog;
 
-public interface FlyWheelsIO {
+public interface FlywheelsIO {
 
     @AutoLog
     class FlywheelsIOInputs {
@@ -12,6 +12,7 @@ public interface FlyWheelsIO {
         public double velocityRPM = 0.0;
         public double tempCelsius = 0.0;
 
+        public boolean flywheelsConnected = false;
     }
 
     /**
@@ -23,7 +24,6 @@ public interface FlyWheelsIO {
      * Runs open loop at the specified voltages
      */
     default void setVoltage(double volts) {}
-
 
     /**
      * Runs closed loop at the specified RPMs
