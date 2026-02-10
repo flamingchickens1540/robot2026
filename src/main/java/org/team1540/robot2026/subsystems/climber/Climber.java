@@ -110,6 +110,10 @@ public class Climber extends SubsystemBase {
         return new Climber(new ClimberIOReal());
     }
 
+    public static Climber createSim() {
+        return new Climber(new ClimberIOSim());
+    }
+
     public static Climber createDummy() {
         return new Climber(new ClimberIO() {});
     }
