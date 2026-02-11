@@ -122,15 +122,53 @@ public class Turret extends SubsystemBase {
         setRotation(inputs.drivePositionRads);
     }
 
-    public double calculateTurretRotation() {
-        double mainPos = mainCancoder.getAbsolutePosition().getValueAsDouble();
-        double secondaryPos = secondaryCancoder.getAbsolutePosition().getValueAsDouble();
-        return 0;
+    public double calculateTurretAngleFromEncoderInputs(double encoder1, double encoder2) {
+        // Inputs are integer readings from the encoders, so convert
+        double e1 = (int) ((encoder1)*ENCODER_RANGE);
+        double e2 = (int) ((encoder2)*ENCODER_RANGE);
+        // Handle an edge case near 0 degrees where one or both encoder is 'below zero', that is, has
+        // a large value
+        double e1Rotations = -1;
+        double e2Rotations = -1;
+        // Now search through all possible rotation pairs to find the smallest error
+        double minError = DrivenGearDiameter;
+        double minE1Rotations = e1Rotations;
+        while (e1Rotations < Gear1MaxRotations && e2Rotations < Gear2MaxRotations) {
+            double e1Value = e1 + (e1Rotations) * ENCODER_RANGE;
+            double e2Value = e2 + (e2Rotations) * ENCODER_RANGE;
+            double e1Distance = e1Value * PlanetaryGear1InchPerBit;
+            double e2Distance = e2Value * PlanetaryGear2InchPerBit;
+            double err = Math.abs(e1Distance - e2Distance);
+            if (err < minError) {
+                minError = err;
+                minE1Rotations = e1Rotations;
+            }
+
+            if (e1Distance < e2Distance) {
+                e1Rotations += 1;
+            } else {
+                e2Rotations += 1;
+            }
+        }
+        //Now the best answer is given by minE1Rotations, so compute the distance gear 1
+        //has moved and convert to the corresponding driven gear movement.Note that
+        //the distance gear 1 has moved (at the pitch circle)is equal to the distance
+        //the driven gear has moved at its pitch circle
+        double e1Count = e1 + (minE1Rotations) * ENCODER_RANGE;
+        double e1Distance = e1Count * PlanetaryGear1InchPerBit;
+        double turretAngle = e1Distance * DrivenGearDegreePerInch;
+        return turretAngle;
     }
 
     public Command commandToSetpoint(DoubleSupplier rotationDegrees) {
         return Commands.runOnce(() -> setRotation(rotationDegrees.getAsDouble()),this
         );
+    }
+
+    public Command zeroCommand() {
+        return Commands.run(()-> setRotation(calculateTurretAngleFromEncoderInputs(
+                Units.rotationsToDegrees(mainCancoder.getAbsolutePosition().getValueAsDouble()),
+                Units.rotationsToDegrees(secondaryCancoder.getAbsolutePosition().getValueAsDouble()))));
     }
 
     public static Turret createReal() {

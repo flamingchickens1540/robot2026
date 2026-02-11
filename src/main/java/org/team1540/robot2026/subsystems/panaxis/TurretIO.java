@@ -1,5 +1,6 @@
 package org.team1540.robot2026.subsystems.panaxis;
 
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import edu.wpi.first.math.geometry.Rotation2d;
 import org.littletonrobotics.junction.AutoLog;
 
@@ -36,4 +37,6 @@ public interface TurretIO {
     default void configPID(double kP, double kI, double kD) {}
 
     default void configFF(double kS, double kV, double kG) {}
+
+    default void setMotorPosition(double degrees) {}
 }

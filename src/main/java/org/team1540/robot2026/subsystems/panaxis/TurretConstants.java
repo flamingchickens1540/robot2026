@@ -4,9 +4,7 @@ public class TurretConstants {
     public static final int  MAX_TURRET_ROTATION = 320;
     public static final int SUN_GEAR_TEETH_COUNT = 85;
     public static final int DRIVE_GEAR_TEETH_COUNT = 10;
-    public static final int EXTRA_GEAR_TEETH_COUNT = 13;
-    public static final int EXTRA2_GEAR_TEETH_COUNT = 14;
-    public static final double SUN_TO_DRIVE_RATIO = (double) SUN_GEAR_TEETH_COUNT / DRIVE_GEAR_TEETH_COUNT;
+     public static final double SUN_TO_DRIVE_RATIO = (double) SUN_GEAR_TEETH_COUNT / DRIVE_GEAR_TEETH_COUNT;
 
 
     public static final double KS = 0.185;
@@ -23,4 +21,38 @@ public class TurretConstants {
 
     public static final double UPDATE_HRTZ = 50;
     public static final double POS_ERR_TOLERANCE_DEGREES = 1;
+
+    // CRT Constants
+    public static int leftTcount;
+    public static int rightTcount;
+    public static int sunTcount;
+    public static double lRatio;
+    public static double rRatio;
+    public static int DRIVEN_GEAR_TOOTH_COUNT = 85;
+    public static int PLANETARY_GEAR_1_TOOTH_COUNT = 14;
+    public static int PLANETARY_GEAR_2_TOOTH_COUNT = 13;
+
+    public static double GEAR_TOOTH_CLEARANCE = 0.004; // the thickness of a sheet of 20lb paper
+    public static double ENCODER_RANGE = 4096.0;  // 12-bit precision
+    public static int ENCODER_RANGE_MODULUS = (int) ENCODER_RANGE;
+
+    public static double GEAR_DIAMETRAL_PITCH = 10.0;    // Ratio of number of teeth to pitch diameter, that is a 10-tooth
+
+    // Compute the maximum number of rotations (+1) for each planetary gear for a full rotation of
+    // the driven gear
+    public static int Gear1MaxRotations = (DRIVEN_GEAR_TOOTH_COUNT/PLANETARY_GEAR_1_TOOTH_COUNT) + 1;
+    public static int Gear2MaxRotations = (DRIVEN_GEAR_TOOTH_COUNT/PLANETARY_GEAR_2_TOOTH_COUNT) + 1;
+
+    // Compute the pitch diameters for the various gears
+    public static double DrivenGearDiameter = ((double) (DRIVEN_GEAR_TOOTH_COUNT)) / GEAR_DIAMETRAL_PITCH;
+    public static double PlanetaryGear1PitchDiameter = ((double) (PLANETARY_GEAR_1_TOOTH_COUNT)) / GEAR_DIAMETRAL_PITCH;
+    public static double PlanetaryGear2PitchDiameter = ((double) (PLANETARY_GEAR_2_TOOTH_COUNT)) / GEAR_DIAMETRAL_PITCH;
+    public static double DrivenGearDistancePerDegree = DrivenGearDiameter / 360.0;
+    public static double DrivenGearDegreePerInch = 1.0 / DrivenGearDistancePerDegree;
+
+    // Compute the encoder bit per unit distance for each planetary gear
+    public static double PlanetaryGear1BitPerInch = ENCODER_RANGE / PlanetaryGear1PitchDiameter;
+    public static double PlanetaryGear2BitPerInch = ENCODER_RANGE / PlanetaryGear2PitchDiameter;
+    public static double PlanetaryGear1InchPerBit = 1.0 / PlanetaryGear1BitPerInch;
+    public static  double PlanetaryGear2InchPerBit = 1.0 / PlanetaryGear2BitPerInch;
 }

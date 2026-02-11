@@ -13,6 +13,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.*;
 
 public class TurretIOTalonFX implements TurretIO {
@@ -76,6 +77,11 @@ public class TurretIOTalonFX implements TurretIO {
         driveMotor.setNeutralMode(brakeMode ? NeutralModeValue.Brake : NeutralModeValue.Coast);
     }
 
+    @Override
+    public void setMotorPosition(double degrees) {
+        driveMotor.setPosition(Rotations.of(degrees));
+    }
+
     public void configPID(double kP, double kI, double kD) {
         Slot0Configs configs = new Slot0Configs();
         driveMotor.getConfigurator().refresh(configs);
@@ -93,4 +99,5 @@ public class TurretIOTalonFX implements TurretIO {
         configs.kG = kG;
         driveMotor.getConfigurator().apply(configs);
     }
+
 }
