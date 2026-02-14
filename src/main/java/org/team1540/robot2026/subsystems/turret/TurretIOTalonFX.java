@@ -18,8 +18,8 @@ import edu.wpi.first.units.measure.*;
 
 public class TurretIOTalonFX implements TurretIO {
     private final TalonFX motor = new TalonFX(MOTOR_ID);
-    private final CANcoder encoder1 = new CANcoder(ENCODER_1_ID);
-    private final CANcoder encoder2 = new CANcoder(ENCODER_2_ID);
+    private final CANcoder encoder1 = new CANcoder(SMALL_ENCODER_ID);
+    private final CANcoder encoder2 = new CANcoder(BIG_ENCODER_ID);
 
     private final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
 
@@ -66,6 +66,7 @@ public class TurretIOTalonFX implements TurretIO {
 
         motor.getConfigurator().apply(motorConfig);
 
+        motor.setPosition(0);
         CANcoderConfiguration encoderConfig = new CANcoderConfiguration();
         encoderConfig.MagnetSensor.MagnetOffset = ENCODER_1_OFFSET_ROTS;
         encoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive;

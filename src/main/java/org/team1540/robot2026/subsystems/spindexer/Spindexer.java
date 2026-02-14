@@ -4,9 +4,9 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import org.team1540.robot2026.util.LoggedTracer;
-
 import java.util.function.DoubleSupplier;
+import org.team1540.robot2026.Constants;
+import org.team1540.robot2026.util.LoggedTracer;
 
 public class Spindexer extends SubsystemBase {
     private static boolean hasInstance = false;
@@ -55,5 +55,12 @@ public class Spindexer extends SubsystemBase {
 
     public static Spindexer createDummy() {
         return new Spindexer(new SpindexerIO() {});
+    }
+
+    public static Spindexer createSim() {
+        if (Constants.CURRENT_MODE == Constants.Mode.REAL) {
+            DriverStation.reportWarning("Using simulated turret on real robot", false);
+        }
+        return new Spindexer(new SpindexerIOSim());
     }
 }

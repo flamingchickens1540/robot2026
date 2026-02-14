@@ -14,6 +14,7 @@ import org.team1540.robot2026.subsystems.drive.Drivetrain;
 import org.team1540.robot2026.subsystems.hood.Hood;
 import org.team1540.robot2026.subsystems.shooter.Shooter;
 import org.team1540.robot2026.subsystems.spindexer.Spindexer;
+import org.team1540.robot2026.subsystems.turret.Turret;
 import org.team1540.robot2026.util.auto.LoggedAutoChooser;
 
 public class RobotContainer {
@@ -24,6 +25,7 @@ public class RobotContainer {
     private final Hood hood;
     private final Shooter shooter;
     private final Spindexer spindexer;
+    private final Turret turret;
     private final LoggedAutoChooser autoChooser = new LoggedAutoChooser("Auto Chooser");
 
     private final RobotState robotState = RobotState.getInstance();
@@ -37,13 +39,15 @@ public class RobotContainer {
                 hood = Hood.createReal();
                 shooter = Shooter.createReal();
                 spindexer = Spindexer.createReal();
+                turret = Turret.createReal();
             }
             case SIM -> {
                 // Initialize simulated hardware IOs
                 drivetrain = Drivetrain.createSim();
                 hood = Hood.createSim();
                 shooter = Shooter.createSim();
-                spindexer = Spindexer.createDummy();
+                spindexer = Spindexer.createSim();
+                turret = Turret.createSim();
 
                 RobotState.getInstance().resetPose(new Pose2d(3.0, 3.0, Rotation2d.kZero));
             }
@@ -53,6 +57,7 @@ public class RobotContainer {
                 hood = Hood.createDummy();
                 shooter = Shooter.createDummy();
                 spindexer = Spindexer.createDummy();
+                turret = Turret.createDummy();
             }
         }
 
@@ -63,9 +68,10 @@ public class RobotContainer {
     }
 
     private void configureButtonBindings() {
-        drivetrain.setDefaultCommand(drivetrain.teleopDriveCommand(driver.getHID()));
-        driver.x().onTrue(drivetrain.runOnce(drivetrain::stopWithX));
-        driver.start().onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual));
+        //        drivetrain.setDefaultCommand(drivetrain.teleopDriveCommand(driver.getHID()));
+        //        driver.x().onTrue(drivetrain.runOnce(drivetrain::stopWithX));
+        //        driver.start().onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual));
+        turret.setDefaultCommand(turret.commandToSetpoint(() -> Rotation2d.fromRotations(0.25 * driver.getLeftX())));
     }
 
     private void configureAutoRoutines() {

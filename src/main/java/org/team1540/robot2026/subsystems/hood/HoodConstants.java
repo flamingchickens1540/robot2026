@@ -3,9 +3,9 @@ package org.team1540.robot2026.subsystems.hood;
 import edu.wpi.first.math.geometry.Rotation2d;
 
 public class HoodConstants {
-    public static final int MOTOR_ID = 67;
+    public static final int MOTOR_ID = 11;
 
-    public static final double GEAR_RATIO = 67.0;
+    public static final double GEAR_RATIO = 60.0 / 12.0 * 154.0 / 10.0;
     public static final Rotation2d POSITION_ERR_TOLERANCE = Rotation2d.fromDegrees(1.0);
 
     public static final Rotation2d MIN_ANGLE = Rotation2d.fromDegrees(15.0);

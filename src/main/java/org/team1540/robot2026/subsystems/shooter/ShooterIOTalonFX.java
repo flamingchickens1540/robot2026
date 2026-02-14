@@ -19,8 +19,8 @@ import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
 
 public class ShooterIOTalonFX implements ShooterIO {
-    private final TalonFX leader = new TalonFX(LEADER_ID);
-    private final TalonFX follower = new TalonFX(FOLLOWER_ID);
+    private final TalonFX leader = new TalonFX(RIGHT_ID);
+    private final TalonFX follower = new TalonFX(LEFT_ID);
 
     private final StatusSignal<AngularVelocity> leaderVelocity = leader.getVelocity();
     private final StatusSignal<Voltage> leaderVoltage = leader.getMotorVoltage();
@@ -53,7 +53,7 @@ public class ShooterIOTalonFX implements ShooterIO {
 
         leader.getConfigurator().apply(config);
         follower.getConfigurator().apply(config);
-        follower.setControl(new Follower(LEADER_ID, MotorAlignmentValue.Opposed));
+        follower.setControl(new Follower(RIGHT_ID, MotorAlignmentValue.Opposed));
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 50,
