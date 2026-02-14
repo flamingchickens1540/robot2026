@@ -6,16 +6,16 @@ public interface ClimberIO {
     @AutoLog
     class ClimberIOInputs {
         public boolean leftMotorConnected = true;
-        public double leftMotorPosition = 0;
-        public double leftMotorVelocityRPM = 0;
+        public double leftMotorPositionMeters = 0;
+        public double leftMotorVelocityMPS = 0;
         public double leftMotorAppliedVolts = 0;
         public double leftMotorSupplyCurrentAmps = 0;
         public double leftMotorStatorCurrentAmps = 0;
         public double leftMotorTempC = 0;
 
         public boolean rightMotorConnected = true;
-        public double rightMotorPosition = 0;
-        public double rightMotorVelocityRPM = 0;
+        public double rightMotorPositionMeters = 0;
+        public double rightMotorVelocityMPS = 0;
         public double rightMotorAppliedVolts = 0;
         public double rightMotorSupplyCurrentAmps = 0;
         public double rightMotorStatorCurrentAmps = 0;

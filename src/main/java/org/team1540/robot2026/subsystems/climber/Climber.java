@@ -57,7 +57,7 @@ public class Climber extends SubsystemBase {
 
     @AutoLogOutput(key = "Climber/AtSetpoint")
     public boolean isAtSetpoint() {
-        return (MathUtil.isNear(setpointMeters, inputs.leftMotorPosition, POS_ERR_TOLERANCE_M) && MathUtil.isNear(setpointMeters, inputs.rightMotorPosition, POS_ERR_TOLERANCE_M))
+        return (MathUtil.isNear(setpointMeters, inputs.leftMotorPositionMeters, POS_ERR_TOLERANCE_M) && MathUtil.isNear(setpointMeters, inputs.rightMotorPositionMeters, POS_ERR_TOLERANCE_M))
                 || (inputs.atLowerLimit && setpointMeters <= 0);
     }
 
@@ -75,11 +75,11 @@ public class Climber extends SubsystemBase {
     }
 
     public double[] getPosition() {
-        return new double[] {inputs.leftMotorPosition, inputs.rightMotorPosition};
+        return new double[] {inputs.leftMotorPositionMeters, inputs.rightMotorPositionMeters};
     }
 
     public double[] getVelocity() {
-        return new double[] {inputs.leftMotorVelocityRPM, inputs.rightMotorVelocityRPM};
+        return new double[] {inputs.leftMotorVelocityMPS, inputs.rightMotorVelocityMPS};
     }
 
     public void setBrakeMode(boolean isBrakeMode) {
@@ -95,15 +95,19 @@ public class Climber extends SubsystemBase {
     }
 
     public void holdPosition() {
-        io.setSetpoint(inputs.leftMotorPosition);
+        io.setSetpoint(inputs.leftMotorPositionMeters);
     }
 
-    public Command raise() {
-        return Commands.run(() -> setPosition(MAX_HEIGHT_M), this);
-    }
-
-    public Command lower() {
-        return Commands.run(() -> setPosition(0.0), this);
+    public Command climbCommand(double positionMeters) {
+        return Commands.runEnd(
+            () -> {
+                io.setSetpoint(positionMeters);
+            },
+            () -> {
+                io.setVoltage(0);
+            },
+            this
+        );
     }
 
     public static Climber createReal() {

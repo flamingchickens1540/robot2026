@@ -17,7 +17,7 @@ public class ClimberIOSim implements ClimberIO {
     private static final double SIM_KV = 2.562;
     private static final double SIM_KG = 0;
     private final ElevatorSim climberSim = new ElevatorSim(
-        DCMotor.getKrakenX60(2),
+        DCMotor.getKrakenX44Foc(2),
         GEAR_RATIO,
         SIM_CARRIAGE_MASS_KG,
         SPROCKET_RADIUS_M,
@@ -44,15 +44,15 @@ public class ClimberIOSim implements ClimberIO {
         climberSim.update(LOOP_PERIOD_SECS);
 
         inputs.leftMotorConnected = true;
-        inputs.leftMotorPosition = climberSim.getPositionMeters();
-        inputs.leftMotorVelocityRPM = climberSim.getVelocityMetersPerSecond();
+        inputs.leftMotorPositionMeters = climberSim.getPositionMeters();
+        inputs.leftMotorVelocityMPS = climberSim.getVelocityMetersPerSecond();
         inputs.leftMotorAppliedVolts = appliedVolts;
         inputs.leftMotorSupplyCurrentAmps = climberSim.getCurrentDrawAmps();
         inputs.leftMotorStatorCurrentAmps = climberSim.getCurrentDrawAmps();
 
         inputs.rightMotorConnected = true;
-        inputs.rightMotorPosition = climberSim.getPositionMeters();
-        inputs.rightMotorVelocityRPM = climberSim.getVelocityMetersPerSecond();
+        inputs.rightMotorPositionMeters = climberSim.getPositionMeters();
+        inputs.rightMotorVelocityMPS = climberSim.getVelocityMetersPerSecond();
         inputs.rightMotorAppliedVolts = appliedVolts;
         inputs.rightMotorSupplyCurrentAmps = climberSim.getCurrentDrawAmps();
         inputs.rightMotorStatorCurrentAmps = climberSim.getCurrentDrawAmps();

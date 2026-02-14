@@ -24,7 +24,7 @@ public class ClimberIOReal implements ClimberIO {
     private final StatusSignal<AngularVelocity> leftVelocity = leftMotor.getVelocity();
     private final StatusSignal<Voltage> leftVolts = leftMotor.getMotorVoltage();
     private final StatusSignal<Current> leftSupplyCurrent = leftMotor.getSupplyCurrent();
-    private final StatusSignal<Current> leftSatorCurrent = leftMotor.getStatorCurrent();
+    private final StatusSignal<Current> leftStatorCurrent = leftMotor.getStatorCurrent();
     private final StatusSignal<Temperature> leftTempC = leftMotor.getDeviceTemp();
 
     private final TalonFX rightMotor = new TalonFX(RIGHT_MOTOR_ID);
@@ -32,7 +32,7 @@ public class ClimberIOReal implements ClimberIO {
     private final StatusSignal<AngularVelocity> rightVelocity = rightMotor.getVelocity();
     private final StatusSignal<Voltage> rightVolts = rightMotor.getMotorVoltage();
     private final StatusSignal<Current> rightSupplyCurrent = rightMotor.getSupplyCurrent();
-    private final StatusSignal<Current> rightSatorCurrent = rightMotor.getStatorCurrent();
+    private final StatusSignal<Current> rightStatorCurrent = rightMotor.getStatorCurrent();
     private final StatusSignal<Temperature> rightTempC = rightMotor.getDeviceTemp();
     private final MotionMagicVoltage profiledPositionControl = new MotionMagicVoltage(0.0).withEnableFOC(true);
 
@@ -40,21 +40,15 @@ public class ClimberIOReal implements ClimberIO {
     private final DigitalInput lowerLimitSwitch = new DigitalInput(LOWER_LIMIT_ID);
 
     public ClimberIOReal() {
-        TalonFXConfiguration leftConfig = new TalonFXConfiguration();
-        TalonFXConfiguration rightConfig = new TalonFXConfiguration();
-        leftConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-        leftConfig.CurrentLimits.SupplyCurrentLimit = 40.0;
-        leftConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        leftConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-        leftConfig.Feedback.SensorToMechanismRatio = GEAR_RATIO;
-        rightConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-        rightConfig.CurrentLimits.SupplyCurrentLimit = 40.0;
-        rightConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        rightConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        rightConfig.Feedback.SensorToMechanismRatio = GEAR_RATIO;
+        TalonFXConfiguration config = new TalonFXConfiguration();
+        config.CurrentLimits.SupplyCurrentLimitEnable = true;
+        config.CurrentLimits.SupplyCurrentLimit = 40.0;
+        config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
 
-        Slot0Configs Gains = leftConfig.Slot0;
+        Slot0Configs Gains = config.Slot0;
         Gains.kS = KS;
         Gains.kV = KV;
         Gains.kG = KG;
@@ -64,28 +58,24 @@ public class ClimberIOReal implements ClimberIO {
         Gains.GravityType = GravityTypeValue.Elevator_Static;
 
 
-        MotionMagicConfigs leftMotionMagicConfigs = leftConfig.MotionMagic;
-        MotionMagicConfigs rightMotionMagicConfigs = rightConfig.MotionMagic;
+        MotionMagicConfigs motionMagicConfigs = config.MotionMagic;
 
-        leftMotionMagicConfigs.MotionMagicCruiseVelocity = CRUISE_VELOCITY_MPS;
-        leftMotionMagicConfigs.MotionMagicAcceleration = ACCELERATION_MPS2;
+        motionMagicConfigs.MotionMagicCruiseVelocity = CRUISE_VELOCITY_MPS;
+        motionMagicConfigs.MotionMagicAcceleration = ACCELERATION_MPS2;
 
-        rightMotionMagicConfigs.MotionMagicCruiseVelocity = CRUISE_VELOCITY_MPS;
-        rightMotionMagicConfigs.MotionMagicAcceleration = ACCELERATION_MPS2;
-
-        leftMotor.getConfigurator().apply(leftConfig);
-        rightMotor.getConfigurator().apply(rightConfig);
+        leftMotor.getConfigurator().apply(config);
+        rightMotor.getConfigurator().apply(config);
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 50,
                 leftVelocity,
                 leftVolts,
                 leftSupplyCurrent,
-                leftSatorCurrent,
+                leftStatorCurrent,
                 leftTempC,
                 rightVelocity,
                 rightVolts,
-                rightSatorCurrent,
+                rightStatorCurrent,
                 rightSupplyCurrent,
                 rightTempC);
 
@@ -99,32 +89,32 @@ public class ClimberIOReal implements ClimberIO {
                 leftVelocity,
                 leftVolts,
                 leftSupplyCurrent,
-                leftSatorCurrent,
+                leftStatorCurrent,
                 leftTempC,
                 rightVelocity,
                 rightVolts,
-                rightSatorCurrent,
+                rightStatorCurrent,
                 rightSupplyCurrent,
                 rightTempC);
 
         inputs.leftMotorConnected = leftMotor.isConnected();
-        inputs.leftMotorPosition = leftPosition.getValueAsDouble();
+        inputs.leftMotorPositionMeters = leftPosition.getValueAsDouble();
         inputs.leftMotorAppliedVolts = leftVolts.getValueAsDouble();
-        inputs.leftMotorVelocityRPM = leftVelocity.getValueAsDouble();
-        inputs.leftMotorStatorCurrentAmps = leftSatorCurrent.getValueAsDouble();
+        inputs.leftMotorVelocityMPS = 2 * Math.PI * SPROCKET_RADIUS_M * leftVelocity.getValueAsDouble();
+        inputs.leftMotorStatorCurrentAmps = leftStatorCurrent.getValueAsDouble();
         inputs.leftMotorSupplyCurrentAmps = leftSupplyCurrent.getValueAsDouble();
         inputs.leftMotorTempC = leftTempC.getValueAsDouble();
 
         inputs.rightMotorConnected = rightMotor.isConnected();
-        inputs.rightMotorPosition = rightPosition.getValueAsDouble();
+        inputs.rightMotorPositionMeters = 2 * Math.PI * SPROCKET_RADIUS_M * rightPosition.getValueAsDouble();
         inputs.rightMotorAppliedVolts = rightVolts.getValueAsDouble();
-        inputs.rightMotorVelocityRPM = rightVelocity.getValueAsDouble();
-        inputs.rightMotorStatorCurrentAmps = rightSatorCurrent.getValueAsDouble();
+        inputs.rightMotorVelocityMPS = 2 * Math.PI * SPROCKET_RADIUS_M * rightVelocity.getValueAsDouble();
+        inputs.rightMotorStatorCurrentAmps = rightStatorCurrent.getValueAsDouble();
         inputs.rightMotorSupplyCurrentAmps = rightSupplyCurrent.getValueAsDouble();
         inputs.rightMotorTempC = rightTempC.getValueAsDouble();
 
-        inputs.atUpperLimit = !upperLimitSwitch.get();
-        inputs.atLowerLimit = !lowerLimitSwitch.get();
+        inputs.atUpperLimit = upperLimitSwitch.get();
+        inputs.atLowerLimit = lowerLimitSwitch.get();
     }
 
     @Override
@@ -147,7 +137,13 @@ public class ClimberIOReal implements ClimberIO {
 
     @Override
     public void configFF(double kS, double kV, double kG) {
-
+        Slot0Configs configs = new Slot0Configs();
+        leftMotor.getConfigurator().refresh(configs);
+        configs.kS = kS;
+        configs.kV = kV;
+        configs.kG = kG;
+        leftMotor.getConfigurator().apply(configs);
+        rightMotor.getConfigurator().apply(configs);
     }
 
     @Override
