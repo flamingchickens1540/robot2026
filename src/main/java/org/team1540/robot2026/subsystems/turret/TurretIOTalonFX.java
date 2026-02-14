@@ -1,21 +1,26 @@
-package org.team1540.robot2026.subsystems.hood;
+package org.team1540.robot2026.subsystems.turret;
 
-import static org.team1540.robot2026.subsystems.hood.HoodConstants.*;
+import static org.team1540.robot2026.subsystems.turret.TurretConstants.*;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.SensorDirectionValue;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.*;
 
-public class HoodIOTalonFX implements HoodIO {
+public class TurretIOTalonFX implements TurretIO {
     private final TalonFX motor = new TalonFX(MOTOR_ID);
+    private final CANcoder encoder1 = new CANcoder(ENCODER_1_ID);
+    private final CANcoder encoder2 = new CANcoder(ENCODER_2_ID);
+
     private final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
 
     private final StatusSignal<Angle> position = motor.getPosition();
@@ -25,11 +30,14 @@ public class HoodIOTalonFX implements HoodIO {
     private final StatusSignal<Current> statorCurrent = motor.getStatorCurrent();
     private final StatusSignal<Temperature> temp = motor.getDeviceTemp();
 
+    private final StatusSignal<Angle> encoder1Position = encoder1.getPosition();
+    private final StatusSignal<Angle> encoder2Position = encoder2.getPosition();
+
     private final VoltageOut voltageCtrlReq = new VoltageOut(0).withEnableFOC(true);
     private final MotionMagicVoltage positionCtrlReq =
             new MotionMagicVoltage(0).withEnableFOC(true).withSlot(0);
 
-    public HoodIOTalonFX() {
+    public TurretIOTalonFX() {
         motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         motorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
@@ -47,8 +55,6 @@ public class HoodIOTalonFX implements HoodIO {
         motorConfig.Slot0.kD = KD;
         motorConfig.Slot0.kS = KS;
         motorConfig.Slot0.kV = KV;
-        motorConfig.Slot0.kG = KG;
-        motorConfig.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
         motorConfig.MotionMagic.MotionMagicCruiseVelocity = CRUISE_VELOCITY_RPS;
         motorConfig.MotionMagic.MotionMagicAcceleration = MAX_ACCELERATION_RPS2;
@@ -56,29 +62,44 @@ public class HoodIOTalonFX implements HoodIO {
 
         motor.getConfigurator().apply(motorConfig);
 
-        BaseStatusSignal.setUpdateFrequencyForAll(
-                50.0, position, velocity, voltage, supplyCurrent, statorCurrent, temp);
-        motor.optimizeBusUtilization();
+        CANcoderConfiguration encoderConfig = new CANcoderConfiguration();
+        encoderConfig.MagnetSensor.MagnetOffset = ENCODER_1_OFFSET_ROTS;
+        encoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive;
+        encoderConfig.MagnetSensor.AbsoluteSensorDiscontinuityPoint = 1.0;
+        encoder1.getConfigurator().apply(encoderConfig);
+        encoderConfig.MagnetSensor.MagnetOffset = ENCODER_2_OFFSET_ROTS;
 
-        motor.setPosition(MIN_ANGLE.getRotations());
+        BaseStatusSignal.setUpdateFrequencyForAll(
+                50.0,
+                position,
+                velocity,
+                voltage,
+                supplyCurrent,
+                statorCurrent,
+                temp,
+                encoder1Position,
+                encoder2Position);
+
+        motor.optimizeBusUtilization();
+        encoder1.optimizeBusUtilization();
+        encoder2.optimizeBusUtilization();
     }
 
     @Override
-    public void updateInputs(HoodIOInputs inputs) {
-        inputs.motorConnected = BaseStatusSignal.refreshAll(
-                        position, velocity, voltage, supplyCurrent, statorCurrent, temp)
-                .isOK();
+    public void updateInputs(TurretIOInputs inputs) {
+        inputs.motorConnected = BaseStatusSignal.refreshAll(position, velocity, voltage, supplyCurrent, statorCurrent, temp).isOK();
         inputs.position = Rotation2d.fromRotations(position.getValueAsDouble());
         inputs.velocityRPS = velocity.getValueAsDouble();
-        inputs.appliedVolts = voltage.getValueAsDouble();
         inputs.supplyCurrentAmps = supplyCurrent.getValueAsDouble();
-        inputs.statorCurrentAmps = statorCurrent.getValueAsDouble();
+        inputs.appliedVolts = voltage.getValueAsDouble();
         inputs.tempCelsius = temp.getValueAsDouble();
-    }
+        inputs.statorCurrentAmps = statorCurrent.getValueAsDouble();
 
-    @Override
-    public void setVoltage(double volts) {
-        motor.setControl(voltageCtrlReq.withOutput(volts));
+        inputs.encoder1Connected = encoder1Position.refresh().getStatus().isOK();
+        inputs.encoder1Position = Rotation2d.fromRotations(encoder1Position.getValueAsDouble());
+
+        inputs.encoder2Connected = encoder2Position.refresh().getStatus().isOK();
+        inputs.encoder2Position = Rotation2d.fromRotations(encoder2Position.getValueAsDouble());
     }
 
     @Override
@@ -87,24 +108,22 @@ public class HoodIOTalonFX implements HoodIO {
     }
 
     @Override
-    public void resetPosition(Rotation2d position) {
-        motor.setPosition(position.getRotations());
+    public void setVoltage(double volts) {
+        motor.setControl(voltageCtrlReq.withOutput(volts));
     }
 
     @Override
-    public void setBrakeMode(boolean enabled) {
-        motorConfig.MotorOutput.NeutralMode = enabled ? NeutralModeValue.Brake : NeutralModeValue.Coast;
-        motor.getConfigurator().apply(motorConfig);
+    public void setBrakeMode(boolean brakeMode) {
+        motor.setNeutralMode(brakeMode ? NeutralModeValue.Brake : NeutralModeValue.Coast);
     }
 
     @Override
-    public void configPID(double kP, double kI, double kD, double kS, double kV, double kG) {
+    public void configPID(double kP, double kI, double kD, double kS, double kV) {
         motorConfig.Slot0.kP = kP;
         motorConfig.Slot0.kI = kI;
         motorConfig.Slot0.kD = kD;
         motorConfig.Slot0.kS = kS;
         motorConfig.Slot0.kV = kV;
-        motorConfig.Slot0.kG = kG;
         motor.getConfigurator().apply(motorConfig);
     }
 }
