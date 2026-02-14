@@ -5,32 +5,35 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface TurretIO {
+    void configFF(double kS, double kV);
+
     @AutoLog
     class TurretIOInputs {
-        // Drive Motor
-        public boolean driveConnected = false;
-        public double drivePositionRads = 0.0;
-        public double driveVelocityRadPerSec = 0.0;
-        public double driveAppliedVolts = 0.0;
-        public double driveSupplyCurrentAmps = 0.0;
-        public double driveStatorCurrentAmps = 0.0;
-        public double driveTempCelsius = 0.0;
+        //  Motor
+        public boolean connected = false;
+        public Rotation2d position = Rotation2d.kZero;
+        public double velocityRadPerSec = 0.0;
+        public double appliedVolts = 0.0;
+        public double supplyCurrentAmps = 0.0;
+        public double statorCurrentAmps = 0.0;
+        public double tempCelsius = 0.0;
 
         // Cancoder Main
         public boolean mainEncoderConnected = false;
+        public Rotation2d mainEncoderPosition = Rotation2d.kZero;
 
         // Cancoder Second
         public boolean secondaryEncoderConnected = false;
+        public Rotation2d secondaryEncoderPosition = Rotation2d.kZero;
 
-        public double[] odometryTimestamps = new double[] {};
-        public double[] odometryEncoderPositionsRads = new double[] {};
+
     }
 
     default void updateInputs(TurretIOInputs inputs) {}
 
     default void setVoltage(double volts) {}
 
-    default void setRotation(double rotation) {}
+    default void setSetpoint(Rotation2d  rotation) {}
 
     default void setBrakeMode(boolean brakeMode) {}
 
@@ -38,5 +41,5 @@ public interface TurretIO {
 
     default void configFF(double kS, double kV, double kG) {}
 
-    default void setMotorPosition(double degrees) {}
+    default void setMotorPosition(Rotation2d position) {}
 }

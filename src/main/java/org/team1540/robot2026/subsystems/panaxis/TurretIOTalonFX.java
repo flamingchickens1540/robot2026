@@ -6,98 +6,117 @@ import static org.team1540.robot2026.subsystems.panaxis.TurretConstants.*;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.math.filter.Debouncer;
-import edu.wpi.first.math.util.Units;
+import com.ctre.phoenix6.signals.SensorDirectionValue;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.*;
 
 public class TurretIOTalonFX implements TurretIO {
-    // Magic Motion
+    // Motion Magic
     private final MotionMagicVoltage profiledPositionControl = new MotionMagicVoltage(0.0).withEnableFOC(true);
 
-    // Drive Motor
-    private final TalonFX driveMotor = new TalonFX(DRIVE_ID);
-    private final StatusSignal<AngularVelocity> driveVelocity = driveMotor.getVelocity();
-    private final StatusSignal<Angle> drivePosition = driveMotor.getPosition();
-    private final StatusSignal<Voltage> driveAppliedVoltage = driveMotor.getMotorVoltage();
-    private final StatusSignal<Current> driveMotorSupplyCurrent = driveMotor.getSupplyCurrent();
-    private final StatusSignal<Temperature> driveMotorTemp = driveMotor.getDeviceTemp();
-    private final StatusSignal<Current> driveMotorStatorCurrent = driveMotor.getStatorCurrent();
+    //  Motor
+    private final TalonFX motor = new TalonFX(DRIVE_ID);
+    private final StatusSignal<AngularVelocity> velocity = motor.getVelocity();
+    private final StatusSignal<Angle> position = motor.getPosition();
+    private final StatusSignal<Voltage> appliedVoltage = motor.getMotorVoltage();
+    private final StatusSignal<Current> motorSupplyCurrent = motor.getSupplyCurrent();
+    private final StatusSignal<Temperature> motorTemp = motor.getDeviceTemp();
+    private final StatusSignal<Current> motorStatorCurrent = motor.getStatorCurrent();
 
-
-    // Debouncer
-    private final Debouncer leaderDebouncer = new Debouncer(0.5);
+    // Encoders
+    private final CANcoder mainCANcoder = new CANcoder(MAIN_CANCODER_ID);
+    private final CANcoder secondaryCANcoder = new CANcoder(SECONDARY_CANCODER_ID);
+    private final StatusSignal<Angle> mainCANcoderPosition = mainCANcoder.getAbsolutePosition();
+    private final StatusSignal<Angle> secondaryCANcoderPosition = secondaryCANcoder.getAbsolutePosition();
 
     public TurretIOTalonFX() {
         TalonFXConfiguration config = new TalonFXConfiguration();
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        config.Feedback.SensorToMechanismRatio = DRIVEN_TO_DRIVE_RATIO;
+
+        CANcoderConfiguration configEncoder = new CANcoderConfiguration();
+        configEncoder.MagnetSensor.MagnetOffset = MAGNET_SENSOR_OFFSET;
+        configEncoder.MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive;
+        configEncoder.MagnetSensor.AbsoluteSensorDiscontinuityPoint = 1;
+
 
         BaseStatusSignal.setUpdateFrequencyForAll(
-                UPDATE_HRTZ,
-                drivePosition,
-                driveVelocity,
-                driveAppliedVoltage,
-                driveMotorSupplyCurrent,
-                driveMotorTemp,
-                driveMotorStatorCurrent);
+                50,
+                position,
+                velocity,
+                appliedVoltage,
+                motorSupplyCurrent,
+                motorTemp,
+                motorStatorCurrent,
+                mainCANcoderPosition,
+                secondaryCANcoderPosition);
+        motor.optimizeBusUtilization();
     }
 
     public void updateInputs(TurretIO.TurretIOInputs inputs) {
-        StatusCode driveStatus = BaseStatusSignal.refreshAll(
-                drivePosition, driveVelocity,
-                driveAppliedVoltage, driveMotorSupplyCurrent,
-                driveMotorTemp, driveMotorStatorCurrent);
+        StatusCode Status = BaseStatusSignal.refreshAll(
+                position, velocity,
+                appliedVoltage, motorSupplyCurrent,
+                motorTemp, motorStatorCurrent,
+                mainCANcoderPosition, secondaryCANcoderPosition);
 
-        inputs.driveConnected = leaderDebouncer.calculate(driveStatus.isOK());
-        inputs.driveSupplyCurrentAmps = driveMotorSupplyCurrent.getValueAsDouble();
-        inputs.driveAppliedVolts = driveAppliedVoltage.getValueAsDouble();
-        inputs.driveTempCelsius = driveMotorTemp.getValueAsDouble();
-        inputs.driveStatorCurrentAmps = driveMotorStatorCurrent.getValueAsDouble();
-        inputs.drivePositionRads = drivePosition.getValueAsDouble();
-        inputs.driveVelocityRadPerSec = driveVelocity.getValueAsDouble();
-    }
-
-    public void setVoltage(double volts) {
-        driveMotor.setVoltage(volts);
-    }
-
-    public void setRotation(double rotationDegrees) {
-        driveMotor.setControl(profiledPositionControl.withPosition(
-                Rotations.of(SUN_TO_DRIVE_RATIO * rotationDegrees)));
-    }
-
-    public void setBrakeMode(boolean brakeMode) {
-        driveMotor.setNeutralMode(brakeMode ? NeutralModeValue.Brake : NeutralModeValue.Coast);
+        inputs.connected = Status.isOK();
+        inputs.supplyCurrentAmps = motorSupplyCurrent.getValueAsDouble();
+        inputs.appliedVolts = appliedVoltage.getValueAsDouble();
+        inputs.tempCelsius = motorTemp.getValueAsDouble();
+        inputs.statorCurrentAmps = motorStatorCurrent.getValueAsDouble();
+        inputs.position.fromDegrees(position.getValueAsDouble());
+        inputs.velocityRadPerSec = velocity.getValueAsDouble();
     }
 
     @Override
-    public void setMotorPosition(double degrees) {
-        driveMotor.setPosition(Rotations.of(degrees));
+    public void setVoltage(double volts) {
+        motor.setVoltage(volts);
     }
 
+    @Override
+    public void setSetpoint(Rotation2d position) {
+        motor.setControl(profiledPositionControl.withPosition(
+                Rotations.of(position.getDegrees())));
+    }
+
+    @Override
+    public void setMotorPosition(Rotation2d position) {
+        motor.setPosition(Rotations.of(position.getDegrees()));
+    }
+
+    @Override
+    public void setBrakeMode(boolean brakeMode) {
+        motor.setNeutralMode(brakeMode ? NeutralModeValue.Brake : NeutralModeValue.Coast);
+    }
+
+    @Override
     public void configPID(double kP, double kI, double kD) {
         Slot0Configs configs = new Slot0Configs();
-        driveMotor.getConfigurator().refresh(configs);
+        motor.getConfigurator().refresh(configs);
         configs.kP = kP;
         configs.kI = kI;
         configs.kD = kD;
-        driveMotor.getConfigurator().apply(configs);
+        motor.getConfigurator().apply(configs);
     }
 
-    public void configFF(double kS, double kV, double kG) {
+    @Override
+    public void configFF(double kS, double kV) {
         Slot0Configs configs = new Slot0Configs();
-        driveMotor.getConfigurator().refresh(configs);
+        motor.getConfigurator().refresh(configs);
         configs.kS = kS;
         configs.kV = kV;
-        configs.kG = kG;
-        driveMotor.getConfigurator().apply(configs);
+        motor.getConfigurator().apply(configs);
     }
 
 }

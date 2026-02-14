@@ -3,9 +3,9 @@ package org.team1540.robot2026.subsystems.panaxis;
 import static org.team1540.robot2026.subsystems.panaxis.TurretConstants.*;
 
 import com.ctre.phoenix6.hardware.CANcoder;
-import com.ctre.phoenix6.hardware.Pigeon2;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -29,18 +29,17 @@ public class Turret extends SubsystemBase {
     private final LoggedTunableNumber kD = new LoggedTunableNumber("Turret/kD", KD);
     private final LoggedTunableNumber kS = new LoggedTunableNumber("Turret/kS", KS);
     private final LoggedTunableNumber kV = new LoggedTunableNumber("Turret/kV", KV);
-    private final LoggedTunableNumber kG = new LoggedTunableNumber("Turret/kG", KG);
+
 
     private final Alert motorDisconnectedAlert = new Alert("Turret motor disconnected", Alert.AlertType.kError);
 
     private final TurretIO io;
     private final TurretIOInputsAutoLogged inputs = new TurretIOInputsAutoLogged();
 
-    private CANcoder mainCancoder;
-    private CANcoder secondaryCancoder;
 
 
-    private double setpointRotation;
+
+    private Rotation2d setpointRotation;
 
     private final Debouncer zeroedDebouncer = new Debouncer(0.25);
     private boolean atZero = false;
@@ -49,8 +48,6 @@ public class Turret extends SubsystemBase {
         if (hasInstance) throw new IllegalStateException("Instance of elevator already exists");
         hasInstance = true;
         this.io = turretIO;
-        mainCancoder = new CANcoder(MAIN_CANCODER_ID);
-        secondaryCancoder = new CANcoder(SECONDARY_CANCODER_ID);
     }
 
     @Override
@@ -67,65 +64,52 @@ public class Turret extends SubsystemBase {
 
         // MechanismVisualizer.getInstance().setElevatorPosition(inputs.positionMeters[0]); TODO set up sim pos
 
-        motorDisconnectedAlert.set(!inputs.driveConnected);
+        motorDisconnectedAlert.set(!inputs.connected || !inputs.mainEncoderConnected || !inputs.secondaryEncoderConnected);
 
         LoggedTracer.record("Turret");
     }
 
-    private void stop() {
+    public void stop() {
         io.setVoltage(0);
     }
 
     @AutoLogOutput(key = "Turret/AtSetpoint")
     public boolean isAtSetpoint() {
-        return MathUtil.isNear(Units.degreesToRadians(setpointRotation), inputs.drivePositionRads, POS_ERR_TOLERANCE_DEGREES);
+        return MathUtil.isNear(setpointRotation.getDegrees(), inputs.position.getDegrees(), POS_ERR_TOLERANCE_DEGREES);
     }
 
     @AutoLogOutput(key = "Turret/Setpoint")
-    public double getSetpoint() {
+    public Rotation2d getSetpoint() {
         return setpointRotation;
     }
 
-    public void setRotation(double rotationDegrees) {
-        rotationDegrees = MathUtil.clamp(rotationDegrees, -MAX_TURRET_ROTATION, MAX_TURRET_ROTATION);
-        setpointRotation = rotationDegrees;
-        io.setRotation(setpointRotation);
+    public void setSetpoint(Rotation2d position) {
+
+      position.fromDegrees(MathUtil.clamp(position.getDegrees(), 0, MAX_TURRET_ROTATION));
+        setpointRotation = position;
+        io.setSetpoint(setpointRotation);
     }
 
     public void setVoltage(double voltage) {
         io.setVoltage(voltage);
     }
 
-    /* TODO
-    public double timeToSetpoint(double setpoint) {
-        trapezoidProfile.calculate(
-                0.0,
-                new TrapezoidProfile.State(getPosition(), inputs.velocityMPS[0]),
-                new TrapezoidProfile.State(setpoint, 0));
-        return trapezoidProfile.totalTime();
-    }
-    */
-
-    public double getPosition() {
-        return inputs.drivePositionRads;
+    public Rotation2d getPosition() {
+        return inputs.position;
     }
 
     public double getVelocity() {
-        return inputs.driveVelocityRadPerSec;
+        return inputs.velocityRadPerSec;
     }
 
     public void setBrakeMode(boolean isBrakeMode) {
         io.setBrakeMode(isBrakeMode);
     }
 
-    public void holdPosition() {
-        setRotation(inputs.drivePositionRads);
-    }
-
-    public double calculateTurretAngleFromEncoderInputs(double encoder1, double encoder2) {
+    public double calculateTurretAngleFromEncoderInputs(double mainEncoderPos, double secondaryEncoderPos) {
         // Inputs are integer readings from the encoders, so convert
-        double e1 = (int) ((encoder1)*ENCODER_RANGE);
-        double e2 = (int) ((encoder2)*ENCODER_RANGE);
+        double e1 = (mainEncoderPos)*ENCODER_RANGE;
+        double e2 = (secondaryEncoderPos)*ENCODER_RANGE;
         // Handle an edge case near 0 degrees where one or both encoder is 'below zero', that is, has
         // a large value
         double e1Rotations = -1;
@@ -133,14 +117,14 @@ public class Turret extends SubsystemBase {
         // Now search through all possible rotation pairs to find the smallest error
         double minError = DrivenGearDiameter;
         double minE1Rotations = e1Rotations;
-        while (e1Rotations < Gear1MaxRotations && e2Rotations < Gear2MaxRotations) {
-            double e1Value = e1 + (e1Rotations) * ENCODER_RANGE;
+        while (e1Rotations < ROTATIONS_OF_GEAR_1_PER_DRIVEN_GEAR_ROTATION && e2Rotations < ROTATIONS_OF_GEAR_2_PER_DRIVEN_GEAR_ROTATION) {
+            double e1Value = e1 + e1Rotations * ENCODER_RANGE;
             double e2Value = e2 + (e2Rotations) * ENCODER_RANGE;
             double e1Distance = e1Value * PlanetaryGear1InchPerBit;
             double e2Distance = e2Value * PlanetaryGear2InchPerBit;
-            double err = Math.abs(e1Distance - e2Distance);
-            if (err < minError) {
-                minError = err;
+            double error = Math.abs(e1Distance - e2Distance);
+            if (error < minError) {
+                minError = error;
                 minE1Rotations = e1Rotations;
             }
 
@@ -161,12 +145,12 @@ public class Turret extends SubsystemBase {
     }
 
     public Command commandToSetpoint(DoubleSupplier rotationDegrees) {
-        return Commands.runOnce(() -> setRotation(rotationDegrees.getAsDouble()),this
+        return Commands.runOnce(() -> setSetpoint(rotationDegrees.getAsDouble()),this
         );
     }
 
     public Command zeroCommand() {
-        return Commands.run(()-> setRotation(calculateTurretAngleFromEncoderInputs(
+        return Commands.run(()-> setSetpoint(calculateTurretAngleFromEncoderInputs(
                 Units.rotationsToDegrees(mainCancoder.getAbsolutePosition().getValueAsDouble()),
                 Units.rotationsToDegrees(secondaryCancoder.getAbsolutePosition().getValueAsDouble()))));
     }
