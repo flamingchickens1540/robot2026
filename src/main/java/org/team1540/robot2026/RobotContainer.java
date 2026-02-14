@@ -13,6 +13,7 @@ import org.team1540.robot2026.commands.CharacterizationCommands;
 import org.team1540.robot2026.subsystems.drive.Drivetrain;
 import org.team1540.robot2026.subsystems.hood.Hood;
 import org.team1540.robot2026.subsystems.shooter.Shooter;
+import org.team1540.robot2026.subsystems.spindexer.Spindexer;
 import org.team1540.robot2026.util.auto.LoggedAutoChooser;
 
 public class RobotContainer {
@@ -22,6 +23,7 @@ public class RobotContainer {
     private final Drivetrain drivetrain;
     private final Hood hood;
     private final Shooter shooter;
+    private final Spindexer spindexer;
     private final LoggedAutoChooser autoChooser = new LoggedAutoChooser("Auto Chooser");
 
     private final RobotState robotState = RobotState.getInstance();
@@ -34,12 +36,14 @@ public class RobotContainer {
                 drivetrain = Drivetrain.createReal();
                 hood = Hood.createReal();
                 shooter = Shooter.createReal();
+                spindexer = Spindexer.createReal();
             }
             case SIM -> {
                 // Initialize simulated hardware IOs
                 drivetrain = Drivetrain.createSim();
                 hood = Hood.createSim();
                 shooter = Shooter.createSim();
+                spindexer = Spindexer.createDummy();
 
                 RobotState.getInstance().resetPose(new Pose2d(3.0, 3.0, Rotation2d.kZero));
             }
@@ -48,6 +52,7 @@ public class RobotContainer {
                 drivetrain = Drivetrain.createDummy();
                 hood = Hood.createDummy();
                 shooter = Shooter.createDummy();
+                spindexer = Spindexer.createDummy();
             }
         }
 

@@ -42,6 +42,10 @@ public class TurretIOTalonFX implements TurretIO {
         motorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
         motorConfig.Feedback.SensorToMechanismRatio = GEAR_RATIO;
+        motorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+        motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = MAX_ANGLE.getRotations();
+        motorConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+        motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = MIN_ANGLE.getRotations();
 
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         motorConfig.CurrentLimits.SupplyCurrentLimit = 80.0;
@@ -87,7 +91,9 @@ public class TurretIOTalonFX implements TurretIO {
 
     @Override
     public void updateInputs(TurretIOInputs inputs) {
-        inputs.motorConnected = BaseStatusSignal.refreshAll(position, velocity, voltage, supplyCurrent, statorCurrent, temp).isOK();
+        inputs.motorConnected = BaseStatusSignal.refreshAll(
+                        position, velocity, voltage, supplyCurrent, statorCurrent, temp)
+                .isOK();
         inputs.position = Rotation2d.fromRotations(position.getValueAsDouble());
         inputs.velocityRPS = velocity.getValueAsDouble();
         inputs.supplyCurrentAmps = supplyCurrent.getValueAsDouble();

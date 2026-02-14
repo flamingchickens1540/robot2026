@@ -28,5 +28,5 @@ public class TurretConstants {
 
     public static final double CRUISE_VELOCITY_RPS = 6.7;
     public static final double MAX_ACCELERATION_RPS2 = 67.0;
-     public static final double JERK_RPS3 = 670.0;
+    public static final double JERK_RPS3 = 670.0;
 }

@@ -8,9 +8,7 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
 import java.util.function.Supplier;
-
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.Constants;
@@ -33,7 +31,6 @@ public class Turret extends SubsystemBase {
 
     private Rotation2d setpoint = Rotation2d.kZero;
 
-
     private Turret(TurretIO turretIO) {
         if (hasInstance) throw new IllegalStateException("Instance of elevator already exists");
         hasInstance = true;
@@ -49,7 +46,8 @@ public class Turret extends SubsystemBase {
 
         if (DriverStation.isDisabled()) stop();
 
-        LoggedTunableNumber.ifChanged(hashCode(), () -> io.configPID(kP.get(), kI.get(), kD.get(), kS.get(), kV.get()), kP, kI, kD, kS, kV);
+        LoggedTunableNumber.ifChanged(
+                hashCode(), () -> io.configPID(kP.get(), kI.get(), kD.get(), kS.get(), kV.get()), kP, kI, kD, kS, kV);
 
         motorDisconnectedAlert.set(!inputs.motorConnected);
 
@@ -62,8 +60,7 @@ public class Turret extends SubsystemBase {
 
     @AutoLogOutput(key = "Turret/AtSetpoint")
     public boolean isAtSetpoint() {
-        return MathUtil.isNear(
-                getSetpoint().getDegrees(), getPosition().getDegrees(), POS_ERR_TOLERANCE_DEGREES);
+        return MathUtil.isNear(getSetpoint().getDegrees(), getPosition().getDegrees(), POS_ERR_TOLERANCE_DEGREES);
     }
 
     @AutoLogOutput(key = "Turret/Setpoint")
@@ -72,7 +69,8 @@ public class Turret extends SubsystemBase {
     }
 
     public void setSetpoint(Rotation2d position) {
-        position = Rotation2d.fromDegrees(MathUtil.clamp(position.getDegrees(), MIN_ANGLE.getDegrees(), MAX_ANGLE.getDegrees()));
+        position = Rotation2d.fromDegrees(
+                MathUtil.clamp(position.getDegrees(), MIN_ANGLE.getDegrees(), MAX_ANGLE.getDegrees()));
         setpoint = position;
         io.setSetpoint(position);
     }
