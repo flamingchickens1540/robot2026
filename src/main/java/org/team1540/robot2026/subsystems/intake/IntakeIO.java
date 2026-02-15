@@ -1,5 +1,7 @@
 package org.team1540.robot2026.subsystems.intake;
 
+import static org.team1540.robot2026.subsystems.intake.IntakeConstants.PIVOT_MIN_ANGLE;
+
 import edu.wpi.first.math.geometry.Rotation2d;
 import org.littletonrobotics.junction.AutoLog;
 
@@ -14,6 +16,7 @@ public interface IntakeIO {
 
         public boolean pivotConnected = true;
         public Rotation2d pivotPosition = Rotation2d.kZero;
+        public Rotation2d pivotSetpoint = PIVOT_MIN_ANGLE;
         public double pivotMotorVelocityRPS = 0;
         public double pivotMotorAppliedVolts = 0;
         public double pivotSupplyCurrentAmps = 0;
@@ -26,5 +29,9 @@ public interface IntakeIO {
 
     default void setPivotPosition(Rotation2d pivotPosition) {}
 
-    default void setPivotAppliedVoltage(double voltage) {}
+    default void setPivotVoltage(double voltage) {}
+
+    default void setPivotPID(double kP, double kI, double kD) {}
+
+    default void setPivotFF(double kS, double kV, double kG) {}
 }

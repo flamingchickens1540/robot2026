@@ -8,10 +8,13 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.ControlRequest;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
@@ -26,7 +29,7 @@ public class IntakeIOTalonFX implements IntakeIO {
     private StatusSignal<Current> spinSupplyCurrentAmps;
     private StatusSignal<Current> spinStatorCurrentAmps;
 
-    private StatusSignal<Rotation2d> pivotPosition;
+    private StatusSignal<Angle> pivotSetpoint;
     private StatusSignal<AngularVelocity> pivotMotorVelocityRPS;
     private StatusSignal<Voltage> pivotMotorAppliedVolts;
     private StatusSignal<Current> pivotSupplyCurrentAmps;
@@ -39,7 +42,7 @@ public class IntakeIOTalonFX implements IntakeIO {
         spinSupplyCurrentAmps = intakeMotor.getSupplyCurrent();
         spinStatorCurrentAmps = intakeMotor.getStatorCurrent();
 
-        // pivotPosition = pivotMotor.getPosition(); Why is it mad at me? //TODO: fix this
+        pivotSetpoint = pivotMotor.getPosition();
         pivotMotorVelocityRPS = pivotMotor.getVelocity();
         pivotMotorAppliedVolts = pivotMotor.getMotorVoltage();
         pivotSupplyCurrentAmps = pivotMotor.getSupplyCurrent();
@@ -84,7 +87,7 @@ public class IntakeIOTalonFX implements IntakeIO {
                 spinMotorVelocityRPS, spinMotorAppliedVolts, spinSupplyCurrentAmps, spinStatorCurrentAmps);
         StatusCode pivotStatus = BaseStatusSignal.refreshAll(
                 pivotMotorVelocityRPS,
-                pivotPosition,
+                pivotSetpoint,
                 pivotMotorAppliedVolts,
                 pivotSupplyCurrentAmps,
                 pivotStatorCurrentAmps);
@@ -98,23 +101,45 @@ public class IntakeIOTalonFX implements IntakeIO {
 
         // inputs.pivotConnected = pivotConnectedDebounce.calculate(pivotStatus.isOK()); remake that to work for this
 
-        inputs.pivotPosition = pivotPosition.getValue();
+        inputs.pivotPosition = Rotation2d.fromRotations(pivotSetpoint.getValueAsDouble());
         inputs.pivotMotorVelocityRPS = pivotMotorVelocityRPS.getValueAsDouble();
         inputs.pivotMotorAppliedVolts = pivotMotorAppliedVolts.getValueAsDouble();
         inputs.pivotSupplyCurrentAmps = pivotSupplyCurrentAmps.getValueAsDouble();
         inputs.pivotStatorCurrentAmps = pivotStatorCurrentAmps.getValueAsDouble();
     }
 
+    @Override
     public void setIntakeVoltage(double voltage) {
-        // intakeMotor.setControl(intakeMotor(voltage).withOutput(voltage));   this is what they did, I have no idea
-        // what to do next
+        intakeMotor.setControl(new VoltageOut(voltage));
     }
 
-    public void setPivotPosition(Rotation2d pivotPosition) {
-        // no idea what to do here
+    @Override
+    public void setPivotSetpoint(Rotation2d pivotPosition) {
+        pivotMotor.setControl((ControlRequest) pivotPosition);
     }
 
-    public void setPivotAppliedVoltage(double voltage) {
-        // also no idea what to do here
+    @Override
+    public void setPivotVoltage(double voltage) {
+        pivotMotor.setControl(new VoltageOut(voltage));
+    }
+
+    @Override
+    public void setPivotPID(double kP, double kI, double kD) {
+        Slot0Configs configs = new Slot0Configs();
+        pivotMotor.getConfigurator().refresh(configs);
+        configs.kP = kP;
+        configs.kI = kI;
+        configs.kD = kD;
+        pivotMotor.getConfigurator().apply(configs);
+    }
+
+    @Override
+    public void setPivotFF(double kS, double kV, double kG) {
+        Slot0Configs configs = new Slot0Configs();
+        pivotMotor.getConfigurator().refresh(configs);
+        configs.kS = kS;
+        configs.kV = kV;
+        configs.kA = kG;
+        pivotMotor.getConfigurator().apply(configs);
     }
 }
