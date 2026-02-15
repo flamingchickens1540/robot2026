@@ -18,11 +18,11 @@ import org.team1540.robot2026.util.LoggedTunableNumber;
 public class Shooter extends SubsystemBase {
     private static boolean hasInstance = false;
 
-    private final LoggedTunableNumber kP = new LoggedTunableNumber("Shooter/kP");
-    private final LoggedTunableNumber kI = new LoggedTunableNumber("Shooter/kI");
-    private final LoggedTunableNumber kD = new LoggedTunableNumber("Shooter/kD");
-    private final LoggedTunableNumber kS = new LoggedTunableNumber("Shooter/kS");
-    private final LoggedTunableNumber kV = new LoggedTunableNumber("Shooter/kV");
+    private final LoggedTunableNumber kP = new LoggedTunableNumber("Shooter/kP", KP);
+    private final LoggedTunableNumber kI = new LoggedTunableNumber("Shooter/kI", KI);
+    private final LoggedTunableNumber kD = new LoggedTunableNumber("Shooter/kD", KD);
+    private final LoggedTunableNumber kS = new LoggedTunableNumber("Shooter/kS", KS);
+    private final LoggedTunableNumber kV = new LoggedTunableNumber("Shooter/kV", KV);
 
     private final ShooterIO io;
     private final ShooterIOInputsAutoLogged inputs = new ShooterIOInputsAutoLogged();
@@ -47,8 +47,7 @@ public class Shooter extends SubsystemBase {
         Logger.processInputs("Shooter", inputs);
 
         Logger.recordOutput(
-                "Shooter/FilteredVelocity",
-                velocityFilter.calculate((inputs.velocityRPM[0] + inputs.velocityRPM[1]) / 2.0));
+                "Shooter/FilteredRPM", velocityFilter.calculate((inputs.velocityRPM[0] + inputs.velocityRPM[1]) / 2.0));
 
         if (DriverStation.isDisabled()) stop();
 
@@ -73,6 +72,7 @@ public class Shooter extends SubsystemBase {
     }
 
     public void stop() {
+        setpointRPM = 0;
         setVoltage(0);
     }
 
@@ -91,7 +91,7 @@ public class Shooter extends SubsystemBase {
     }
 
     public Command runVelocityCommand(DoubleSupplier velocityRPM) {
-        return runEnd(() -> runVelocity(velocityRPM.getAsDouble()), this::stop);
+        return runEnd(() -> runVelocity(velocityRPM.getAsDouble()), this::stop).withName("ShooterVelocityCommand");
     }
 
     public static Shooter createReal() {

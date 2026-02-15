@@ -11,6 +11,8 @@ public class HoodConstants {
     public static final Rotation2d MIN_ANGLE = Rotation2d.fromDegrees(15.0);
     public static final Rotation2d MAX_ANGLE = Rotation2d.fromDegrees(45.0);
 
+    public static final double ZERO_CURRENT_AMPS = 30;
+
     public static final double KP = 67.0;
     public static final double KI = 0.0;
     public static final double KD = 0.0;
@@ -18,7 +20,7 @@ public class HoodConstants {
     public static final double KV = 0.0;
     public static final double KG = 0.0;
 
-    public static final double CRUISE_VELOCITY_RPS = 6.7;
-    public static final double MAX_ACCELERATION_RPS2 = 67.0;
+    public static final double CRUISE_VELOCITY_RPS = 1.5;
+    public static final double MAX_ACCELERATION_RPS2 = 6.0;
     public static final double JERK_RPS3 = 670.0;
 }

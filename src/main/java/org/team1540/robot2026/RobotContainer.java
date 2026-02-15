@@ -12,9 +12,13 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import org.team1540.robot2026.commands.CharacterizationCommands;
 import org.team1540.robot2026.subsystems.drive.Drivetrain;
 import org.team1540.robot2026.subsystems.hood.Hood;
+import org.team1540.robot2026.subsystems.hood.HoodConstants;
 import org.team1540.robot2026.subsystems.shooter.Shooter;
 import org.team1540.robot2026.subsystems.spindexer.Spindexer;
 import org.team1540.robot2026.subsystems.turret.Turret;
+import org.team1540.robot2026.subsystems.turret.TurretConstants;
+import org.team1540.robot2026.util.JoystickUtil;
+import org.team1540.robot2026.util.LoggedTunableNumber;
 import org.team1540.robot2026.util.auto.LoggedAutoChooser;
 
 public class RobotContainer {
@@ -30,6 +34,15 @@ public class RobotContainer {
 
     private final RobotState robotState = RobotState.getInstance();
 
+    // TODO remove tuning setpoints
+    private final LoggedTunableNumber shooterRPM = new LoggedTunableNumber("Shooter/SetpointRPM", 3000.0);
+    private final LoggedTunableNumber hoodDegrees =
+            new LoggedTunableNumber("Hood/SetpointDegrees", HoodConstants.MIN_ANGLE.getDegrees());
+    private final LoggedTunableNumber turretDegrees =
+            new LoggedTunableNumber("Turret/SetpointDegrees", TurretConstants.MIN_ANGLE.getDegrees());
+    private final LoggedTunableNumber spindexerPercent = new LoggedTunableNumber("Spindexer/Percent", 0.5);
+    private final LoggedTunableNumber feederPercent = new LoggedTunableNumber("Feeder/Percent", 0.5);
+
     /** The container for the robot. Contains subsystems, IO devices, and commands. */
     public RobotContainer() {
         switch (Constants.CURRENT_MODE) {
@@ -39,7 +52,7 @@ public class RobotContainer {
                 hood = Hood.createReal();
                 shooter = Shooter.createReal();
                 spindexer = Spindexer.createReal();
-                turret = Turret.createReal();
+                turret = Turret.createDummy(); // TODO undummy
             }
             case SIM -> {
                 // Initialize simulated hardware IOs
@@ -68,10 +81,30 @@ public class RobotContainer {
     }
 
     private void configureButtonBindings() {
+        // TODO retest DT
         //        drivetrain.setDefaultCommand(drivetrain.teleopDriveCommand(driver.getHID()));
         //        driver.x().onTrue(drivetrain.runOnce(drivetrain::stopWithX));
         //        driver.start().onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual));
-        turret.setDefaultCommand(turret.commandToSetpoint(() -> Rotation2d.fromRotations(0.25 * driver.getLeftX())));
+        turret.setDefaultCommand(
+                turret.run(() -> turret.setVoltage(JoystickUtil.smartDeadzone(-driver.getLeftX(), 0.1) * 12.0))
+                        .withName("TurretManual"));
+        hood.setDefaultCommand(hood.run(() -> {
+                    double joystickInput = JoystickUtil.smartDeadzone(-driver.getRightY(), 0.1);
+                    hood.setVoltage(joystickInput * 12.0);
+                })
+                .withName("HoodManual"));
+
+        driver.start().whileTrue(hood.zeroCommand());
+        driver.back().onTrue(turret.runOnce(() -> turret.resetPosition(TurretConstants.MIN_ANGLE)));
+
+        driver.a().toggleOnTrue(shooter.runVelocityCommand(shooterRPM));
+        driver.b().toggleOnTrue(hood.setpointCommand(() -> Rotation2d.fromDegrees(hoodDegrees.get())));
+        driver.y().toggleOnTrue(turret.commandToSetpoint(() -> Rotation2d.fromDegrees(turretDegrees.get())));
+        driver.x()
+                .onTrue(Commands.parallel(
+                                shooter.runOnce(shooter::stop), hood.runOnce(hood::stop), turret.runOnce(turret::stop))
+                        .withName("StopAll"));
+        driver.rightTrigger().whileTrue(spindexer.runCommand(spindexerPercent, feederPercent));
     }
 
     private void configureAutoRoutines() {
@@ -95,6 +128,9 @@ public class RobotContainer {
             autoChooser.addCmd(
                     "Hood FF Characterization",
                     () -> CharacterizationCommands.feedforward(hood::setVoltage, hood::getVelocityRPS, hood));
+            autoChooser.addCmd(
+                    "Turret FF Characterization",
+                    () -> CharacterizationCommands.feedforward(turret::setVoltage, turret::getVelocityRPS, turret));
         }
     }
 

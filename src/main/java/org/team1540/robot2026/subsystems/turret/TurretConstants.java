@@ -20,13 +20,13 @@ public class TurretConstants {
     public static final Rotation2d MIN_ANGLE = Rotation2d.kZero;
     public static final Rotation2d MAX_ANGLE = Rotation2d.fromDegrees(630);
 
-    public static final double KP = 150;
+    public static final double KP = 118;
     public static final double KI = 0;
     public static final double KD = 0;
-    public static final double KS = 0.185;
-    public static final double KV = 4.337;
+    public static final double KS = 0.2835013175931324;
+    public static final double KV = 4.433714746197311;
 
-    public static final double CRUISE_VELOCITY_RPS = 6.7;
-    public static final double MAX_ACCELERATION_RPS2 = 67.0;
-    public static final double JERK_RPS3 = 670.0;
+    public static final double CRUISE_VELOCITY_RPS = 3.5;
+    public static final double MAX_ACCELERATION_RPS2 = 35.0;
+    public static final double JERK_RPS3 = 350.0;
 }

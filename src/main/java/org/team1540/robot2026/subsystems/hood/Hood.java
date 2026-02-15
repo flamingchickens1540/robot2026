@@ -7,7 +7,9 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
@@ -18,12 +20,12 @@ import org.team1540.robot2026.util.LoggedTunableNumber;
 public class Hood extends SubsystemBase {
     private static boolean hasInstance = false;
 
-    private final LoggedTunableNumber kP = new LoggedTunableNumber("Hood/kP", 0.0);
-    private final LoggedTunableNumber kI = new LoggedTunableNumber("Hood/kI", 0.0);
-    private final LoggedTunableNumber kD = new LoggedTunableNumber("Hood/kD", 0.0);
-    private final LoggedTunableNumber kS = new LoggedTunableNumber("Hood/kS", 0.0);
-    private final LoggedTunableNumber kV = new LoggedTunableNumber("Hood/kV", 0.0);
-    private final LoggedTunableNumber kG = new LoggedTunableNumber("Hood/kG", 0.0);
+    private final LoggedTunableNumber kP = new LoggedTunableNumber("Hood/kP", KP);
+    private final LoggedTunableNumber kI = new LoggedTunableNumber("Hood/kI", KI);
+    private final LoggedTunableNumber kD = new LoggedTunableNumber("Hood/kD", KD);
+    private final LoggedTunableNumber kS = new LoggedTunableNumber("Hood/kS", KS);
+    private final LoggedTunableNumber kV = new LoggedTunableNumber("Hood/kV", KV);
+    private final LoggedTunableNumber kG = new LoggedTunableNumber("Hood/kG", KG);
 
     private final HoodIO io;
     private final HoodIOInputsAutoLogged inputs = new HoodIOInputsAutoLogged();
@@ -36,6 +38,7 @@ public class Hood extends SubsystemBase {
         if (hasInstance) throw new IllegalStateException("Instance of hood already exists");
         hasInstance = true;
         this.io = io;
+        resetPosition(MIN_ANGLE);
     }
 
     @Override
@@ -63,8 +66,9 @@ public class Hood extends SubsystemBase {
     }
 
     public void setSetpoint(Rotation2d position) {
-        setpoint = position;
-        io.setSetpoint(position);
+        setpoint = Rotation2d.fromDegrees(
+                MathUtil.clamp(position.getDegrees(), MIN_ANGLE.getDegrees(), MAX_ANGLE.getDegrees()));
+        io.setSetpoint(setpoint);
     }
 
     public void setVoltage(double volts) {
@@ -77,6 +81,11 @@ public class Hood extends SubsystemBase {
 
     public Rotation2d getPosition() {
         return inputs.position;
+    }
+
+    public void resetPosition(Rotation2d position) {
+        io.resetPosition(Rotation2d.fromDegrees(
+                MathUtil.clamp(position.getDegrees(), MIN_ANGLE.getDegrees(), MAX_ANGLE.getDegrees())));
     }
 
     public double getVelocityRPS() {
@@ -95,7 +104,15 @@ public class Hood extends SubsystemBase {
     }
 
     public Command setpointCommand(Supplier<Rotation2d> position) {
-        return runEnd(() -> setSetpoint(position.get()), this::stop);
+        return runEnd(() -> setSetpoint(position.get()), this::stop).withName("HoodSetpointCommands");
+    }
+
+    public Command zeroCommand() {
+        return runOnce(() -> setVoltage(-0.1))
+                .andThen(
+                        Commands.waitUntil(
+                                new Trigger(() -> inputs.statorCurrentAmps >= ZERO_CURRENT_AMPS).debounce(0.5)),
+                        runOnce(() -> resetPosition(MIN_ANGLE)));
     }
 
     public static Hood createReal() {

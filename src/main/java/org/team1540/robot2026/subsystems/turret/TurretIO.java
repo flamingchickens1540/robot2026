@@ -25,6 +25,8 @@ public interface TurretIO {
 
     default void setSetpoint(Rotation2d position) {}
 
+    default void resetPosition(Rotation2d position) {}
+
     default void setVoltage(double volts) {}
 
     default void setBrakeMode(boolean brakeMode) {}

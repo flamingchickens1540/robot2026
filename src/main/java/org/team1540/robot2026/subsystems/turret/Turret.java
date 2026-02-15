@@ -16,7 +16,7 @@ import org.team1540.robot2026.util.LoggedTracer;
 import org.team1540.robot2026.util.LoggedTunableNumber;
 
 public class Turret extends SubsystemBase {
-    private boolean hasInstance = false;
+    private static boolean hasInstance = false;
 
     private final LoggedTunableNumber kP = new LoggedTunableNumber("Turret/kP", KP);
     private final LoggedTunableNumber kI = new LoggedTunableNumber("Turret/kI", KI);
@@ -31,10 +31,11 @@ public class Turret extends SubsystemBase {
 
     private Rotation2d setpoint = Rotation2d.kZero;
 
-    private Turret(TurretIO turretIO) {
+    private Turret(TurretIO io) {
         if (hasInstance) throw new IllegalStateException("Instance of elevator already exists");
         hasInstance = true;
-        this.io = turretIO;
+        this.io = io;
+        resetPosition(MIN_ANGLE);
     }
 
     @Override
@@ -79,11 +80,16 @@ public class Turret extends SubsystemBase {
         io.setVoltage(voltage);
     }
 
+    public void resetPosition(Rotation2d position) {
+        io.resetPosition(Rotation2d.fromDegrees(
+                MathUtil.clamp(position.getDegrees(), MIN_ANGLE.getDegrees(), MAX_ANGLE.getDegrees())));
+    }
+
     public Rotation2d getPosition() {
         return inputs.position;
     }
 
-    public double getVelocity() {
+    public double getVelocityRPS() {
         return inputs.velocityRPS;
     }
 
@@ -92,7 +98,7 @@ public class Turret extends SubsystemBase {
     }
 
     public Command commandToSetpoint(Supplier<Rotation2d> position) {
-        return runEnd(() -> setSetpoint(position.get()), this::stop);
+        return runEnd(() -> setSetpoint(position.get()), this::stop).withName("TurretSetpointCommand");
     }
 
     public static Turret createReal() {

@@ -66,7 +66,6 @@ public class TurretIOTalonFX implements TurretIO {
 
         motor.getConfigurator().apply(motorConfig);
 
-        motor.setPosition(0);
         CANcoderConfiguration encoderConfig = new CANcoderConfiguration();
         encoderConfig.MagnetSensor.MagnetOffset = ENCODER_1_OFFSET_ROTS;
         encoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive;
@@ -112,6 +111,11 @@ public class TurretIOTalonFX implements TurretIO {
     @Override
     public void setSetpoint(Rotation2d position) {
         motor.setControl(positionCtrlReq.withPosition(position.getRotations()));
+    }
+
+    @Override
+    public void resetPosition(Rotation2d position) {
+        motor.setPosition(position.getRotations());
     }
 
     @Override

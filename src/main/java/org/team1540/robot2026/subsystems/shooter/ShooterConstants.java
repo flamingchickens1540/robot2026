@@ -7,9 +7,9 @@ public class ShooterConstants {
     public static final double GEAR_RATIO = 1.0;
     public static final double VELOCITY_ERR_TOLERANCE_RPM = 100;
 
-    public static final double KP = 67;
-    public static final double KI = 67;
-    public static final double KD = 67;
-    public static final double KS = 67;
-    public static final double KV = 67;
+    public static final double KP = 0.3;
+    public static final double KI = 0.0;
+    public static final double KD = 0.0;
+    public static final double KS = 0.30946782333952655;
+    public static final double KV = 0.12089376471841834;
 }
