@@ -2,9 +2,10 @@ package org.team1540.robot2026;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import org.team1540.robot2026.subsystems.leds.LEDs;
 
 public class RobotContainer {
-
+    LEDs leds = new LEDs();
     /** The container for the robot. Contains subsystems, IO devices, and commands. */
     public RobotContainer() {
         configureButtonBindings();

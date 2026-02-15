@@ -1,4 +1,5 @@
 package org.team1540.robot2026.subsystems.climber;
+
 import static org.team1540.robot2026.subsystems.climber.ClimberConstants.*;
 
 import com.ctre.phoenix6.BaseStatusSignal;
@@ -11,13 +12,13 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DigitalInput;
+
 public class ClimberIOReal implements ClimberIO {
     private final TalonFX leftMotor = new TalonFX(LEFT_MOTOR_ID);
     private final StatusSignal<Angle> leftPosition = leftMotor.getPosition();
@@ -47,7 +48,6 @@ public class ClimberIOReal implements ClimberIO {
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
-
         Slot0Configs Gains = config.Slot0;
         Gains.kS = KS;
         Gains.kV = KV;
@@ -56,7 +56,6 @@ public class ClimberIOReal implements ClimberIO {
         Gains.kI = KI;
         Gains.kD = KD;
         Gains.GravityType = GravityTypeValue.Elevator_Static;
-
 
         MotionMagicConfigs motionMagicConfigs = config.MotionMagic;
 
