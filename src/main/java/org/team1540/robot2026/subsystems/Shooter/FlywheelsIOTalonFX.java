@@ -6,10 +6,12 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
@@ -17,6 +19,7 @@ import edu.wpi.first.units.measure.Voltage;
 
 public class FlywheelsIOTalonFX implements FlywheelsIO {
     private final TalonFX motor = new TalonFX(ID);
+    private final TalonFX motor2 = new TalonFX(ID2);
 
     private final StatusSignal<AngularVelocity> velocity = motor.getVelocity();
     private final StatusSignal<Voltage> appliedVoltage = motor.getMotorVoltage();
@@ -41,8 +44,13 @@ public class FlywheelsIOTalonFX implements FlywheelsIO {
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         motor.getConfigurator().apply(config);
 
+        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        motor2.getConfigurator().apply(config);
+
         BaseStatusSignal.setUpdateFrequencyForAll(
                 50, velocity, appliedVoltage, statorCurrent, supplyCurrent, temperature);
+
+        motor2.setControl(new Follower(ID, MotorAlignmentValue.Opposed));
 
         motor.optimizeBusUtilization();
     }

@@ -5,6 +5,7 @@ import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.function.Supplier;
@@ -53,7 +54,7 @@ public class Shooter extends SubsystemBase {
         if (Constants.CURRENT_MODE == Constants.Mode.REAL) {
             DriverStation.reportWarning("Using a sim shooter on real robot", false);
         }
-        return new Shooter(new FlywheelsIOSim());
+        return new Shooter(new FlywheelsIO() {});
     }
 
     public static Shooter createDummy() {
@@ -113,8 +114,11 @@ public class Shooter extends SubsystemBase {
     }
 
     public Command spinUpCommand(Supplier<Double> setPoint) {
-        return new FunctionalCommand(
-                () -> {}, () -> setFlyWheelSpeeds(setPoint.get()), (ignored) -> {}, this::areFlywheelsSpunUp, this);
+        return Commands.run(()->setFlyWheelSpeeds(setPoint.get()), this).until(this::areFlywheelsSpunUp);
+    }
+
+    public Command stopShooterCommand() {
+        return Commands.run();
     }
 
     @AutoLogOutput(key = "Shooter/Flywheels/setPointRPM")

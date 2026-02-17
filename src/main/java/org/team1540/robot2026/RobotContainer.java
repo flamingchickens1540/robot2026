@@ -2,16 +2,24 @@ package org.team1540.robot2026;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import org.team1540.robot2026.subsystems.Shooter.Shooter;
 
 public class RobotContainer {
-
+    private final CommandXboxController driver = new CommandXboxController(0);
     /** The container for the robot. Contains subsystems, IO devices, and commands. */
+
+    private final Shooter shooter;
     public RobotContainer() {
         configureButtonBindings();
         configureAutoRoutines();
+        shooter = Shooter.createReal();
     }
 
-    private void configureButtonBindings() {}
+    private void configureButtonBindings() {
+        driver.leftTrigger().whileTrue(shooter.spinUpCommand(()->3400.0));
+        driver.a().onTrue()
+    }
 
     private void configureAutoRoutines() {}
 
