@@ -6,7 +6,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -17,9 +16,11 @@ import org.team1540.robot2026.util.LoggedTunableNumber;
 public class Shooter extends SubsystemBase {
     private FlywheelsIO flywheelsIO;
     // TODO
-    private final LinearFilter speedFilter = LinearFilter.movingAverage(20);
+    private final LinearFilter leftSpeedFilter = LinearFilter.movingAverage(20);
+    private final LinearFilter rightSpeedFilter = LinearFilter.movingAverage(20);
 
-    private double flywheelSetpointRPM;
+    private double leftFlywheelSetpointRPM;
+    private double rightFlywheelSetpointRPM;
     private final FlywheelsIOInputsAutoLogged flywheelInputs = new FlywheelsIOInputsAutoLogged();
 
     private final LoggedTunableNumber flywheelsKP =
@@ -68,7 +69,8 @@ public class Shooter extends SubsystemBase {
     public void periodic() {
         flywheelsIO.updateInputs(flywheelInputs);
         Logger.processInputs("Shooter/Flywheels", flywheelInputs);
-        speedFilter.calculate(getFlywheelSpeed());
+        leftSpeedFilter.calculate(getLeftFlywheelSpeed());
+        rightSpeedFilter.calculate(getRightFlywheelSpeed());
 
         if (RobotState.isDisabled()) {
             stopFlywheels();
@@ -84,45 +86,57 @@ public class Shooter extends SubsystemBase {
         }
     }
 
-    public void setFlyWheelSpeeds(double speedRPM) {
-        flywheelSetpointRPM = speedRPM;
-        speedFilter.reset();
-        flywheelsIO.setSpeeds(speedRPM);
+    public void setFlyWheelSpeeds(double leftSpeedRPM,double rightSpeedRPM) {
+        leftFlywheelSetpointRPM = leftSpeedRPM;
+        rightFlywheelSetpointRPM = rightSpeedRPM;
+        leftSpeedFilter.reset();
+        flywheelsIO.setSpeeds(leftSpeedRPM, rightSpeedRPM);
     }
 
-    public void setFlywheelVolts(double volts) {
-        flywheelsIO.setVoltage(volts);
+    public void setFlywheelVolts(double rightVolts, double leftVolts) {
+        flywheelsIO.setVoltage(
+                MathUtil.clamp(rightVolts, -12, 12),
+                MathUtil.clamp(leftVolts, -12, 12)
+        );
     }
-
     public void stopFlywheels() {
-        setFlywheelVolts(0);
+        setFlywheelVolts(0,0);
     }
 
-    public double getFlywheelSpeed() {
-        return flywheelInputs.velocityRPM; // figure out the Autologged
+    public double getLeftFlywheelSpeed() {
+        return flywheelInputs.leftVelocityRPM;
     }
 
-    public boolean areFlywheelsSpunUp() {
-        return MathUtil.isNear(
-                flywheelSetpointRPM,
-                speedFilter.calculate(getFlywheelSpeed()),
-                ShooterConstants.Flywheels.ERROR_TOLERANCE_RPM);
+    public double getRightFlywheelSpeed(){
+        return flywheelInputs.rightVelocityRPM;
     }
+
+    public boolean areFlywheelsSpunUp(){
+        return  MathUtil.isNear(leftFlywheelSetpointRPM, leftSpeedFilter.calculate(getLeftFlywheelSpeed()), ShooterConstants.Flywheels.ERROR_TOLERANCE_RPM) &&
+                MathUtil.isNear(rightFlywheelSetpointRPM, rightSpeedFilter.calculate(getRightFlywheelSpeed()), ShooterConstants.Flywheels.ERROR_TOLERANCE_RPM);
+    }
+
 
     public double getSpinUpPercent() {
-        return (getFlywheelSpeed() / getFlywheelSetpointRPM());
+        return (getRightFlywheelSpeed() + getLeftFlywheelSpeed()) / (getRightFlywheelSetpointRPM() + getLeftFlywheelSetpointRPM());
     }
 
-    public Command spinUpCommand(Supplier<Double> setPoint) {
-        return Commands.run(()->setFlyWheelSpeeds(setPoint.get()), this).until(this::areFlywheelsSpunUp);
+    public Command spinUpCommand(Supplier<Double> leftSetPoint, Supplier<Double> rightSetPoint) {
+        return Commands.run(() -> setFlyWheelSpeeds(leftSetPoint.get(),rightSetPoint.get()), this).until(this::areFlywheelsSpunUp);
     }
 
     public Command stopShooterCommand() {
         return Commands.run();
     }
 
-    @AutoLogOutput(key = "Shooter/Flywheels/setPointRPM")
-    public double getFlywheelSetpointRPM() {
-        return flywheelSetpointRPM;
+    @AutoLogOutput(key = "Shooter/Flywheels/leftSetPointRPM")
+    public double getLeftFlywheelSetpointRPM() {
+        return leftFlywheelSetpointRPM;
     }
+
+    @AutoLogOutput(key = "Shooter/Flywheels/rightSetPointRPM")
+    public double getRightFlywheelSetpointRPM() {
+        return rightFlywheelSetpointRPM;
+    }
+
 }

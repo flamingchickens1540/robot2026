@@ -21,11 +21,16 @@ public class FlywheelsIOTalonFX implements FlywheelsIO {
     private final TalonFX motor = new TalonFX(ID);
     private final TalonFX motor2 = new TalonFX(ID2);
 
-    private final StatusSignal<AngularVelocity> velocity = motor.getVelocity();
-    private final StatusSignal<Voltage> appliedVoltage = motor.getMotorVoltage();
-    private final StatusSignal<Current> statorCurrent = motor.getStatorCurrent();
-    private final StatusSignal<Current> supplyCurrent = motor.getSupplyCurrent();
-    private final StatusSignal<Temperature> temperature = motor.getDeviceTemp();
+    private final StatusSignal<AngularVelocity> leftVelocity = motor.getVelocity();
+    private final StatusSignal<Voltage> leftAppliedVoltage = motor.getMotorVoltage();
+    private final StatusSignal<Current> leftStatorCurrent = motor.getStatorCurrent();
+    private final StatusSignal<Current> leftSupplyCurrent = motor.getSupplyCurrent();
+    private final StatusSignal<Temperature> leftTemperature = motor.getDeviceTemp();
+    private final StatusSignal<AngularVelocity> rightVelocity = motor.getVelocity();
+    private final StatusSignal<Voltage> rightAppliedVoltage = motor.getMotorVoltage();
+    private final StatusSignal<Current> rightStatorCurrent = motor.getStatorCurrent();
+    private final StatusSignal<Current> rightSupplyCurrent = motor.getSupplyCurrent();
+    private final StatusSignal<Temperature> rightTemperature = motor.getDeviceTemp();
 
     private final VelocityVoltage velocityCtrlReq =
             new VelocityVoltage(0).withEnableFOC(true).withSlot(0);
@@ -48,7 +53,17 @@ public class FlywheelsIOTalonFX implements FlywheelsIO {
         motor2.getConfigurator().apply(config);
 
         BaseStatusSignal.setUpdateFrequencyForAll(
-                50, velocity, appliedVoltage, statorCurrent, supplyCurrent, temperature);
+                50,
+                leftVelocity,
+                leftAppliedVoltage,
+                leftStatorCurrent,
+                leftSupplyCurrent,
+                leftTemperature,
+                rightVelocity,
+                rightAppliedVoltage,
+                rightStatorCurrent,
+                rightSupplyCurrent,
+                rightTemperature);
 
         motor2.setControl(new Follower(ID, MotorAlignmentValue.Opposed));
 
@@ -57,23 +72,38 @@ public class FlywheelsIOTalonFX implements FlywheelsIO {
 
     @Override
     public void updateInputs(FlywheelsIOInputs inputs) {
-        BaseStatusSignal.refreshAll(velocity, appliedVoltage, statorCurrent, supplyCurrent, temperature);
+        BaseStatusSignal.refreshAll(leftVelocity,
+                leftAppliedVoltage,
+                leftStatorCurrent,
+                leftSupplyCurrent,
+                leftTemperature,
+                rightVelocity,
+                rightAppliedVoltage,
+                rightAppliedVoltage,
+                rightStatorCurrent,
+                rightSupplyCurrent,
+                rightTemperature);
 
-        inputs.velocityRPM = velocity.getValueAsDouble();
-        inputs.appliedVolts = appliedVoltage.getValueAsDouble();
-        inputs.statorCurrentAmps = statorCurrent.getValueAsDouble();
-        inputs.tempCelsius = temperature.getValueAsDouble();
-        inputs.supplyCurrentAmps = supplyCurrent.getValueAsDouble();
+        inputs.leftVelocityRPM = leftVelocity.getValueAsDouble();
+        inputs.leftAppliedVolts = leftAppliedVoltage.getValueAsDouble();
+        inputs.leftStatorCurrentAmps = leftStatorCurrent.getValueAsDouble();
+        inputs.leftTempCelsius = leftTemperature.getValueAsDouble();
+        inputs.leftSupplyCurrentAmps = leftSupplyCurrent.getValueAsDouble();
+        inputs.rightVelocityRPM = rightVelocity.getValueAsDouble();
+        inputs.rightAppliedVolts = rightAppliedVoltage.getValueAsDouble();
+        inputs.rightStatorCurrentAmps = rightStatorCurrent.getValueAsDouble();
+        inputs.rightTempCelsius = rightTemperature.getValueAsDouble();
+        inputs.rightSupplyCurrentAmps = rightSupplyCurrent.getValueAsDouble();
     }
 
     @Override
-    public void setSpeeds(double RPM) {
-        motor.setControl(velocityCtrlReq.withVelocity(RPM / 60));
+    public void setSpeeds(double leftRPM, double rightRPM) {
+        motor.setControl(velocityCtrlReq.withVelocity(leftRPM / 60));
     }
 
     @Override
-    public void setVoltage(double volts) {
-        motor.setControl(voltageCtrlReq.withOutput(volts));
+    public void setVoltage(double leftVolts, double rightVolts) {
+        motor.setControl(voltageCtrlReq.withOutput(leftVolts));
     }
 
     @Override
