@@ -17,7 +17,7 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
 
-public class FlywheelsIOTalonFX implements FlywheelsIO {
+public class ShooterIOTalonFX implements FlywheelsIO {
     private final TalonFX motor = new TalonFX(ID);
     private final TalonFX motor2 = new TalonFX(ID2);
 
@@ -36,7 +36,7 @@ public class FlywheelsIOTalonFX implements FlywheelsIO {
             new VelocityVoltage(0).withEnableFOC(true).withSlot(0);
     private final VoltageOut voltageCtrlReq = new VoltageOut(0).withEnableFOC(true);
 
-    public FlywheelsIOTalonFX() {
+    public ShooterIOTalonFX() {
 
         TalonFXConfiguration config = new TalonFXConfiguration();
 
