@@ -12,25 +12,26 @@ import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
 
 public class ShooterIOTalonFX implements FlywheelsIO {
-    private final TalonFX motor = new TalonFX(ID);
-    private final TalonFX motor2 = new TalonFX(ID2);
+    private final TalonFX rightMotor = new TalonFX(RIGHT_ID);
+    private final TalonFX leftMotor = new TalonFX(LEFT_ID);
 
-    private final StatusSignal<AngularVelocity> leftVelocity = motor.getVelocity();
-    private final StatusSignal<Voltage> leftAppliedVoltage = motor.getMotorVoltage();
-    private final StatusSignal<Current> leftStatorCurrent = motor.getStatorCurrent();
-    private final StatusSignal<Current> leftSupplyCurrent = motor.getSupplyCurrent();
-    private final StatusSignal<Temperature> leftTemperature = motor.getDeviceTemp();
-    private final StatusSignal<AngularVelocity> rightVelocity = motor.getVelocity();
-    private final StatusSignal<Voltage> rightAppliedVoltage = motor.getMotorVoltage();
-    private final StatusSignal<Current> rightStatorCurrent = motor.getStatorCurrent();
-    private final StatusSignal<Current> rightSupplyCurrent = motor.getSupplyCurrent();
-    private final StatusSignal<Temperature> rightTemperature = motor.getDeviceTemp();
+    private final StatusSignal<AngularVelocity> leftVelocity = rightMotor.getVelocity();
+    private final StatusSignal<Voltage> leftAppliedVoltage = rightMotor.getMotorVoltage();
+    private final StatusSignal<Current> leftStatorCurrent = rightMotor.getStatorCurrent();
+    private final StatusSignal<Current> leftSupplyCurrent = rightMotor.getSupplyCurrent();
+    private final StatusSignal<Temperature> leftTemperature = rightMotor.getDeviceTemp();
+    private final StatusSignal<AngularVelocity> rightVelocity = rightMotor.getVelocity();
+    private final StatusSignal<Voltage> rightAppliedVoltage = rightMotor.getMotorVoltage();
+    private final StatusSignal<Current> rightStatorCurrent = rightMotor.getStatorCurrent();
+    private final StatusSignal<Current> rightSupplyCurrent = rightMotor.getSupplyCurrent();
+    private final StatusSignal<Temperature> rightTemperature = rightMotor.getDeviceTemp();
 
     private final VelocityVoltage velocityCtrlReq =
             new VelocityVoltage(0).withEnableFOC(true).withSlot(0);
@@ -46,11 +47,16 @@ public class ShooterIOTalonFX implements FlywheelsIO {
         config.Slot0.kS = KS;
         config.Slot0.kV = KV;
 
+        config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
+        config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-        motor.getConfigurator().apply(config);
+        rightMotor.getConfigurator().apply(config);
 
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        motor2.getConfigurator().apply(config);
+        leftMotor.getConfigurator().apply(config);
+
+
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 50,
@@ -65,9 +71,9 @@ public class ShooterIOTalonFX implements FlywheelsIO {
                 rightSupplyCurrent,
                 rightTemperature);
 
-        motor2.setControl(new Follower(ID, MotorAlignmentValue.Opposed));
+        leftMotor.setControl(new Follower(RIGHT_ID, MotorAlignmentValue.Opposed));
 
-        motor.optimizeBusUtilization();
+        rightMotor.optimizeBusUtilization();
     }
 
     @Override
@@ -99,23 +105,23 @@ public class ShooterIOTalonFX implements FlywheelsIO {
 
     @Override
     public void setSpeeds(double leftRPM, double rightRPM) {
-        motor.setControl(velocityCtrlReq.withVelocity(leftRPM / 60));
+        rightMotor.setControl(velocityCtrlReq.withVelocity(leftRPM / 60));
     }
 
     @Override
     public void setVoltage(double leftVolts, double rightVolts) {
-        motor.setControl(voltageCtrlReq.withOutput(leftVolts));
+        rightMotor.setControl(voltageCtrlReq.withOutput(leftVolts));
     }
 
     @Override
     public void configPID(double kP, double kI, double kD, double kV, double kS) {
         Slot0Configs pidConfigs = new Slot0Configs();
-        motor.getConfigurator().refresh(pidConfigs);
+        rightMotor.getConfigurator().refresh(pidConfigs);
         pidConfigs.kP = kP;
         pidConfigs.kI = kI;
         pidConfigs.kD = kD;
         pidConfigs.kV = kV;
         pidConfigs.kS = kS;
-        motor.getConfigurator().apply(pidConfigs);
+        rightMotor.getConfigurator().apply(pidConfigs);
     }
 }
