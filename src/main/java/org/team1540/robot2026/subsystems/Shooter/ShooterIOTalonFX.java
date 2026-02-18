@@ -72,7 +72,8 @@ public class ShooterIOTalonFX implements FlywheelsIO {
 
     @Override
     public void updateInputs(FlywheelsIOInputs inputs) {
-        BaseStatusSignal.refreshAll(leftVelocity,
+        BaseStatusSignal.refreshAll(
+                leftVelocity,
                 leftAppliedVoltage,
                 leftStatorCurrent,
                 leftSupplyCurrent,

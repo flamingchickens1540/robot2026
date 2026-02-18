@@ -86,7 +86,7 @@ public class Shooter extends SubsystemBase {
         }
     }
 
-    public void setFlyWheelSpeeds(double leftSpeedRPM,double rightSpeedRPM) {
+    public void setFlyWheelSpeeds(double leftSpeedRPM, double rightSpeedRPM) {
         leftFlywheelSetpointRPM = leftSpeedRPM;
         rightFlywheelSetpointRPM = rightSpeedRPM;
         leftSpeedFilter.reset();
@@ -94,39 +94,45 @@ public class Shooter extends SubsystemBase {
     }
 
     public void setFlywheelVolts(double rightVolts, double leftVolts) {
-        flywheelsIO.setVoltage(
-                MathUtil.clamp(rightVolts, -12, 12),
-                MathUtil.clamp(leftVolts, -12, 12)
-        );
+        flywheelsIO.setVoltage(MathUtil.clamp(rightVolts, -12, 12), MathUtil.clamp(leftVolts, -12, 12));
     }
-    public void stopFlywheels() {
-        setFlywheelVolts(0,0);
+
+    public Runnable stopFlywheels() {
+        setFlywheelVolts(0, 0);
+        return null;
     }
 
     public double getLeftFlywheelSpeed() {
         return flywheelInputs.leftVelocityRPM;
     }
 
-    public double getRightFlywheelSpeed(){
+    public double getRightFlywheelSpeed() {
         return flywheelInputs.rightVelocityRPM;
     }
 
-    public boolean areFlywheelsSpunUp(){
-        return  MathUtil.isNear(leftFlywheelSetpointRPM, leftSpeedFilter.calculate(getLeftFlywheelSpeed()), ShooterConstants.Flywheels.ERROR_TOLERANCE_RPM) &&
-                MathUtil.isNear(rightFlywheelSetpointRPM, rightSpeedFilter.calculate(getRightFlywheelSpeed()), ShooterConstants.Flywheels.ERROR_TOLERANCE_RPM);
+    public boolean areFlywheelsSpunUp() {
+        return MathUtil.isNear(
+                        leftFlywheelSetpointRPM,
+                        leftSpeedFilter.calculate(getLeftFlywheelSpeed()),
+                        ShooterConstants.Flywheels.ERROR_TOLERANCE_RPM)
+                && MathUtil.isNear(
+                        rightFlywheelSetpointRPM,
+                        rightSpeedFilter.calculate(getRightFlywheelSpeed()),
+                        ShooterConstants.Flywheels.ERROR_TOLERANCE_RPM);
     }
 
-
     public double getSpinUpPercent() {
-        return (getRightFlywheelSpeed() + getLeftFlywheelSpeed()) / (getRightFlywheelSetpointRPM() + getLeftFlywheelSetpointRPM());
+        return (getRightFlywheelSpeed() + getLeftFlywheelSpeed())
+                / (getRightFlywheelSetpointRPM() + getLeftFlywheelSetpointRPM());
     }
 
     public Command spinUpCommand(Supplier<Double> leftSetPoint, Supplier<Double> rightSetPoint) {
-        return Commands.run(() -> setFlyWheelSpeeds(leftSetPoint.get(),rightSetPoint.get()), this).until(this::areFlywheelsSpunUp);
+        return Commands.run(() -> setFlyWheelSpeeds(leftSetPoint.get(), rightSetPoint.get()), this)
+                .until(this::areFlywheelsSpunUp);
     }
 
     public Command stopShooterCommand() {
-        return Commands.run();
+        return Commands.run(stopFlywheels());
     }
 
     @AutoLogOutput(key = "Shooter/Flywheels/leftSetPointRPM")
@@ -138,5 +144,4 @@ public class Shooter extends SubsystemBase {
     public double getRightFlywheelSetpointRPM() {
         return rightFlywheelSetpointRPM;
     }
-
 }

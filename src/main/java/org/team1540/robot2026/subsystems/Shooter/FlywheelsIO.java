@@ -28,7 +28,7 @@ public interface FlywheelsIO {
     /**
      * Runs open loop at the specified voltages
      */
-    default void setVoltage(double leftVolts,double rightVolts) {}
+    default void setVoltage(double leftVolts, double rightVolts) {}
 
     /**
      * Runs closed loop at the specified RPMs
