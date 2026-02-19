@@ -20,6 +20,7 @@ import org.team1540.robot2026.util.LoggedTracer;
 import org.team1540.robot2026.util.LoggedTunableNumber;
 
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 public class Turret extends SubsystemBase {
     private boolean hasInstance = false;
@@ -42,7 +43,7 @@ public class Turret extends SubsystemBase {
     private Rotation2d setpointRotation;
 
     private final Debouncer zeroedDebouncer = new Debouncer(0.25);
-    private boolean atZero = false;
+
 
     private Turret(TurretIO turretIO) {
         if (hasInstance) throw new IllegalStateException("Instance of elevator already exists");
@@ -60,7 +61,7 @@ public class Turret extends SubsystemBase {
         if (RobotState.isDisabled()) stop();
 
         LoggedTunableNumber.ifChanged(hashCode(), () -> io.configPID(kP.get(), kI.get(), kD.get()), kP, kI, kD);
-        LoggedTunableNumber.ifChanged(hashCode(), () -> io.configFF(kS.get(), kV.get(), kG.get()), kS, kV, kG);
+        LoggedTunableNumber.ifChanged(hashCode(), () -> io.configFF(kS.get(), kV.get()), kS, kV);
 
         // MechanismVisualizer.getInstance().setElevatorPosition(inputs.positionMeters[0]); TODO set up sim pos
 
@@ -84,7 +85,6 @@ public class Turret extends SubsystemBase {
     }
 
     public void setSetpoint(Rotation2d position) {
-
       position.fromDegrees(MathUtil.clamp(position.getDegrees(), 0, MAX_TURRET_ROTATION));
         setpointRotation = position;
         io.setSetpoint(setpointRotation);
@@ -106,53 +106,14 @@ public class Turret extends SubsystemBase {
         io.setBrakeMode(isBrakeMode);
     }
 
-    public double calculateTurretAngleFromEncoderInputs(double mainEncoderPos, double secondaryEncoderPos) {
-        // Inputs are integer readings from the encoders, so convert
-        double e1 = (mainEncoderPos)*ENCODER_RANGE;
-        double e2 = (secondaryEncoderPos)*ENCODER_RANGE;
-        // Handle an edge case near 0 degrees where one or both encoder is 'below zero', that is, has
-        // a large value
-        double e1Rotations = -1;
-        double e2Rotations = -1;
-        // Now search through all possible rotation pairs to find the smallest error
-        double minError = DrivenGearDiameter;
-        double minE1Rotations = e1Rotations;
-        while (e1Rotations < ROTATIONS_OF_GEAR_1_PER_DRIVEN_GEAR_ROTATION && e2Rotations < ROTATIONS_OF_GEAR_2_PER_DRIVEN_GEAR_ROTATION) {
-            double e1Value = e1 + e1Rotations * ENCODER_RANGE;
-            double e2Value = e2 + (e2Rotations) * ENCODER_RANGE;
-            double e1Distance = e1Value * PlanetaryGear1InchPerBit;
-            double e2Distance = e2Value * PlanetaryGear2InchPerBit;
-            double error = Math.abs(e1Distance - e2Distance);
-            if (error < minError) {
-                minError = error;
-                minE1Rotations = e1Rotations;
-            }
-
-            if (e1Distance < e2Distance) {
-                e1Rotations += 1;
-            } else {
-                e2Rotations += 1;
-            }
-        }
-        //Now the best answer is given by minE1Rotations, so compute the distance gear 1
-        //has moved and convert to the corresponding driven gear movement.Note that
-        //the distance gear 1 has moved (at the pitch circle)is equal to the distance
-        //the driven gear has moved at its pitch circle
-        double e1Count = e1 + (minE1Rotations) * ENCODER_RANGE;
-        double e1Distance = e1Count * PlanetaryGear1InchPerBit;
-        double turretAngle = e1Distance * DrivenGearDegreePerInch;
-        return turretAngle;
-    }
-
-    public Command commandToSetpoint(DoubleSupplier rotationDegrees) {
-        return Commands.runOnce(() -> setSetpoint(rotationDegrees.getAsDouble()),this
+    public Command commandToSetpoint(Supplier<Rotation2d> rotation) {
+        return Commands.runOnce(() -> setSetpoint((Rotation2d) rotation),this
         );
     }
 
     public Command zeroCommand() {
-        return Commands.run(()-> setSetpoint(calculateTurretAngleFromEncoderInputs(
-                Units.rotationsToDegrees(mainCancoder.getAbsolutePosition().getValueAsDouble()),
-                Units.rotationsToDegrees(secondaryCancoder.getAbsolutePosition().getValueAsDouble()))));
+        return Commands.run(()-> setSetpoint(io.calculateTurretAngle()),this);
+
     }
 
     public static Turret createReal() {
@@ -173,6 +134,6 @@ public class Turret extends SubsystemBase {
         if (Constants.CURRENT_MODE == Constants.Mode.REAL) {
             DriverStation.reportWarning("Using dummy turret on real robot", false);
         }
-        return new Turret(new TurretIO() {});
+        return new Turret(new TurretIO(){});
     }
 }

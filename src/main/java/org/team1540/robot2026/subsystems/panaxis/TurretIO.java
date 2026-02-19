@@ -5,7 +5,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface TurretIO {
-    void configFF(double kS, double kV);
+    default void configFF(double kS, double kV) {};
 
     @AutoLog
     class TurretIOInputs {
@@ -42,4 +42,6 @@ public interface TurretIO {
     default void configFF(double kS, double kV, double kG) {}
 
     default void setMotorPosition(Rotation2d position) {}
+
+    default Rotation2d calculateTurretAngle() {return Rotation2d.kZero;};
 }

@@ -10,6 +10,7 @@ import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -80,6 +81,32 @@ public class TurretIOTalonFX implements TurretIO {
     }
 
     @Override
+    public Rotation2d calculateTurretAngle() {
+        double encoder1Pos = mainCANcoder.getAbsolutePosition().getValueAsDouble();
+        double encoder2Pos = secondaryCANcoder.getAbsolutePosition().getValueAsDouble();
+
+        double[] encoder1Positions = new double[POSSIBLE_POS_ACC_DIGITS];
+        double[] encoder2Positions = new double[POSSIBLE_POS_ACC_DIGITS];
+        double out = 0;
+        double minValue = 1;
+        for (int i = 0; i < POSSIBLE_POS_ACC_DIGITS; i++) {
+            encoder1Positions[i] = (i + (encoder1Pos)) * PLANETARY_GEAR_1_TOOTH_COUNT / DRIVEN_GEAR_TOOTH_COUNT;      //0 - 1
+            encoder2Positions[i] = (i + (encoder2Pos)) * PLANETARY_GEAR_2_TOOTH_COUNT / DRIVEN_GEAR_TOOTH_COUNT;
+        }
+
+        for (int i = 0; i < POSSIBLE_POS_ACC_DIGITS; i++) {
+            for (int z = i; z < POSSIBLE_POS_ACC_DIGITS; z++) {
+                if (Math.abs(encoder1Positions[i] - encoder2Positions[z]) < minValue) {
+                    out = (encoder1Positions[i] + encoder2Positions[z]) / 2;
+                    minValue = Math.abs(encoder1Positions[i] - encoder2Positions[z]);
+                }
+            }
+        }
+        return Rotation2d.fromRotations(out);
+    }
+
+
+    @Override
     public void setVoltage(double volts) {
         motor.setVoltage(volts);
     }
@@ -110,6 +137,7 @@ public class TurretIOTalonFX implements TurretIO {
         motor.getConfigurator().apply(configs);
     }
 
+
     @Override
     public void configFF(double kS, double kV) {
         Slot0Configs configs = new Slot0Configs();
@@ -118,5 +146,5 @@ public class TurretIOTalonFX implements TurretIO {
         configs.kV = kV;
         motor.getConfigurator().apply(configs);
     }
-
 }
+

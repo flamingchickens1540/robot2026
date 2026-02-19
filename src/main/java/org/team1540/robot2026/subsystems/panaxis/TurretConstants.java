@@ -7,6 +7,8 @@ public class TurretConstants {
     public static int PLANETARY_GEAR_1_TOOTH_COUNT = 14;
     public static int PLANETARY_GEAR_2_TOOTH_COUNT = 13;
     public static final int DRIVE_GEAR_TEETH_COUNT = 10;
+    public static final int POSSIBLE_POS_ACC_DIGITS = 14;
+
      public static final double DRIVEN_TO_DRIVE_RATIO = (double) DRIVEN_GEAR_TOOTH_COUNT / DRIVE_GEAR_TEETH_COUNT;
 
     // Tuning
