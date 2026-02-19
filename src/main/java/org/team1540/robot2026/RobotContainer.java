@@ -18,12 +18,12 @@ public class RobotContainer {
     private final CommandXboxController copilot = new CommandXboxController(1);
 
     private final Drivetrain drivetrain;
+
     private final LoggedAutoChooser autoChooser = new LoggedAutoChooser("Auto Chooser");
 
     private final RobotState robotState = RobotState.getInstance();
 
     /** The container for the robot. Contains subsystems, IO devices, and commands. */
-    private final Shooter shooter;
 
     public RobotContainer() {
         switch (Constants.CURRENT_MODE) {
