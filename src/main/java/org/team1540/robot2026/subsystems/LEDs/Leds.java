@@ -6,6 +6,7 @@ import static org.team1540.robot2026.subsystems.LEDs.LEDConstants.LED_PORT;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
+import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +15,8 @@ import org.team1540.robot2026.util.LoggedTracer;
 public class Leds extends SubsystemBase {
     private final AddressableLED ledStrip = new AddressableLED(LED_PORT);
     private final AddressableLEDBuffer ledBuffer = new AddressableLEDBuffer(LED_LENGTH);
+    private final LEDPattern defaultPattern =
+            LEDPattern.solid(new Color("#ff3700")).synchronizedBlink(RobotController::getRSLState);
 
     private final List<LedWindow> children = new ArrayList<LedWindow>();
 
