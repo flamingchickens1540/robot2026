@@ -2,18 +2,28 @@ package org.team1540.robot2026;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import org.team1540.robot2026.subsystems.panaxis.Turret;
+import org.team1540.robot2026.subsystems.panaxis.TurretIO;
 
-public class RobotContainer {
+public class RobotContainer{
+
+
 
     /** The container for the robot. Contains subsystems, IO devices, and commands. */
     public RobotContainer() {
         configureButtonBindings();
         configureAutoRoutines();
+
     }
 
-    private void configureButtonBindings() {}
+    private void configureButtonBindings() {
 
-    private void configureAutoRoutines() {}
+    }
+
+    private void configureAutoRoutines() {
+        
+    }
 
     /**
      * Use this to pass the autonomous command to the main {@link Robot} class.

@@ -45,7 +45,7 @@ public class Turret extends SubsystemBase {
     private final Debouncer zeroedDebouncer = new Debouncer(0.25);
 
 
-    private Turret(TurretIO turretIO) {
+    public Turret(TurretIO turretIO) {
         if (hasInstance) throw new IllegalStateException("Instance of elevator already exists");
         hasInstance = true;
         this.io = turretIO;
