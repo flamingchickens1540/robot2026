@@ -1,5 +1,8 @@
 package org.team1540.robot2026.commands;
 
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -8,7 +11,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.function.DoubleConsumer;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
+import org.team1540.robot2026.subsystems.drive.DrivetrainConstants;
 import org.team1540.robot2026.util.LoggedTunableNumber;
 import org.team1540.robot2026.util.math.PolynomialRegression;
 
@@ -64,5 +69,68 @@ public class CharacterizationCommands {
                         }));
         command.addRequirements(requirements);
         return command;
+    }
+
+    private static final LoggedTunableNumber wheelRadiusSpeedRadsPerSec =
+            new LoggedTunableNumber("Characterization/WheelRadius/SpeedRadsPerSec", 0.5);
+    private static final LoggedTunableNumber wheelRadiusRampRate =
+            new LoggedTunableNumber("Characterization/WheelRadius/RampRate", 0.5);
+
+    public static Command wheelRadius(
+            DoubleConsumer omegaConsumer,
+            DoubleSupplier gyroYawRadsSupplier,
+            Supplier<double[]> wheelPositionsRadsSupplier,
+            Subsystem... requirements) {
+        WheelRadiusCharacterizationState state = new WheelRadiusCharacterizationState();
+
+        return Commands.parallel(
+                        Commands.sequence(
+                                Commands.runOnce(() -> state.limiter = new SlewRateLimiter(wheelRadiusRampRate.get())),
+                                Commands.run(
+                                        () -> {
+                                            double omega = state.limiter.calculate(wheelRadiusSpeedRadsPerSec.get());
+                                            omegaConsumer.accept(omega);
+                                        },
+                                        requirements)),
+                        Commands.sequence(
+                                Commands.waitSeconds(START_DELAY_SECS),
+                                Commands.runOnce(() -> {
+                                    state.startPositions = wheelPositionsRadsSupplier.get();
+                                    state.lastYawRads = gyroYawRadsSupplier.getAsDouble();
+                                    state.accumGyroYawRads = 0.0;
+                                }),
+                                Commands.run(() -> {
+                                    double rotation = gyroYawRadsSupplier.getAsDouble();
+                                    state.accumGyroYawRads +=
+                                            Math.abs(MathUtil.angleModulus(rotation - state.lastYawRads));
+                                    state.lastYawRads = rotation;
+                                })))
+                .finallyDo(() -> {
+                    double[] positions = wheelPositionsRadsSupplier.get();
+                    double wheelDelta = 0.0;
+                    for (int i = 0; i < 4; i++) {
+                        wheelDelta += Math.abs(positions[i] - state.startPositions[i]);
+                    }
+                    wheelDelta /= 4.0;
+                    double effectiveRadius =
+                            (state.accumGyroYawRads * DrivetrainConstants.DRIVEBASE_RADIUS) / wheelDelta;
+                    effectiveRadius = Units.metersToInches(effectiveRadius);
+
+                    System.out.println("********** Wheel Radius Characterization Results **********");
+                    System.out.println("\tAvg Wheel Delta: " + wheelDelta);
+                    System.out.println("\tAccum Gyro Yaw: " + state.accumGyroYawRads);
+                    System.out.println("\tEffective Radius (inches): " + effectiveRadius);
+
+                    Logger.recordOutput("Characterization/WheelRadius/AvgWheelDelta", wheelDelta);
+                    Logger.recordOutput("Characterization/WheelRadius/AccumGyroYaw", state.accumGyroYawRads);
+                    Logger.recordOutput("Characterization/WheelRadius/EffectiveRadiusInches", effectiveRadius);
+                });
+    }
+
+    private static class WheelRadiusCharacterizationState {
+        SlewRateLimiter limiter = new SlewRateLimiter(wheelRadiusRampRate.get());
+        double[] startPositions = new double[4];
+        double lastYawRads = 0.0;
+        double accumGyroYawRads = 0.0;
     }
 }

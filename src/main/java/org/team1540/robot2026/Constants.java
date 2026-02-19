@@ -1,5 +1,6 @@
 package org.team1540.robot2026;
 
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 
 /**
@@ -30,4 +31,10 @@ public final class Constants {
     }
 
     public static final double LOOP_PERIOD_SECS = 0.02;
+
+    public static final double ROBOT_MASS_KG = Units.lbsToKilograms(135.0);
+    public static final double ROBOT_MOI_KGM2 = 7.0; // TODO: find more accurate value from CAD
+
+    public static final double BUMPER_LENGTH_X_METERS = Units.inchesToMeters(38.0);
+    public static final double BUMPER_LENGTH_Y_METERS = Units.inchesToMeters(32.0);
 }
