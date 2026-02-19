@@ -14,5 +14,7 @@ public class ShooterConstants {
         public static final double KV = 0.12089376471841834;
 
         public static final double ERROR_TOLERANCE_RPM = 100;
+
+        public static final double SIM_MOI = 3;
     }
 }
