@@ -75,11 +75,8 @@ public class ShooterIOTalonFX implements ShooterIO {
     @Override
     public void updateInputs(ShooterIOInputs inputs) {
         inputs.leftMotorConnected = BaseStatusSignal.refreshAll(
-                leftVelocity,
-                leftAppliedVoltage,
-                leftStatorCurrent,
-                leftSupplyCurrent,
-                leftTemperature).isOK();
+                        leftVelocity, leftAppliedVoltage, leftStatorCurrent, leftSupplyCurrent, leftTemperature)
+                .isOK();
         inputs.leftVelocityRPM = leftVelocity.getValueAsDouble();
         inputs.leftAppliedVolts = leftAppliedVoltage.getValueAsDouble();
         inputs.leftStatorCurrentAmps = leftStatorCurrent.getValueAsDouble();
@@ -87,12 +84,13 @@ public class ShooterIOTalonFX implements ShooterIO {
         inputs.leftSupplyCurrentAmps = leftSupplyCurrent.getValueAsDouble();
 
         inputs.rightMotorConnected = BaseStatusSignal.refreshAll(
-                rightVelocity,
-                rightAppliedVoltage,
-                rightAppliedVoltage,
-                rightStatorCurrent,
-                rightSupplyCurrent,
-                rightTemperature).isOK();
+                        rightVelocity,
+                        rightAppliedVoltage,
+                        rightAppliedVoltage,
+                        rightStatorCurrent,
+                        rightSupplyCurrent,
+                        rightTemperature)
+                .isOK();
         inputs.rightVelocityRPM = rightVelocity.getValueAsDouble();
         inputs.rightAppliedVolts = rightAppliedVoltage.getValueAsDouble();
         inputs.rightStatorCurrentAmps = rightStatorCurrent.getValueAsDouble();

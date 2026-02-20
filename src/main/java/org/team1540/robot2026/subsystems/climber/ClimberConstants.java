@@ -4,8 +4,7 @@ import edu.wpi.first.math.util.Units;
 
 public class ClimberConstants {
     // CONSTANTS NEED TO BE UPDATED
-    public static final int LEFT_MOTOR_ID = 0;
-    public static final int RIGHT_MOTOR_ID = 0;
+    public static final int MOTOR_ID = 0;
     public static final int UPPER_LIMIT_ID = 0;
     public static final int LOWER_LIMIT_ID = 0;
 
@@ -18,7 +17,6 @@ public class ClimberConstants {
     public static final double GEAR_RATIO = 3.0;
     public static final double KS = 0.185;
     public static final double KV = 4.337;
-    public static final double KA = 0.00;
     public static final double KP = 150;
     public static final double KI = 0;
     public static final double KD = 0;
