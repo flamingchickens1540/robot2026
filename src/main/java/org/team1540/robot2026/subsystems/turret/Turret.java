@@ -57,8 +57,7 @@ public class Turret extends SubsystemBase {
         // MechanismVisualizer.getInstance().setElevatorPosition(inputs.positionMeters[0]); TODO set up sim pos
 
         motorDisconnectedAlert.set(!inputs.connected || !inputs.smallEncoderConnected || !inputs.bigEncoderConnected);
-        Logger.recordOutput(
-                "Turret/CalculatedPosition", calculateTurretAngle());
+        Logger.recordOutput("Turret/CalculatedPosition", calculateTurretAngle());
 
         LoggedTracer.record("Turret");
     }
@@ -132,9 +131,7 @@ public class Turret extends SubsystemBase {
     }
 
     public Command zeroCommand() {
-        return Commands.run(
-                () -> io.setMotorPosition(calculateTurretAngle()),
-                this);
+        return Commands.run(() -> io.setMotorPosition(calculateTurretAngle()), this);
     }
 
     public static Turret createReal() {

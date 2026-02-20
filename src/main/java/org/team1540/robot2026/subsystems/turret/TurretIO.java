@@ -40,6 +40,4 @@ public interface TurretIO {
     default void configFF(double kS, double kV, double kG) {}
 
     default void setMotorPosition(Rotation2d position) {}
-
-
 }
