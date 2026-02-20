@@ -1,6 +1,4 @@
-package org.team1540.robot2026.subsystems.Shooter;
-
-import static org.team1540.robot2026.subsystems.Shooter.ShooterConstants.Flywheels.*;
+package org.team1540.robot2026.subsystems.shooter;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
@@ -18,15 +16,16 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
 
-public class ShooterIOTalonFX implements FlywheelsIO {
-    private final TalonFX rightMotor = new TalonFX(RIGHT_ID);
-    private final TalonFX leftMotor = new TalonFX(LEFT_ID);
+public class ShooterIOTalonFX implements ShooterIO {
+    private final TalonFX rightMotor = new TalonFX(ShooterConstants.RIGHT_ID);
+    private final TalonFX leftMotor = new TalonFX(ShooterConstants.LEFT_ID);
 
     private final StatusSignal<AngularVelocity> leftVelocity = rightMotor.getVelocity();
     private final StatusSignal<Voltage> leftAppliedVoltage = rightMotor.getMotorVoltage();
     private final StatusSignal<Current> leftStatorCurrent = rightMotor.getStatorCurrent();
     private final StatusSignal<Current> leftSupplyCurrent = rightMotor.getSupplyCurrent();
     private final StatusSignal<Temperature> leftTemperature = rightMotor.getDeviceTemp();
+
     private final StatusSignal<AngularVelocity> rightVelocity = rightMotor.getVelocity();
     private final StatusSignal<Voltage> rightAppliedVoltage = rightMotor.getMotorVoltage();
     private final StatusSignal<Current> rightStatorCurrent = rightMotor.getStatorCurrent();
@@ -38,16 +37,15 @@ public class ShooterIOTalonFX implements FlywheelsIO {
     private final VoltageOut voltageCtrlReq = new VoltageOut(0).withEnableFOC(true);
 
     public ShooterIOTalonFX() {
-
         TalonFXConfiguration config = new TalonFXConfiguration();
 
-        config.Slot0.kP = KP;
-        config.Slot0.kI = KI;
-        config.Slot0.kD = KD;
-        config.Slot0.kS = KS;
-        config.Slot0.kV = KV;
+        config.Slot0.kP = ShooterConstants.KP;
+        config.Slot0.kI = ShooterConstants.KI;
+        config.Slot0.kD = ShooterConstants.KD;
+        config.Slot0.kS = ShooterConstants.KS;
+        config.Slot0.kV = ShooterConstants.KV;
 
-        config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
+        config.Feedback.SensorToMechanismRatio = ShooterConstants.GEAR_RATIO;
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
@@ -55,8 +53,6 @@ public class ShooterIOTalonFX implements FlywheelsIO {
 
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         leftMotor.getConfigurator().apply(config);
-
-
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 50,
@@ -71,31 +67,32 @@ public class ShooterIOTalonFX implements FlywheelsIO {
                 rightSupplyCurrent,
                 rightTemperature);
 
-        leftMotor.setControl(new Follower(RIGHT_ID, MotorAlignmentValue.Opposed));
+        leftMotor.setControl(new Follower(ShooterConstants.RIGHT_ID, MotorAlignmentValue.Opposed));
 
         rightMotor.optimizeBusUtilization();
     }
 
     @Override
-    public void updateInputs(FlywheelsIOInputs inputs) {
-        BaseStatusSignal.refreshAll(
+    public void updateInputs(ShooterIOInputs inputs) {
+        inputs.leftMotorConnected = BaseStatusSignal.refreshAll(
                 leftVelocity,
                 leftAppliedVoltage,
                 leftStatorCurrent,
                 leftSupplyCurrent,
-                leftTemperature,
-                rightVelocity,
-                rightAppliedVoltage,
-                rightAppliedVoltage,
-                rightStatorCurrent,
-                rightSupplyCurrent,
-                rightTemperature);
-
+                leftTemperature).isOK();
         inputs.leftVelocityRPM = leftVelocity.getValueAsDouble();
         inputs.leftAppliedVolts = leftAppliedVoltage.getValueAsDouble();
         inputs.leftStatorCurrentAmps = leftStatorCurrent.getValueAsDouble();
         inputs.leftTempCelsius = leftTemperature.getValueAsDouble();
         inputs.leftSupplyCurrentAmps = leftSupplyCurrent.getValueAsDouble();
+
+        inputs.rightMotorConnected = BaseStatusSignal.refreshAll(
+                rightVelocity,
+                rightAppliedVoltage,
+                rightAppliedVoltage,
+                rightStatorCurrent,
+                rightSupplyCurrent,
+                rightTemperature).isOK();
         inputs.rightVelocityRPM = rightVelocity.getValueAsDouble();
         inputs.rightAppliedVolts = rightAppliedVoltage.getValueAsDouble();
         inputs.rightStatorCurrentAmps = rightStatorCurrent.getValueAsDouble();
@@ -104,24 +101,24 @@ public class ShooterIOTalonFX implements FlywheelsIO {
     }
 
     @Override
-    public void setSpeeds(double leftRPM, double rightRPM) {
-        rightMotor.setControl(velocityCtrlReq.withVelocity(leftRPM / 60));
+    public void setSpeed(double rpm) {
+        rightMotor.setControl(velocityCtrlReq.withVelocity(rpm / 60));
     }
 
     @Override
-    public void setVoltage(double leftVolts, double rightVolts) {
-        rightMotor.setControl(voltageCtrlReq.withOutput(leftVolts));
+    public void setVoltage(double volts) {
+        rightMotor.setControl(voltageCtrlReq.withOutput(volts));
     }
 
     @Override
-    public void configPID(double kP, double kI, double kD, double kV, double kS) {
+    public void configPID(double kP, double kI, double kD, double kS, double kV) {
         Slot0Configs pidConfigs = new Slot0Configs();
         rightMotor.getConfigurator().refresh(pidConfigs);
         pidConfigs.kP = kP;
         pidConfigs.kI = kI;
         pidConfigs.kD = kD;
-        pidConfigs.kV = kV;
         pidConfigs.kS = kS;
+        pidConfigs.kV = kV;
         rightMotor.getConfigurator().apply(pidConfigs);
     }
 }

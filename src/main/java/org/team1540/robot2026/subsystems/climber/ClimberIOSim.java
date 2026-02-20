@@ -1,7 +1,7 @@
 package org.team1540.robot2026.subsystems.climber;
 
-import static org.team1540.robot2026.subsystems.climber.ClimberConstants.*;
 import static org.team1540.robot2026.Constants.*;
+import static org.team1540.robot2026.subsystems.climber.ClimberConstants.*;
 
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -17,15 +17,14 @@ public class ClimberIOSim implements ClimberIO {
     private static final double SIM_KV = 2.562;
     private static final double SIM_KG = 0;
     private final ElevatorSim climberSim = new ElevatorSim(
-        DCMotor.getKrakenX44Foc(2),
-        GEAR_RATIO,
-        SIM_CARRIAGE_MASS_KG,
-        SPROCKET_RADIUS_M,
-        MIN_HEIGHT_M,
-        MAX_HEIGHT_M,
-        false,
-        MIN_HEIGHT_M
-    );
+            DCMotor.getKrakenX44Foc(2),
+            GEAR_RATIO,
+            SIM_CARRIAGE_MASS_KG,
+            SPROCKET_RADIUS_M,
+            MIN_HEIGHT_M,
+            MAX_HEIGHT_M,
+            false,
+            MIN_HEIGHT_M);
     private double appliedVolts = 0.0;
     private final ProfiledPIDController controller = new ProfiledPIDController(
             SIM_KP, SIM_KI, SIM_KD, new TrapezoidProfile.Constraints(CRUISE_VELOCITY_MPS, ACCELERATION_MPS2));

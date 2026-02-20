@@ -1,7 +1,7 @@
-package org.team1540.robot2026.subsystems.LEDs;
+package org.team1540.robot2026.subsystems.leds;
 
-import static org.team1540.robot2026.subsystems.LEDs.LEDConstants.LED_LENGTH;
-import static org.team1540.robot2026.subsystems.LEDs.LEDConstants.LED_PORT;
+import static org.team1540.robot2026.subsystems.leds.LEDConstants.LED_LENGTH;
+import static org.team1540.robot2026.subsystems.leds.LEDConstants.LED_PORT;
 
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.AddressableLED;
@@ -11,13 +11,13 @@ import java.util.ArrayList;
 import java.util.List;
 import org.team1540.robot2026.util.LoggedTracer;
 
-public class Leds extends SubsystemBase {
+public class LEDs extends SubsystemBase {
     private final AddressableLED ledStrip = new AddressableLED(LED_PORT);
     private final AddressableLEDBuffer ledBuffer = new AddressableLEDBuffer(LED_LENGTH);
 
     private final List<LedWindow> children = new ArrayList<LedWindow>();
 
-    public Leds() {
+    public LEDs() {
         ledStrip.setLength(ledBuffer.getLength());
         ledStrip.start();
     }
