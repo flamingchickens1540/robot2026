@@ -56,8 +56,6 @@ public class ShooterIOTalonFX implements FlywheelsIO {
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         leftMotor.getConfigurator().apply(config);
 
-
-
         BaseStatusSignal.setUpdateFrequencyForAll(
                 50,
                 leftVelocity,

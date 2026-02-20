@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import org.team1540.robot2026.commands.CharacterizationCommands;
 import org.team1540.robot2026.subsystems.drive.Drivetrain;
+import org.team1540.robot2026.subsystems.turret.Turret;
 import org.team1540.robot2026.util.auto.LoggedAutoChooser;
 
 public class RobotContainer {
@@ -18,28 +19,31 @@ public class RobotContainer {
     private final CommandXboxController copilot = new CommandXboxController(1);
 
     private final Drivetrain drivetrain;
+    private final Turret turret;
 
     private final LoggedAutoChooser autoChooser = new LoggedAutoChooser("Auto Chooser");
 
     private final RobotState robotState = RobotState.getInstance();
 
     /** The container for the robot. Contains subsystems, IO devices, and commands. */
-
     public RobotContainer() {
         switch (Constants.CURRENT_MODE) {
             case REAL -> {
                 // Initialize physical hardware IOs
                 drivetrain = Drivetrain.createReal();
+                turret = Turret.createReal();
             }
             case SIM -> {
                 // Initialize simulated hardware IOs
                 drivetrain = Drivetrain.createSim();
+                turret = Turret.createSim();
 
                 RobotState.getInstance().resetPose(new Pose2d(3.0, 3.0, Rotation2d.kZero));
             }
             default -> {
                 // Initialize no-op hardware IOs for replay
                 drivetrain = Drivetrain.createDummy();
+                turret = Turret.createDummy();
             }
         }
 
@@ -53,6 +57,7 @@ public class RobotContainer {
         drivetrain.setDefaultCommand(drivetrain.teleopDriveCommand(driver.getHID()));
         driver.x().onTrue(drivetrain.runOnce(drivetrain::stopWithX));
         driver.start().onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual));
+        driver.y().onTrue(turret.zeroCommand());
     }
 
     private void configureAutoRoutines() {

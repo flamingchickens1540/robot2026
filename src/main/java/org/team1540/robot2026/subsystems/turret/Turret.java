@@ -1,26 +1,22 @@
-package org.team1540.robot2026.subsystems.panaxis;
+package org.team1540.robot2026.subsystems.turret;
 
-import static org.team1540.robot2026.subsystems.panaxis.TurretConstants.*;
+import static org.team1540.robot2026.subsystems.turret.TurretConstants.*;
 
-import com.ctre.phoenix6.hardware.CANcoder;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import java.util.function.Supplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.Constants;
 import org.team1540.robot2026.util.LoggedTracer;
 import org.team1540.robot2026.util.LoggedTunableNumber;
-
-import java.util.function.DoubleSupplier;
-import java.util.function.Supplier;
 
 public class Turret extends SubsystemBase {
     private boolean hasInstance = false;
@@ -31,19 +27,14 @@ public class Turret extends SubsystemBase {
     private final LoggedTunableNumber kS = new LoggedTunableNumber("Turret/kS", KS);
     private final LoggedTunableNumber kV = new LoggedTunableNumber("Turret/kV", KV);
 
-
     private final Alert motorDisconnectedAlert = new Alert("Turret motor disconnected", Alert.AlertType.kError);
 
     private final TurretIO io;
     private final TurretIOInputsAutoLogged inputs = new TurretIOInputsAutoLogged();
 
-
-
-
     private Rotation2d setpointRotation;
 
     private final Debouncer zeroedDebouncer = new Debouncer(0.25);
-
 
     public Turret(TurretIO turretIO) {
         if (hasInstance) throw new IllegalStateException("Instance of elevator already exists");
@@ -65,7 +56,9 @@ public class Turret extends SubsystemBase {
 
         // MechanismVisualizer.getInstance().setElevatorPosition(inputs.positionMeters[0]); TODO set up sim pos
 
-        motorDisconnectedAlert.set(!inputs.connected || !inputs.mainEncoderConnected || !inputs.secondaryEncoderConnected);
+        motorDisconnectedAlert.set(!inputs.connected || !inputs.gear1EncoderConnected || !inputs.gear2EncoderConnected);
+        Logger.recordOutput(
+                "Turret/CalculatedPosition", calculateTurretAngle(io.getGear1EncoderPos(), io.getGear2EncoderPos()));
 
         LoggedTracer.record("Turret");
     }
@@ -85,7 +78,7 @@ public class Turret extends SubsystemBase {
     }
 
     public void setSetpoint(Rotation2d position) {
-      position.fromDegrees(MathUtil.clamp(position.getDegrees(), 0, MAX_TURRET_ROTATION));
+        position.fromDegrees(MathUtil.clamp(position.getDegrees(), 0, MAX_TURRET_ROTATION));
         setpointRotation = position;
         io.setSetpoint(setpointRotation);
     }
@@ -106,14 +99,39 @@ public class Turret extends SubsystemBase {
         io.setBrakeMode(isBrakeMode);
     }
 
+    public Rotation2d calculateTurretAngle(double encoder1Pos, double encoder2Pos) {
+        double[] encoder1Positions = new double[POSSIBLE_POS_ACC_DIGITS];
+        double[] encoder2Positions = new double[POSSIBLE_POS_ACC_DIGITS];
+        double out = 0;
+        double minValue = 1;
+        for (int i = 0; i < POSSIBLE_POS_ACC_DIGITS; i++) {
+            encoder1Positions[i] =
+                    (i + (encoder1Pos)) * PLANETARY_GEAR_1_TOOTH_COUNT / DRIVEN_GEAR_TOOTH_COUNT; // 0 - 1
+            encoder2Positions[i] = (i + (encoder2Pos)) * PLANETARY_GEAR_2_TOOTH_COUNT / DRIVEN_GEAR_TOOTH_COUNT;
+        }
+        Logger.recordOutput("Turret/Encoder1Positions", encoder1Positions);
+        Logger.recordOutput("Turret/Encoder2Positions", encoder2Positions);
+
+        for (int i = 0; i < POSSIBLE_POS_ACC_DIGITS; i++) {
+            for (int z = 0; z < POSSIBLE_POS_ACC_DIGITS; z++) {
+                if (Math.abs(encoder1Positions[i] - encoder2Positions[z]) < minValue) {
+                    out = (encoder1Positions[i] + encoder2Positions[z]) / 2;
+                    minValue = Math.abs(encoder1Positions[i] - encoder2Positions[z]);
+                }
+            }
+        }
+        return Rotation2d.fromRotations(out);
+    }
+
     public Command commandToSetpoint(Supplier<Rotation2d> rotation) {
-        return Commands.runOnce(() -> setSetpoint((Rotation2d) rotation),this
-        );
+        return Commands.runOnce(
+                () -> setSetpoint((Rotation2d) rotation), this); // setSetpoint((Rotation2d) rotation),this
     }
 
     public Command zeroCommand() {
-        return Commands.run(()-> setSetpoint(io.calculateTurretAngle()),this);
-
+        return Commands.run(
+                () -> io.setMotorPosition(calculateTurretAngle(io.getGear1EncoderPos(), io.getGear2EncoderPos())),
+                this);
     }
 
     public static Turret createReal() {
@@ -134,6 +152,6 @@ public class Turret extends SubsystemBase {
         if (Constants.CURRENT_MODE == Constants.Mode.REAL) {
             DriverStation.reportWarning("Using dummy turret on real robot", false);
         }
-        return new Turret(new TurretIO(){});
+        return new Turret(new TurretIO() {});
     }
 }

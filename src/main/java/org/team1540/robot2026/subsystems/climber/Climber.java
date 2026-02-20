@@ -1,18 +1,16 @@
 package org.team1540.robot2026.subsystems.climber;
 
+import static org.team1540.robot2026.subsystems.climber.ClimberConstants.*;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
-import static org.team1540.robot2026.subsystems.climber.ClimberConstants.*;
-
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.util.LoggedTracer;
 import org.team1540.robot2026.util.LoggedTunableNumber;
-
 
 public class Climber extends SubsystemBase {
     private boolean hasInstance = false;
@@ -57,7 +55,8 @@ public class Climber extends SubsystemBase {
 
     @AutoLogOutput(key = "Climber/AtSetpoint")
     public boolean isAtSetpoint() {
-        return (MathUtil.isNear(setpointMeters, inputs.leftMotorPositionMeters, POS_ERR_TOLERANCE_M) && MathUtil.isNear(setpointMeters, inputs.rightMotorPositionMeters, POS_ERR_TOLERANCE_M))
+        return (MathUtil.isNear(setpointMeters, inputs.leftMotorPositionMeters, POS_ERR_TOLERANCE_M)
+                        && MathUtil.isNear(setpointMeters, inputs.rightMotorPositionMeters, POS_ERR_TOLERANCE_M))
                 || (inputs.atLowerLimit && setpointMeters <= 0);
     }
 
@@ -100,14 +99,13 @@ public class Climber extends SubsystemBase {
 
     public Command climbCommand(double positionMeters) {
         return Commands.runEnd(
-            () -> {
-                io.setSetpoint(positionMeters);
-            },
-            () -> {
-                io.setVoltage(0);
-            },
-            this
-        );
+                () -> {
+                    io.setSetpoint(positionMeters);
+                },
+                () -> {
+                    io.setVoltage(0);
+                },
+                this);
     }
 
     public static Climber createReal() {

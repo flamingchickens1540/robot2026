@@ -1,11 +1,11 @@
-package org.team1540.robot2026.subsystems.panaxis;
+package org.team1540.robot2026.subsystems.turret;
 
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import edu.wpi.first.math.geometry.Rotation2d;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface TurretIO {
-    default void configFF(double kS, double kV) {};
+    default void configFF(double kS, double kV) {}
+    ;
 
     @AutoLog
     class TurretIOInputs {
@@ -19,21 +19,19 @@ public interface TurretIO {
         public double tempCelsius = 0.0;
 
         // Cancoder Main
-        public boolean mainEncoderConnected = false;
-        public Rotation2d mainEncoderPosition = Rotation2d.kZero;
+        public boolean gear1EncoderConnected = false;
+        public Rotation2d gear1EncoderPosition = Rotation2d.kZero;
 
         // Cancoder Second
-        public boolean secondaryEncoderConnected = false;
-        public Rotation2d secondaryEncoderPosition = Rotation2d.kZero;
-
-
+        public boolean gear2EncoderConnected = false;
+        public Rotation2d gear2EncoderPosition = Rotation2d.kZero;
     }
 
     default void updateInputs(TurretIOInputs inputs) {}
 
     default void setVoltage(double volts) {}
 
-    default void setSetpoint(Rotation2d  rotation) {}
+    default void setSetpoint(Rotation2d rotation) {}
 
     default void setBrakeMode(boolean brakeMode) {}
 
@@ -43,5 +41,11 @@ public interface TurretIO {
 
     default void setMotorPosition(Rotation2d position) {}
 
-    default Rotation2d calculateTurretAngle() {return Rotation2d.kZero;};
+    default double getGear1EncoderPos() {
+        return 0;
+    }
+
+    default double getGear2EncoderPos() {
+        return 0;
+    }
 }
