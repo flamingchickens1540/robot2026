@@ -3,13 +3,11 @@ package org.team1540.robot2026.subsystems.turret;
 import static org.team1540.robot2026.subsystems.turret.TurretConstants.*;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -19,7 +17,7 @@ import org.team1540.robot2026.util.LoggedTracer;
 import org.team1540.robot2026.util.LoggedTunableNumber;
 
 public class Turret extends SubsystemBase {
-    private boolean hasInstance = false;
+    private static boolean hasInstance = false;
 
     private final LoggedTunableNumber kP = new LoggedTunableNumber("Turret/kP", KP);
     private final LoggedTunableNumber kI = new LoggedTunableNumber("Turret/kI", KI);
@@ -27,19 +25,16 @@ public class Turret extends SubsystemBase {
     private final LoggedTunableNumber kS = new LoggedTunableNumber("Turret/kS", KS);
     private final LoggedTunableNumber kV = new LoggedTunableNumber("Turret/kV", KV);
 
-    private final Alert motorDisconnectedAlert = new Alert("Turret motor disconnected", Alert.AlertType.kError);
-
     private final TurretIO io;
     private final TurretIOInputsAutoLogged inputs = new TurretIOInputsAutoLogged();
 
     private Rotation2d setpointRotation;
-
-    private final Debouncer zeroedDebouncer = new Debouncer(0.25);
+    private final Alert motorDisconnectedAlert = new Alert("Turret motor disconnected", Alert.AlertType.kError);
 
     public Turret(TurretIO turretIO) {
-        if (hasInstance) throw new IllegalStateException("Instance of elevator already exists");
-        hasInstance = true;
+        if (hasInstance) throw new IllegalStateException("Instance of turret already exists");
         this.io = turretIO;
+        hasInstance = true;
     }
 
     @Override
@@ -54,48 +49,10 @@ public class Turret extends SubsystemBase {
         LoggedTunableNumber.ifChanged(hashCode(), () -> io.configPID(kP.get(), kI.get(), kD.get()), kP, kI, kD);
         LoggedTunableNumber.ifChanged(hashCode(), () -> io.configFF(kS.get(), kV.get()), kS, kV);
 
-        // MechanismVisualizer.getInstance().setElevatorPosition(inputs.positionMeters[0]); TODO set up sim pos
-
         motorDisconnectedAlert.set(!inputs.connected || !inputs.smallEncoderConnected || !inputs.bigEncoderConnected);
         Logger.recordOutput("Turret/CalculatedPosition", calculateTurretAngle());
 
         LoggedTracer.record("Turret");
-    }
-
-    public void stop() {
-        io.setVoltage(0);
-    }
-
-    @AutoLogOutput(key = "Turret/AtSetpoint")
-    public boolean isAtSetpoint() {
-        return MathUtil.isNear(setpointRotation.getDegrees(), inputs.position.getDegrees(), POS_ERR_TOLERANCE_DEGREES);
-    }
-
-    @AutoLogOutput(key = "Turret/Setpoint")
-    public Rotation2d getSetpoint() {
-        return setpointRotation;
-    }
-
-    public void setSetpoint(Rotation2d position) {
-        position.fromDegrees(MathUtil.clamp(position.getDegrees(), 0, MAX_TURRET_ROTATION));
-        setpointRotation = position;
-        io.setSetpoint(setpointRotation);
-    }
-
-    public void setVoltage(double voltage) {
-        io.setVoltage(voltage);
-    }
-
-    public Rotation2d getPosition() {
-        return inputs.position;
-    }
-
-    public double getVelocity() {
-        return inputs.velocityRadPerSec;
-    }
-
-    public void setBrakeMode(boolean isBrakeMode) {
-        io.setBrakeMode(isBrakeMode);
     }
 
     public Rotation2d calculateTurretAngle() {
@@ -125,13 +82,47 @@ public class Turret extends SubsystemBase {
         return Rotation2d.fromRotations(out);
     }
 
+    public void stop() {
+        io.setVoltage(0);
+    }
+
+    @AutoLogOutput(key = "Turret/AtSetpoint")
+    public boolean atSetpoint() {
+        return MathUtil.isNear(setpointRotation.getDegrees(), inputs.position.getDegrees(), POS_ERR_TOLERANCE_DEGREES);
+    }
+
+    @AutoLogOutput(key = "Turret/Setpoint")
+    public Rotation2d getSetpoint() {
+        return setpointRotation;
+    }
+
+    public void setSetpoint(Rotation2d position) {
+        setpointRotation = Rotation2d.fromDegrees(MathUtil.clamp(position.getDegrees(), 0, MAX_TURRET_ROTATION));
+        io.setSetpoint(setpointRotation);
+    }
+
+    public void setVoltage(double voltage) {
+        io.setVoltage(voltage);
+    }
+
+    public Rotation2d getPosition() {
+        return inputs.position;
+    }
+
+    public double getVelocity() {
+        return inputs.velocityRPS;
+    }
+
+    public void setBrakeMode(boolean isBrakeMode) {
+        io.setBrakeMode(isBrakeMode);
+    }
+
     public Command commandToSetpoint(Supplier<Rotation2d> rotation) {
-        return Commands.runOnce(
-                () -> setSetpoint((Rotation2d) rotation), this); // setSetpoint((Rotation2d) rotation),this
+        return runEnd(() -> setSetpoint(rotation.get()), this::stop);
     }
 
     public Command zeroCommand() {
-        return Commands.run(() -> io.setMotorPosition(calculateTurretAngle()), this);
+        return runOnce(this::stop).andThen(runOnce(() -> io.setMotorPosition(calculateTurretAngle())));
     }
 
     public static Turret createReal() {

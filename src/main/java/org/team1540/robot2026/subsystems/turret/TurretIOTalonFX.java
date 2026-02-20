@@ -95,8 +95,8 @@ public class TurretIOTalonFX implements TurretIO {
         inputs.appliedVolts = appliedVoltage.getValueAsDouble();
         inputs.tempCelsius = motorTemp.getValueAsDouble();
         inputs.statorCurrentAmps = motorStatorCurrent.getValueAsDouble();
-        inputs.position = Rotation2d.fromDegrees(position.getValueAsDouble());
-        inputs.velocityRadPerSec = velocity.getValueAsDouble();
+        inputs.position = Rotation2d.fromRotations(position.getValueAsDouble());
+        inputs.velocityRPS = velocity.getValueAsDouble();
 
         inputs.smallEncoderConnected = smallCANcoder.isConnected();
         inputs.bigEncoderConnected = smallCANcoder.isConnected();
@@ -113,12 +113,12 @@ public class TurretIOTalonFX implements TurretIO {
 
     @Override
     public void setSetpoint(Rotation2d position) {
-        motor.setControl(profiledPositionControl.withPosition(Rotations.of(position.getDegrees())));
+        motor.setControl(profiledPositionControl.withPosition(position.getRotations()));
     }
 
     @Override
     public void setMotorPosition(Rotation2d position) {
-        motor.setPosition(Rotations.of(position.getDegrees()));
+        motor.setPosition(position.getRotations());
     }
 
     @Override

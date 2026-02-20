@@ -12,8 +12,8 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import org.team1540.robot2026.commands.CharacterizationCommands;
 import org.team1540.robot2026.subsystems.climber.Climber;
 import org.team1540.robot2026.subsystems.drive.Drivetrain;
-import org.team1540.robot2026.subsystems.turret.Turret;
 import org.team1540.robot2026.subsystems.shooter.Shooter;
+import org.team1540.robot2026.subsystems.turret.Turret;
 import org.team1540.robot2026.util.auto.LoggedAutoChooser;
 
 public class RobotContainer {
