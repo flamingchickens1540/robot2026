@@ -32,10 +32,10 @@ public class TurretIOTalonFX implements TurretIO {
     private final StatusSignal<Current> motorStatorCurrent = motor.getStatorCurrent();
 
     // Encoders
-    private final CANcoder gear1CANcoder = new CANcoder(GEAR_1_CANCODER_ID);
-    private final CANcoder gear2CANcoder = new CANcoder(GEAR_2_CANCODER_ID);
-    private final StatusSignal<Angle> gear1CANcoderPosition = gear1CANcoder.getAbsolutePosition();
-    private final StatusSignal<Angle> gear2CANcoderPosition = gear2CANcoder.getAbsolutePosition();
+    private final CANcoder smallCANcoder = new CANcoder(SMALL_ENCODER_CANCODER_ID);
+    private final CANcoder bigCANcoder = new CANcoder(BIG_ENCODER_CANCODER_ID);
+    private final StatusSignal<Angle> smallCANcoderPosition = smallCANcoder.getAbsolutePosition();
+    private final StatusSignal<Angle> bigCANcoderPosition = bigCANcoder.getAbsolutePosition();
 
     public TurretIOTalonFX() {
         TalonFXConfiguration config = new TalonFXConfiguration();
@@ -63,12 +63,12 @@ public class TurretIOTalonFX implements TurretIO {
         motor.getConfigurator().apply(config);
 
         CANcoderConfiguration configEncoder = new CANcoderConfiguration();
-        configEncoder.MagnetSensor.MagnetOffset = GEAR_1_MAGNET_SENSOR_OFFSET;
+        configEncoder.MagnetSensor.MagnetOffset = SMALL_ENCODER_MAGNET_SENSOR_OFFSET;
         configEncoder.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
         configEncoder.MagnetSensor.AbsoluteSensorDiscontinuityPoint = 1;
-        gear1CANcoder.getConfigurator().apply(configEncoder);
-        configEncoder.MagnetSensor.MagnetOffset = GEAR_2_MAGNET_SENSOR_OFFSET;
-        gear2CANcoder.getConfigurator().apply(configEncoder);
+        smallCANcoder.getConfigurator().apply(configEncoder);
+        configEncoder.MagnetSensor.MagnetOffset = BIG_ENCODER_MAGNET_SENSOR_OFFSET;
+        bigCANcoder.getConfigurator().apply(configEncoder);
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 50,
@@ -78,8 +78,8 @@ public class TurretIOTalonFX implements TurretIO {
                 motorSupplyCurrent,
                 motorTemp,
                 motorStatorCurrent,
-                gear1CANcoderPosition,
-                gear2CANcoderPosition);
+                smallCANcoderPosition,
+                bigCANcoderPosition);
         motor.optimizeBusUtilization();
     }
 
@@ -88,22 +88,22 @@ public class TurretIOTalonFX implements TurretIO {
                 position, velocity,
                 appliedVoltage, motorSupplyCurrent,
                 motorTemp, motorStatorCurrent,
-                gear1CANcoderPosition, gear2CANcoderPosition);
+                smallCANcoderPosition, bigCANcoderPosition);
 
         inputs.connected = Status.isOK();
         inputs.supplyCurrentAmps = motorSupplyCurrent.getValueAsDouble();
         inputs.appliedVolts = appliedVoltage.getValueAsDouble();
         inputs.tempCelsius = motorTemp.getValueAsDouble();
         inputs.statorCurrentAmps = motorStatorCurrent.getValueAsDouble();
-        inputs.position.fromDegrees(position.getValueAsDouble());
+        inputs.position = Rotation2d.fromDegrees(position.getValueAsDouble());
         inputs.velocityRadPerSec = velocity.getValueAsDouble();
 
-        inputs.gear1EncoderConnected = gear1CANcoder.isConnected();
-        inputs.gear2EncoderConnected = gear1CANcoder.isConnected();
-        inputs.gear1EncoderPosition =
-                Rotation2d.fromRotations(gear1CANcoder.getAbsolutePosition().getValueAsDouble());
-        inputs.gear2EncoderPosition =
-                Rotation2d.fromRotations(gear2CANcoder.getAbsolutePosition().getValueAsDouble());
+        inputs.smallEncoderConnected = smallCANcoder.isConnected();
+        inputs.bigEncoderConnected = smallCANcoder.isConnected();
+        inputs.smallEncoderPosition =
+                Rotation2d.fromRotations(smallCANcoder.getAbsolutePosition().getValueAsDouble());
+        inputs.bigEncoderPosition =
+                Rotation2d.fromRotations(bigCANcoder.getAbsolutePosition().getValueAsDouble());
     }
 
     @Override
@@ -119,16 +119,6 @@ public class TurretIOTalonFX implements TurretIO {
     @Override
     public void setMotorPosition(Rotation2d position) {
         motor.setPosition(Rotations.of(position.getDegrees()));
-    }
-
-    @Override
-    public double getGear1EncoderPos() {
-        return gear1CANcoder.getAbsolutePosition().getValueAsDouble();
-    }
-
-    @Override
-    public double getGear2EncoderPos() {
-        return gear2CANcoder.getAbsolutePosition().getValueAsDouble();
     }
 
     @Override

@@ -56,9 +56,9 @@ public class Turret extends SubsystemBase {
 
         // MechanismVisualizer.getInstance().setElevatorPosition(inputs.positionMeters[0]); TODO set up sim pos
 
-        motorDisconnectedAlert.set(!inputs.connected || !inputs.gear1EncoderConnected || !inputs.gear2EncoderConnected);
+        motorDisconnectedAlert.set(!inputs.connected || !inputs.smallEncoderConnected || !inputs.bigEncoderConnected);
         Logger.recordOutput(
-                "Turret/CalculatedPosition", calculateTurretAngle(io.getGear1EncoderPos(), io.getGear2EncoderPos()));
+                "Turret/CalculatedPosition", calculateTurretAngle());
 
         LoggedTracer.record("Turret");
     }
@@ -99,15 +99,18 @@ public class Turret extends SubsystemBase {
         io.setBrakeMode(isBrakeMode);
     }
 
-    public Rotation2d calculateTurretAngle(double encoder1Pos, double encoder2Pos) {
+    public Rotation2d calculateTurretAngle() {
+        double encoder1Pos = inputs.smallEncoderPosition.getRotations();
+        double encoder2Pos = inputs.bigEncoderPosition.getRotations();
+
         double[] encoder1Positions = new double[POSSIBLE_POS_ACC_DIGITS];
         double[] encoder2Positions = new double[POSSIBLE_POS_ACC_DIGITS];
         double out = 0;
         double minValue = 1;
         for (int i = 0; i < POSSIBLE_POS_ACC_DIGITS; i++) {
             encoder1Positions[i] =
-                    (i + (encoder1Pos)) * PLANETARY_GEAR_1_TOOTH_COUNT / DRIVEN_GEAR_TOOTH_COUNT; // 0 - 1
-            encoder2Positions[i] = (i + (encoder2Pos)) * PLANETARY_GEAR_2_TOOTH_COUNT / DRIVEN_GEAR_TOOTH_COUNT;
+                    (i + (encoder1Pos)) * SMALL_ENCODER_GEAR_TOOTH_COUNT / DRIVEN_GEAR_TOOTH_COUNT; // 0 - 1
+            encoder2Positions[i] = (i + (encoder2Pos)) * BIG_ENCODER_GEAR_TOOTH_COUNT / DRIVEN_GEAR_TOOTH_COUNT;
         }
         Logger.recordOutput("Turret/Encoder1Positions", encoder1Positions);
         Logger.recordOutput("Turret/Encoder2Positions", encoder2Positions);
@@ -130,7 +133,7 @@ public class Turret extends SubsystemBase {
 
     public Command zeroCommand() {
         return Commands.run(
-                () -> io.setMotorPosition(calculateTurretAngle(io.getGear1EncoderPos(), io.getGear2EncoderPos())),
+                () -> io.setMotorPosition(calculateTurretAngle()),
                 this);
     }
 

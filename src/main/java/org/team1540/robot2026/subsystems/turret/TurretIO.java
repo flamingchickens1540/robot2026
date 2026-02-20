@@ -19,12 +19,12 @@ public interface TurretIO {
         public double tempCelsius = 0.0;
 
         // Cancoder Main
-        public boolean gear1EncoderConnected = false;
-        public Rotation2d gear1EncoderPosition = Rotation2d.kZero;
+        public boolean smallEncoderConnected = false;
+        public Rotation2d smallEncoderPosition = Rotation2d.kZero;
 
         // Cancoder Second
-        public boolean gear2EncoderConnected = false;
-        public Rotation2d gear2EncoderPosition = Rotation2d.kZero;
+        public boolean bigEncoderConnected = false;
+        public Rotation2d bigEncoderPosition = Rotation2d.kZero;
     }
 
     default void updateInputs(TurretIOInputs inputs) {}
@@ -41,11 +41,5 @@ public interface TurretIO {
 
     default void setMotorPosition(Rotation2d position) {}
 
-    default double getGear1EncoderPos() {
-        return 0;
-    }
 
-    default double getGear2EncoderPos() {
-        return 0;
-    }
 }
