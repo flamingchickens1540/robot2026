@@ -29,7 +29,7 @@ public class IntakeIOSim implements IntakeIO {
             DCMotor.getFalcon500Foc(1),
             PIVOT_GEAR_RATIO,
             0.1,
-            PIVOT_MOI,
+            PIVOT_MOI_KGM2,
             PIVOT_MIN_ANGLE.getRadians(),
             PIVOT_MAX_ANGLE.getRadians(),
             true,

@@ -22,5 +22,5 @@ public class IntakeConstants {
     public static Rotation2d PIVOT_MIN_ANGLE = Rotation2d.fromRotations(0.0);
     public static Rotation2d PIVOT_MAX_ANGLE = Rotation2d.fromRotations(0.0);
 
-    public static double PIVOT_MOI = 0.0;
+    public static double PIVOT_MOI_KGM2 = 0.2089;
 }

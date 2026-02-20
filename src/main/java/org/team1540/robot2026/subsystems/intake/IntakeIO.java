@@ -12,6 +12,7 @@ public interface IntakeIO {
         public double spinMotorAppliedVolts = 0;
         public double spinSupplyCurrentAmps = 0;
         public double spinStatorCurrentAmps = 0;
+        public double spinMotorTemp = 0;
         public boolean spinConnected = true;
 
         public boolean pivotConnected = true;
@@ -21,13 +22,14 @@ public interface IntakeIO {
         public double pivotMotorAppliedVolts = 0;
         public double pivotSupplyCurrentAmps = 0;
         public double pivotStatorCurrentAmps = 0;
+        public double pivotMotorTemp = 0;
     }
 
     default void updateInputs(IntakeInputs inputs) {}
 
     default void setIntakeVoltage(double voltage) {}
 
-    default void setPivotPosition(Rotation2d pivotPosition) {}
+    default void setPivotSetpoint(Rotation2d pivotPosition) {}
 
     default void setPivotVoltage(double voltage) {}
 

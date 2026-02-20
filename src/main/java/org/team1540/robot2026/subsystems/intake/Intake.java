@@ -4,7 +4,6 @@ import static org.team1540.robot2026.subsystems.intake.IntakeConstants.*;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -50,9 +49,6 @@ public class Intake extends SubsystemBase {
     private final IntakeInputsAutoLogged inputs = new IntakeInputsAutoLogged();
 
     private Rotation2d pivotSetpoint = PIVOT_MIN_ANGLE;
-
-    private final TrapezoidProfile trapezoidProfile =
-            new TrapezoidProfile(new TrapezoidProfile.Constraints(PIVOT_CRUISE_VELOCITY_RPS, PIVOT_ACCELERATION_RPS2));
 
     private Intake(IntakeIO io) {
         if (hasInstance) throw new IllegalStateException("Instance of intake already exists");
@@ -123,19 +119,6 @@ public class Intake extends SubsystemBase {
     @AutoLogOutput(key = "Intake/PivotSetpoint")
     public Rotation2d getPivotSetpoint() {
         return pivotSetpoint;
-    }
-
-    @AutoLogOutput(key = "Intake/TimeToSetpoint")
-    public double timeToSetpoint() {
-        return isPivotAtSetpoint() ? 0 : timeToSetpoint(pivotSetpoint);
-    }
-
-    public double timeToSetpoint(Rotation2d setpoint) {
-        trapezoidProfile.calculate(
-                0.0,
-                new TrapezoidProfile.State(getPivotPosition().getRotations(), inputs.pivotMotorVelocityRPS),
-                new TrapezoidProfile.State(setpoint.getRotations(), 0));
-        return trapezoidProfile.totalTime();
     }
 
     public Command commandToSetpoint(IntakeState state) {
