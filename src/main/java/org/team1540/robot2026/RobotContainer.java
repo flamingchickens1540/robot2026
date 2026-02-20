@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import org.team1540.robot2026.commands.CharacterizationCommands;
 import org.team1540.robot2026.subsystems.climber.Climber;
 import org.team1540.robot2026.subsystems.drive.Drivetrain;
+import org.team1540.robot2026.subsystems.turret.Turret;
 import org.team1540.robot2026.subsystems.shooter.Shooter;
 import org.team1540.robot2026.util.auto.LoggedAutoChooser;
 
@@ -21,6 +22,7 @@ public class RobotContainer {
 
     private final Drivetrain drivetrain;
     private final Shooter shooter;
+    private final Turret turret;
     private final Climber climber;
 
     private final LoggedAutoChooser autoChooser = new LoggedAutoChooser("Auto Chooser");
@@ -34,12 +36,14 @@ public class RobotContainer {
                 // Initialize physical hardware IOs
                 drivetrain = Drivetrain.createReal();
                 shooter = Shooter.createReal();
+                turret = Turret.createReal();
                 climber = Climber.createReal();
             }
             case SIM -> {
                 // Initialize simulated hardware IOs
                 drivetrain = Drivetrain.createSim();
                 shooter = Shooter.createSim();
+                turret = Turret.createSim();
                 climber = Climber.createSim();
 
                 RobotState.getInstance().resetPose(new Pose2d(3.0, 3.0, Rotation2d.kZero));
@@ -48,6 +52,7 @@ public class RobotContainer {
                 // Initialize no-op hardware IOs for replay
                 drivetrain = Drivetrain.createDummy();
                 shooter = Shooter.createDummy();
+                turret = Turret.createDummy();
                 climber = Climber.createDummy();
             }
         }
