@@ -24,7 +24,6 @@ public class RobotContainer {
     private final RobotState robotState = RobotState.getInstance();
 
     /** The container for the robot. Contains subsystems, IO devices, and commands. */
-
     public RobotContainer() {
         switch (Constants.CURRENT_MODE) {
             case REAL -> {

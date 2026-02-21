@@ -19,3 +19,5 @@ public final class Main {
         RobotBase.startRobot(Robot::new);
     }
 }
+
+/* Preparing to add commands */
