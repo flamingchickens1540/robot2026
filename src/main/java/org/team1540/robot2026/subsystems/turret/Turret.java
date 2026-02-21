@@ -29,7 +29,7 @@ public class Turret extends SubsystemBase {
     private final TurretIO io;
     private final TurretIOInputsAutoLogged inputs = new TurretIOInputsAutoLogged();
 
-    private Rotation2d setpointRotation;
+    private Rotation2d setpointRotation = Rotation2d.kZero;
     private final Alert motorDisconnectedAlert = new Alert("Turret motor disconnected", Alert.AlertType.kError);
 
     public Turret(TurretIO turretIO) {

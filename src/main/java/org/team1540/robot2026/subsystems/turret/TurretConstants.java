@@ -10,10 +10,9 @@ public class TurretConstants {
     public static final int DRIVEN_GEAR_TOOTH_COUNT = 85;
     public static final int SMALL_ENCODER_GEAR_TOOTH_COUNT = 13;
     public static final int BIG_ENCODER_GEAR_TOOTH_COUNT = 14;
-    public static final int DRIVE_GEAR_TEETH_COUNT = 10;
     public static final int POSSIBLE_POS_ACC_DIGITS = 12;
 
-    public static final double DRIVEN_TO_DRIVE_RATIO = (double) DRIVEN_GEAR_TOOTH_COUNT / DRIVE_GEAR_TEETH_COUNT;
+    public static final double GEAR_RATIO = 8.5 * 50 / 12;
 
     public static final Rotation2d ANGLE_OFFSET = Rotation2d.fromDegrees(270);
     public static final Rotation2d MAX_ANGLE = Rotation2d.fromDegrees(630).minus(ANGLE_OFFSET);
@@ -33,7 +32,7 @@ public class TurretConstants {
     public static final int SMALL_ENCODER_CANCODER_ID = 21;
     public static final int BIG_ENCODER_CANCODER_ID = 22;
 
-    public static final double POS_ERR_TOLERANCE_DEGREES = 1;
+    public static final double POS_ERR_TOLERANCE_DEGREES = 2;
 
     public static final double SMALL_ENCODER_MAGNET_SENSOR_OFFSET = -0.5021953125;
     public static final double BIG_ENCODER_MAGNET_SENSOR_OFFSET = -0.1240234375;

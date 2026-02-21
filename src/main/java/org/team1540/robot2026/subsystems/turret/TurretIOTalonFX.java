@@ -42,7 +42,7 @@ public class TurretIOTalonFX implements TurretIO {
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
-        config.Feedback.SensorToMechanismRatio = DRIVEN_TO_DRIVE_RATIO;
+        config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
         config.CurrentLimits.SupplyCurrentLimit = 70.0;
         config.CurrentLimits.SupplyCurrentLowerLimit = 40.0;
