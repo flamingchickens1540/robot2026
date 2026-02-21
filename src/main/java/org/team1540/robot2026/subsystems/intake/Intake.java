@@ -21,8 +21,8 @@ public class Intake extends SubsystemBase {
     private static boolean hasInstance = false;
 
     public enum IntakeState {
-        STOW(new LoggedTunableNumber("Intake/Setpoints/Stow/AngleDegrees", PIVOT_MAX_ANGLE.getDegrees())),
-        INTAKE(new LoggedTunableNumber("Intake/Setpoints/Intake/AngleDegrees", PIVOT_MIN_ANGLE.getDegrees()));
+        STOW(new LoggedTunableNumber("Intake/Setpoints/Stow/AngleDegrees", PIVOT_MIN_ANGLE.getDegrees())),
+        INTAKE(new LoggedTunableNumber("Intake/Setpoints/Intake/AngleDegrees", PIVOT_MAX_ANGLE.getDegrees()));
 
         private final DoubleSupplier pivotPosition;
 
@@ -98,6 +98,10 @@ public class Intake extends SubsystemBase {
         return inputs.pivotPosition;
     }
 
+    public double getPivotVelocityRPS() {
+        return inputs.pivotMotorVelocityRPS;
+    }
+
     public void setPivotVoltage(double voltage) {
         io.setPivotVoltage(voltage);
     }
@@ -132,10 +136,10 @@ public class Intake extends SubsystemBase {
     }
 
     public Command zeroCommand() {
-        return Commands.runOnce(() -> setPivotVoltage(0.3 * 12))
+        return Commands.runOnce(() -> setPivotVoltage(-0.3 * 12))
                 .andThen(Commands.waitSeconds(0.5))
                 .andThen(Commands.waitUntil(() -> Math.abs(inputs.pivotStatorCurrentAmps) > 20)
-                        .andThen(Commands.runOnce(() -> setPivotPosition(Rotation2d.fromDegrees(90))))
+                        .andThen(Commands.runOnce(() -> setPivotPosition(Rotation2d.fromDegrees(0))))
                         .andThen(commandToSetpoint(IntakeState.STOW)));
     }
 

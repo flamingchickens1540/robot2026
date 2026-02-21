@@ -1,5 +1,7 @@
 package org.team1540.robot2026;
 
+import static org.team1540.robot2026.subsystems.climber.ClimberConstants.SPROCKET_RADIUS_M;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -12,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import org.team1540.robot2026.commands.CharacterizationCommands;
 import org.team1540.robot2026.subsystems.climber.Climber;
 import org.team1540.robot2026.subsystems.drive.Drivetrain;
+import org.team1540.robot2026.subsystems.intake.Intake;
 import org.team1540.robot2026.subsystems.shooter.Shooter;
 import org.team1540.robot2026.subsystems.turret.Turret;
 import org.team1540.robot2026.util.auto.LoggedAutoChooser;
@@ -24,6 +27,7 @@ public class RobotContainer {
     private final Shooter shooter;
     private final Turret turret;
     private final Climber climber;
+    private final Intake intake;
 
     private final LoggedAutoChooser autoChooser = new LoggedAutoChooser("Auto Chooser");
 
@@ -38,6 +42,7 @@ public class RobotContainer {
                 shooter = Shooter.createReal();
                 turret = Turret.createReal();
                 climber = Climber.createReal();
+                intake = Intake.createReal();
             }
             case SIM -> {
                 // Initialize simulated hardware IOs
@@ -45,6 +50,7 @@ public class RobotContainer {
                 shooter = Shooter.createSim();
                 turret = Turret.createSim();
                 climber = Climber.createSim();
+                intake = Intake.createSim();
 
                 RobotState.getInstance().resetPose(new Pose2d(3.0, 3.0, Rotation2d.kZero));
             }
@@ -54,6 +60,7 @@ public class RobotContainer {
                 shooter = Shooter.createDummy();
                 turret = Turret.createDummy();
                 climber = Climber.createDummy();
+                intake = Intake.createDummy();
             }
         }
 
@@ -65,8 +72,6 @@ public class RobotContainer {
 
     private void configureButtonBindings() {
         drivetrain.setDefaultCommand(drivetrain.teleopDriveCommand(driver.getHID()));
-        driver.x().onTrue(drivetrain.runOnce(drivetrain::stopWithX));
-        driver.start().onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual));
     }
 
     private void configureAutoRoutines() {
@@ -84,9 +89,19 @@ public class RobotContainer {
                             drivetrain::getWheelRadiusCharacterizationPositions,
                             drivetrain));
             autoChooser.addCmd(
+                    "Intake FF Characterization",
+                    () -> CharacterizationCommands.feedforward(
+                            intake::setPivotVoltage, intake::getPivotVelocityRPS, intake));
+            autoChooser.addCmd(
                     "Shooter FF Characterization",
                     () -> CharacterizationCommands.feedforward(
                             shooter::setVoltage, () -> shooter.getVelocityRPM() / 60, shooter));
+            autoChooser.addCmd(
+                    "Climber FF Characterization",
+                    () -> CharacterizationCommands.feedforward(
+                            climber::setVoltage,
+                            () -> climber.getVelocityMPS() / 2 * Math.PI * SPROCKET_RADIUS_M,
+                            climber));
         }
     }
 

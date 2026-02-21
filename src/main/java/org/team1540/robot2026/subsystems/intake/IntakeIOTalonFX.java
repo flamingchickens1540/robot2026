@@ -41,18 +41,20 @@ public class IntakeIOTalonFX implements IntakeIO {
     public IntakeIOTalonFX() {
 
         TalonFXConfiguration pivotTalonFXConfig = new TalonFXConfiguration();
-        pivotTalonFXConfig.CurrentLimits.withStatorCurrentLimitEnable(true);
-        pivotTalonFXConfig.CurrentLimits.withStatorCurrentLimit(120);
-        pivotTalonFXConfig.CurrentLimits.withSupplyCurrentLimit(50);
+        pivotTalonFXConfig.CurrentLimits.StatorCurrentLimitEnable = true;
+        pivotTalonFXConfig.CurrentLimits.StatorCurrentLimit = 120;
+        pivotTalonFXConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+        pivotTalonFXConfig.CurrentLimits.SupplyCurrentLimit = 50;
         pivotTalonFXConfig.MotorOutput.Inverted =
                 InvertedValue.CounterClockwise_Positive; // TODO: is it inverted or not?
         pivotTalonFXConfig.Feedback.SensorToMechanismRatio = PIVOT_GEAR_RATIO;
         pivotTalonFXConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
         TalonFXConfiguration intakeTalonFXConfig = new TalonFXConfiguration();
-        intakeTalonFXConfig.CurrentLimits.withStatorCurrentLimitEnable(true);
-        intakeTalonFXConfig.CurrentLimits.withStatorCurrentLimit(120);
-        intakeTalonFXConfig.CurrentLimits.withSupplyCurrentLimit(50);
+        intakeTalonFXConfig.CurrentLimits.StatorCurrentLimitEnable = true;
+        intakeTalonFXConfig.CurrentLimits.StatorCurrentLimit = 120;
+        intakeTalonFXConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+        intakeTalonFXConfig.CurrentLimits.SupplyCurrentLimit = 50;
         intakeTalonFXConfig.MotorOutput.Inverted =
                 InvertedValue.CounterClockwise_Positive; // TODO: is it inverted or not?
         intakeTalonFXConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
