@@ -11,6 +11,8 @@ import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.ADIS16448_IMU;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -58,6 +60,10 @@ public class RobotState {
     private final InterpolatingTreeMap<Double, Rotation2d> lowShuffleHoodAngleMap =
             new InterpolatingTreeMap<>(InverseInterpolator.forDouble(), Rotation2d::interpolate);
     private final InterpolatingDoubleTreeMap lowShuffleShooterSpeedMap = new InterpolatingDoubleTreeMap();
+
+
+    private final InterpolatingDoubleTreeMap shootOnTheMoveTimeMap = new InterpolatingDoubleTreeMap();
+
 
     private RobotState() {
         poseResetTimer.start();
@@ -169,4 +175,31 @@ public class RobotState {
                 lowShuffleHoodAngleMap.get(distanceToTargetMeters),
                 lowShuffleShooterSpeedMap.get(distanceToTargetMeters));
     }
+
+    public AimingParameters getShootOnTheMoveAimingParameters(Translation2d target){
+        Pose2d currentPose= getEstimatedPose();
+        Translation2d turretToTarget = target.minus(getEstimatedPose()
+                .transformBy(TurretConstants.ROBOT_TO_TURRET_2D)
+                .getTranslation());
+
+        double time = shootOnTheMoveTimeMap.get(target.getNorm());
+
+
+
+        Translation2d turretMovement = new Translation2d((getFieldRelativeVelocity().vxMetersPerSecond*time),(getFieldRelativeVelocity().vyMetersPerSecond*time));
+
+
+        Translation2d futureTargetPos = turretToTarget.plus(turretMovement);
+
+
+        return new AimingParameters(
+                turretToTarget.getAngle(),
+                -getRobotVelocity().omegaRadiansPerSecond,
+                lowShuffleHoodAngleMap.get(futureTargetPos.getNorm()),
+                lowShuffleShooterSpeedMap.get(futureTargetPos.getNorm()));
+
+
+    }
+
+
 }
