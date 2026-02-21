@@ -6,13 +6,15 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.Constants;
+import org.team1540.robot2026.RobotState;
 import org.team1540.robot2026.util.LoggedTracer;
 import org.team1540.robot2026.util.LoggedTunableNumber;
 
@@ -44,7 +46,7 @@ public class Turret extends SubsystemBase {
         io.updateInputs(inputs);
         Logger.processInputs("Turret", inputs);
 
-        if (RobotState.isDisabled()) stop();
+        if (DriverStation.isDisabled()) stop();
 
         LoggedTunableNumber.ifChanged(hashCode(), () -> io.configPID(kP.get(), kI.get(), kD.get()), kP, kI, kD);
         LoggedTunableNumber.ifChanged(hashCode(), () -> io.configFF(kS.get(), kV.get()), kS, kV);
@@ -56,30 +58,36 @@ public class Turret extends SubsystemBase {
     }
 
     public Rotation2d calculateTurretAngle() {
-        double encoder1Pos = inputs.smallEncoderPosition.getRotations();
-        double encoder2Pos = inputs.bigEncoderPosition.getRotations();
+        double smallEncoderPos = inputs.smallEncoderPosition.getRotations();
+        double bigEncoderPos = inputs.bigEncoderPosition.getRotations();
 
-        double[] encoder1Positions = new double[POSSIBLE_POS_ACC_DIGITS];
-        double[] encoder2Positions = new double[POSSIBLE_POS_ACC_DIGITS];
+        double[] smallEncoderPositions = new double[POSSIBLE_POS_ACC_DIGITS];
+        double[] bigEncoderPositions = new double[POSSIBLE_POS_ACC_DIGITS];
         double out = 0;
         double minValue = 1;
         for (int i = 0; i < POSSIBLE_POS_ACC_DIGITS; i++) {
-            encoder1Positions[i] =
-                    (i + (encoder1Pos)) * SMALL_ENCODER_GEAR_TOOTH_COUNT / DRIVEN_GEAR_TOOTH_COUNT; // 0 - 1
-            encoder2Positions[i] = (i + (encoder2Pos)) * BIG_ENCODER_GEAR_TOOTH_COUNT / DRIVEN_GEAR_TOOTH_COUNT;
+            smallEncoderPositions[i] =
+                    (i + (smallEncoderPos)) * SMALL_ENCODER_GEAR_TOOTH_COUNT / DRIVEN_GEAR_TOOTH_COUNT; // 0 - 1
+            bigEncoderPositions[i] = (i + (bigEncoderPos)) * BIG_ENCODER_GEAR_TOOTH_COUNT / DRIVEN_GEAR_TOOTH_COUNT;
         }
-        Logger.recordOutput("Turret/Encoder1Positions", encoder1Positions);
-        Logger.recordOutput("Turret/Encoder2Positions", encoder2Positions);
+
+        Logger.recordOutput(
+                "Turret/CRT/" + SMALL_ENCODER_GEAR_TOOTH_COUNT + "tEncoderPositions", smallEncoderPositions);
+        Logger.recordOutput("Turret/CRT/" + BIG_ENCODER_GEAR_TOOTH_COUNT + "tEncoderPositions", bigEncoderPositions);
 
         for (int i = 0; i < POSSIBLE_POS_ACC_DIGITS; i++) {
             for (int z = 0; z < POSSIBLE_POS_ACC_DIGITS; z++) {
-                if (Math.abs(encoder1Positions[i] - encoder2Positions[z]) < minValue) {
-                    out = (encoder1Positions[i] + encoder2Positions[z]) / 2;
-                    minValue = Math.abs(encoder1Positions[i] - encoder2Positions[z]);
+                if (Math.abs(smallEncoderPositions[i] - bigEncoderPositions[z]) < minValue) {
+                    out = (smallEncoderPositions[i] + bigEncoderPositions[z]) / 2;
+                    minValue = Math.abs(smallEncoderPositions[i] - bigEncoderPositions[z]);
                 }
             }
         }
-        return Rotation2d.fromRotations(out);
+
+        Rotation2d rawPosition = Rotation2d.fromRotations(out);
+        Logger.recordOutput("Turret/RawPosition", rawPosition);
+
+        return rawPosition.minus(ANGLE_OFFSET);
     }
 
     public void stop() {
@@ -97,8 +105,12 @@ public class Turret extends SubsystemBase {
     }
 
     public void setSetpoint(Rotation2d position) {
+        setSetpoint(position, 0.0);
+    }
+
+    public void setSetpoint(Rotation2d position, double velocityRadPerSec) {
         setpointRotation = Rotation2d.fromDegrees(MathUtil.clamp(position.getDegrees(), 0, MAX_TURRET_ROTATION));
-        io.setSetpoint(setpointRotation);
+        io.setSetpoint(setpointRotation, velocityRadPerSec);
     }
 
     public void setVoltage(double voltage) {
@@ -117,8 +129,12 @@ public class Turret extends SubsystemBase {
         io.setBrakeMode(isBrakeMode);
     }
 
-    public Command commandToSetpoint(Supplier<Rotation2d> rotation) {
-        return runEnd(() -> setSetpoint(rotation.get()), this::stop);
+    public Command commandToSetpoint(Supplier<Rotation2d> rotation, DoubleSupplier velocityRadPerSec, boolean isFieldRelative) {
+        return runEnd(
+                () -> setSetpoint(
+                        rotation.get().minus(isFieldRelative ? RobotState.getInstance().getRobotHeading() : Rotation2d.kZero),
+                        velocityRadPerSec.getAsDouble()),
+                this::stop);
     }
 
     public Command zeroCommand() {

@@ -3,6 +3,10 @@ package org.team1540.robot2026;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
+import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
+import edu.wpi.first.math.interpolation.InverseInterpolator;
 import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -14,6 +18,8 @@ import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.AutoLogOutputManager;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.subsystems.drive.DrivetrainConstants;
+import org.team1540.robot2026.subsystems.turret.TurretConstants;
+import org.team1540.robot2026.util.AimingParameters;
 
 public class RobotState {
     private static RobotState instance = null;
@@ -40,6 +46,18 @@ public class RobotState {
 
     private final TimeInterpolatableBuffer<Pose2d> poseBuffer = TimeInterpolatableBuffer.createBuffer(0.5);
     private final TimeInterpolatableBuffer<Rotation2d> turretAngleBuffer = TimeInterpolatableBuffer.createBuffer(0.5);
+
+    private final InterpolatingTreeMap<Double, Rotation2d> hubHoodAngleMap =
+            new InterpolatingTreeMap<>(InverseInterpolator.forDouble(), Rotation2d::interpolate);
+    private final InterpolatingDoubleTreeMap hubShooterSpeedMap = new InterpolatingDoubleTreeMap();
+
+    private final InterpolatingTreeMap<Double, Rotation2d> highShuffleHoodAngleMap =
+            new InterpolatingTreeMap<>(InverseInterpolator.forDouble(), Rotation2d::interpolate);
+    private final InterpolatingDoubleTreeMap highShuffleShooterSpeedMap = new InterpolatingDoubleTreeMap();
+
+    private final InterpolatingTreeMap<Double, Rotation2d> lowShuffleHoodAngleMap =
+            new InterpolatingTreeMap<>(InverseInterpolator.forDouble(), Rotation2d::interpolate);
+    private final InterpolatingDoubleTreeMap lowShuffleShooterSpeedMap = new InterpolatingDoubleTreeMap();
 
     private RobotState() {
         poseResetTimer.start();
@@ -112,5 +130,45 @@ public class RobotState {
 
     public void addTurretObservation(Rotation2d turretAngle, double timestamp) {
         turretAngleBuffer.addSample(timestamp, turretAngle);
+    }
+
+    public AimingParameters getHubAimingParameters() {
+        Translation2d turretToHub = FieldConstants.Hub.topCenterPoint
+                .toTranslation2d()
+                .minus(getEstimatedPose()
+                        .transformBy(TurretConstants.ROBOT_TO_TURRET_2D)
+                        .getTranslation());
+        double distanceToHubMeters = turretToHub.getNorm();
+        return new AimingParameters(
+                turretToHub.getAngle(),
+                -getRobotVelocity().omegaRadiansPerSecond,
+                hubHoodAngleMap.get(distanceToHubMeters),
+                hubShooterSpeedMap.get(distanceToHubMeters));
+    }
+
+    public AimingParameters getHighShuffleAimingParameters(Translation2d shuffleTarget) {
+        Translation2d turretToTarget = shuffleTarget
+                .minus(getEstimatedPose()
+                        .transformBy(TurretConstants.ROBOT_TO_TURRET_2D)
+                        .getTranslation());
+        double distanceToTargetMeters = turretToTarget.getNorm();
+        return new AimingParameters(
+                turretToTarget.getAngle(),
+                -getRobotVelocity().omegaRadiansPerSecond,
+                highShuffleHoodAngleMap.get(distanceToTargetMeters),
+                highShuffleShooterSpeedMap.get(distanceToTargetMeters));
+    }
+
+    public AimingParameters getLowShuffleAimingParameters(Translation2d shuffleTarget) {
+        Translation2d turretToTarget = shuffleTarget
+                .minus(getEstimatedPose()
+                        .transformBy(TurretConstants.ROBOT_TO_TURRET_2D)
+                        .getTranslation());
+        double distanceToTargetMeters = turretToTarget.getNorm();
+        return new AimingParameters(
+                turretToTarget.getAngle(),
+                -getRobotVelocity().omegaRadiansPerSecond,
+                lowShuffleHoodAngleMap.get(distanceToTargetMeters),
+                lowShuffleShooterSpeedMap.get(distanceToTargetMeters));
     }
 }

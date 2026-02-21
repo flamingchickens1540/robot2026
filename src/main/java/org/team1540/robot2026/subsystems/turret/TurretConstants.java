@@ -1,11 +1,16 @@
 package org.team1540.robot2026.subsystems.turret;
 
-public class TurretConstants {
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.util.Units;
 
+public class TurretConstants {
     public static final int MAX_TURRET_ROTATION = 630;
-    public static int DRIVEN_GEAR_TOOTH_COUNT = 85;
-    public static int SMALL_ENCODER_GEAR_TOOTH_COUNT = 13;
-    public static int BIG_ENCODER_GEAR_TOOTH_COUNT = 14;
+    public static final int DRIVEN_GEAR_TOOTH_COUNT = 85;
+    public static final int SMALL_ENCODER_GEAR_TOOTH_COUNT = 13;
+    public static final int BIG_ENCODER_GEAR_TOOTH_COUNT = 14;
     public static final int DRIVE_GEAR_TEETH_COUNT = 10;
     public static final int POSSIBLE_POS_ACC_DIGITS = 12;
 
@@ -32,4 +37,11 @@ public class TurretConstants {
 
     public static final double CRUISE_VELOCITY_MPS = 0.1; // was 3
     public static final double MAXIMUM_ACCELERATION_MPS2 = 0.1; // was 7
+
+    public static final Rotation2d ANGLE_OFFSET = Rotation2d.fromDegrees(270);
+
+    public static final Transform2d ROBOT_TO_TURRET_2D =
+            new Transform2d(Units.inchesToMeters(-7.5), 0.0, Rotation2d.kZero);
+    public static final Transform3d ROBOT_TO_TURRET_3D = new Transform3d(
+            ROBOT_TO_TURRET_2D.getX(), ROBOT_TO_TURRET_2D.getY(), Units.inchesToMeters(11.625), Rotation3d.kZero);
 }

@@ -1,6 +1,5 @@
 package org.team1540.robot2026.subsystems.turret;
 
-import static edu.wpi.first.units.Units.Rotations;
 import static org.team1540.robot2026.subsystems.turret.TurretConstants.*;
 
 import com.ctre.phoenix6.BaseStatusSignal;
@@ -112,8 +111,8 @@ public class TurretIOTalonFX implements TurretIO {
     }
 
     @Override
-    public void setSetpoint(Rotation2d position) {
-        motor.setControl(profiledPositionControl.withPosition(position.getRotations()));
+    public void setSetpoint(Rotation2d position, double voltageFF) {
+        motor.setControl(profiledPositionControl.withPosition(position.getRotations()).withFeedForward(voltageFF));
     }
 
     @Override
