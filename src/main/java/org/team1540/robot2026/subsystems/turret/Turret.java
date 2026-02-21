@@ -8,7 +8,6 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -109,7 +108,8 @@ public class Turret extends SubsystemBase {
     }
 
     public void setSetpoint(Rotation2d position, double velocityRadPerSec) {
-        setpointRotation = Rotation2d.fromDegrees(MathUtil.clamp(position.getDegrees(), 0, MAX_TURRET_ROTATION));
+        setpointRotation = Rotation2d.fromDegrees(
+                MathUtil.clamp(position.getDegrees(), MIN_ANGLE.getDegrees(), MAX_ANGLE.getDegrees()));
         io.setSetpoint(setpointRotation, velocityRadPerSec);
     }
 
@@ -129,10 +129,15 @@ public class Turret extends SubsystemBase {
         io.setBrakeMode(isBrakeMode);
     }
 
-    public Command commandToSetpoint(Supplier<Rotation2d> rotation, DoubleSupplier velocityRadPerSec, boolean isFieldRelative) {
+    public Command commandToSetpoint(
+            Supplier<Rotation2d> rotation, DoubleSupplier velocityRadPerSec, boolean isFieldRelative) {
         return runEnd(
                 () -> setSetpoint(
-                        rotation.get().minus(isFieldRelative ? RobotState.getInstance().getRobotHeading() : Rotation2d.kZero),
+                        rotation.get()
+                                .minus(
+                                        isFieldRelative
+                                                ? RobotState.getInstance().getRobotHeading()
+                                                : Rotation2d.kZero),
                         velocityRadPerSec.getAsDouble()),
                 this::stop);
     }

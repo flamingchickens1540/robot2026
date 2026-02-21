@@ -112,7 +112,8 @@ public class TurretIOTalonFX implements TurretIO {
 
     @Override
     public void setSetpoint(Rotation2d position, double voltageFF) {
-        motor.setControl(profiledPositionControl.withPosition(position.getRotations()).withFeedForward(voltageFF));
+        motor.setControl(
+                profiledPositionControl.withPosition(position.getRotations()).withFeedForward(voltageFF));
     }
 
     @Override

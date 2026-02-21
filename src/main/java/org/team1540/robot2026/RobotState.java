@@ -147,10 +147,9 @@ public class RobotState {
     }
 
     public AimingParameters getHighShuffleAimingParameters(Translation2d shuffleTarget) {
-        Translation2d turretToTarget = shuffleTarget
-                .minus(getEstimatedPose()
-                        .transformBy(TurretConstants.ROBOT_TO_TURRET_2D)
-                        .getTranslation());
+        Translation2d turretToTarget = shuffleTarget.minus(getEstimatedPose()
+                .transformBy(TurretConstants.ROBOT_TO_TURRET_2D)
+                .getTranslation());
         double distanceToTargetMeters = turretToTarget.getNorm();
         return new AimingParameters(
                 turretToTarget.getAngle(),
@@ -160,10 +159,9 @@ public class RobotState {
     }
 
     public AimingParameters getLowShuffleAimingParameters(Translation2d shuffleTarget) {
-        Translation2d turretToTarget = shuffleTarget
-                .minus(getEstimatedPose()
-                        .transformBy(TurretConstants.ROBOT_TO_TURRET_2D)
-                        .getTranslation());
+        Translation2d turretToTarget = shuffleTarget.minus(getEstimatedPose()
+                .transformBy(TurretConstants.ROBOT_TO_TURRET_2D)
+                .getTranslation());
         double distanceToTargetMeters = turretToTarget.getNorm();
         return new AimingParameters(
                 turretToTarget.getAngle(),

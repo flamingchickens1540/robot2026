@@ -7,7 +7,6 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.util.Units;
 
 public class TurretConstants {
-    public static final int MAX_TURRET_ROTATION = 630;
     public static final int DRIVEN_GEAR_TOOTH_COUNT = 85;
     public static final int SMALL_ENCODER_GEAR_TOOTH_COUNT = 13;
     public static final int BIG_ENCODER_GEAR_TOOTH_COUNT = 14;
@@ -15,6 +14,10 @@ public class TurretConstants {
     public static final int POSSIBLE_POS_ACC_DIGITS = 12;
 
     public static final double DRIVEN_TO_DRIVE_RATIO = (double) DRIVEN_GEAR_TOOTH_COUNT / DRIVE_GEAR_TEETH_COUNT;
+
+    public static final Rotation2d ANGLE_OFFSET = Rotation2d.fromDegrees(270);
+    public static final Rotation2d MAX_ANGLE = Rotation2d.fromDegrees(630).minus(ANGLE_OFFSET);
+    public static final Rotation2d MIN_ANGLE = Rotation2d.fromDegrees(0).minus(ANGLE_OFFSET);
 
     // Tuning
     public static final double KS = 0.284;
@@ -37,8 +40,6 @@ public class TurretConstants {
 
     public static final double CRUISE_VELOCITY_MPS = 0.1; // was 3
     public static final double MAXIMUM_ACCELERATION_MPS2 = 0.1; // was 7
-
-    public static final Rotation2d ANGLE_OFFSET = Rotation2d.fromDegrees(270);
 
     public static final Transform2d ROBOT_TO_TURRET_2D =
             new Transform2d(Units.inchesToMeters(-7.5), 0.0, Rotation2d.kZero);
