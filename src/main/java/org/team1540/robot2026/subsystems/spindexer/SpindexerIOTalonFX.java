@@ -1,6 +1,6 @@
-package org.team1540.robot2026.spindexer;
+package org.team1540.robot2026.subsystems.spindexer;
 
-import static org.team1540.robot2026.spindexer.SpindexerConstants.*;
+import static org.team1540.robot2026.subsystems.spindexer.SpindexerConstants.*;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
@@ -36,7 +36,7 @@ public class SpindexerIOTalonFX implements SpindexerIO {
     public SpindexerIOTalonFX() {
         TalonFXConfiguration config = new TalonFXConfiguration();
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         config.Feedback.SensorToMechanismRatio = SPIN_GEAR_RATIO;
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
         config.CurrentLimits.SupplyCurrentLimit = 80.0;

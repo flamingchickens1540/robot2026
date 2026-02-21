@@ -1,4 +1,4 @@
-package org.team1540.robot2026.hood;
+package org.team1540.robot2026.subsystems.hood;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 
@@ -13,7 +13,7 @@ public class HoodConstants {
 
     public static final double ZERO_CURRENT_AMPS = 30;
 
-    public static final double KP = 67.0;
+    public static final double KP = 118.0;
     public static final double KI = 0.0;
     public static final double KD = 0.0;
     public static final double KS = 0.0;

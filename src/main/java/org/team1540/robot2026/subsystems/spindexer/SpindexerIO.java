@@ -1,4 +1,4 @@
-package org.team1540.robot2026.spindexer;
+package org.team1540.robot2026.subsystems.spindexer;
 
 import org.littletonrobotics.junction.AutoLog;
 

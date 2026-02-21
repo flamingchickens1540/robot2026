@@ -1,4 +1,4 @@
-package org.team1540.robot2026.hood;
+package org.team1540.robot2026.subsystems.hood;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import org.littletonrobotics.junction.AutoLog;

@@ -48,10 +48,10 @@ public class ShooterIOTalonFX implements ShooterIO {
         config.Feedback.SensorToMechanismRatio = ShooterConstants.GEAR_RATIO;
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
-        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         rightMotor.getConfigurator().apply(config);
 
-        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         leftMotor.getConfigurator().apply(config);
 
         BaseStatusSignal.setUpdateFrequencyForAll(

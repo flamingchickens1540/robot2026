@@ -1,6 +1,6 @@
-package org.team1540.robot2026.hood;
+package org.team1540.robot2026.subsystems.hood;
 
-import static org.team1540.robot2026.hood.HoodConstants.*;
+import static org.team1540.robot2026.subsystems.hood.HoodConstants.*;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
@@ -31,7 +31,7 @@ public class HoodIOTalonFX implements HoodIO {
 
     public HoodIOTalonFX() {
         motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        motorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        motorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
         motorConfig.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 

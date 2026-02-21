@@ -31,6 +31,8 @@ public interface IntakeIO {
 
     default void setPivotSetpoint(Rotation2d pivotPosition) {}
 
+    default void resetPivotPosition(Rotation2d pivotPosition) {}
+
     default void setPivotVoltage(double voltage) {}
 
     default void setPivotPID(double kP, double kI, double kD) {}

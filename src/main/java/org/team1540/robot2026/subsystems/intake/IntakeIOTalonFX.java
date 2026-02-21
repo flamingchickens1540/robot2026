@@ -136,6 +136,11 @@ public class IntakeIOTalonFX implements IntakeIO {
     }
 
     @Override
+    public void resetPivotPosition(Rotation2d pivotPosition) {
+        pivotMotor.setPosition(pivotPosition.getRotations());
+    }
+
+    @Override
     public void setPivotVoltage(double voltage) {
         pivotMotor.setControl(new VoltageOut(voltage));
     }

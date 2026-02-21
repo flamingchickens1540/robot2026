@@ -1,10 +1,11 @@
-package org.team1540.robot2026.spindexer;
+package org.team1540.robot2026.subsystems.spindexer;
 
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.function.DoubleSupplier;
+import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.Constants;
 import org.team1540.robot2026.util.LoggedTracer;
 
@@ -28,6 +29,7 @@ public class Spindexer extends SubsystemBase {
         LoggedTracer.reset();
 
         io.updateInputs(inputs);
+        Logger.processInputs("Spindexer", inputs);
 
         if (DriverStation.isDisabled()) stop();
 
@@ -46,7 +48,7 @@ public class Spindexer extends SubsystemBase {
     }
 
     public Command runCommand(DoubleSupplier spinPercent, DoubleSupplier feederPercent) {
-        return run(() -> setMotorSpeeds(spinPercent.getAsDouble(), feederPercent.getAsDouble()));
+        return runEnd(() -> setMotorSpeeds(spinPercent.getAsDouble(), feederPercent.getAsDouble()), this::stop);
     }
 
     public static Spindexer createReal() {

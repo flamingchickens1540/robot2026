@@ -1,6 +1,6 @@
-package org.team1540.robot2026.hood;
+package org.team1540.robot2026.subsystems.hood;
 
-import static org.team1540.robot2026.hood.HoodConstants.*;
+import static org.team1540.robot2026.subsystems.hood.HoodConstants.*;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -108,11 +108,12 @@ public class Hood extends SubsystemBase {
     }
 
     public Command zeroCommand() {
-        return runOnce(() -> setVoltage(-0.1))
+        return runOnce(() -> setVoltage(-1))
                 .andThen(
-                        Commands.waitUntil(
-                                new Trigger(() -> inputs.statorCurrentAmps >= ZERO_CURRENT_AMPS).debounce(0.5)),
-                        runOnce(() -> resetPosition(MIN_ANGLE)));
+                        Commands.waitUntil(new Trigger(() -> Math.abs(inputs.statorCurrentAmps) >= ZERO_CURRENT_AMPS)
+                                .debounce(0.5)),
+                        runOnce(() -> resetPosition(MIN_ANGLE)),
+                        runOnce(this::stop));
     }
 
     public static Hood createReal() {
