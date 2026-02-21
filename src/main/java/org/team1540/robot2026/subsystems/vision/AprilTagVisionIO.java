@@ -5,10 +5,10 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import org.littletonrobotics.junction.AutoLog;
 
-public abstract class AprilVisionIO {
+public abstract class AprilTagVisionIO {
     public final String name;
 
-    public AprilVisionIO(String name) {
+    public AprilTagVisionIO(String name) {
         this.name = name;
     }
 

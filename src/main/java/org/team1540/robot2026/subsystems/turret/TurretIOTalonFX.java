@@ -41,7 +41,7 @@ public class TurretIOTalonFX implements TurretIO {
         TalonFXConfiguration config = new TalonFXConfiguration();
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
         config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
@@ -57,8 +57,8 @@ public class TurretIOTalonFX implements TurretIO {
         config.Slot0.kV = KV;
         config.Slot0.kA = KA;
 
-        config.MotionMagic.MotionMagicCruiseVelocity = CRUISE_VELOCITY_MPS;
-        config.MotionMagic.MotionMagicAcceleration = MAXIMUM_ACCELERATION_MPS2;
+        config.MotionMagic.MotionMagicCruiseVelocity = CRUISE_VELOCITY_RPS;
+        config.MotionMagic.MotionMagicAcceleration = MAX_ACCEL_RPS2;
 
         motor.getConfigurator().apply(config);
 

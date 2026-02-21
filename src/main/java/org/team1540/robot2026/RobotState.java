@@ -25,11 +25,10 @@ import org.littletonrobotics.junction.AutoLogOutputManager;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.subsystems.drive.DrivetrainConstants;
 import org.team1540.robot2026.subsystems.turret.TurretConstants;
-import org.team1540.robot2026.subsystems.vision.AprilVisionIO;
+import org.team1540.robot2026.subsystems.vision.AprilTagVisionIO;
 import org.team1540.robot2026.util.AimingParameters;
 
 public class RobotState {
-    private final Timer resetTimer = new Timer();
     private static RobotState instance = null;
 
     public static RobotState getInstance() {
@@ -48,6 +47,8 @@ public class RobotState {
     private final SwerveDrivePoseEstimator poseEstimator =
             new SwerveDrivePoseEstimator(kinematics, lastGyroRotation, lastModulePositions, Pose2d.kZero);
     private final Timer poseResetTimer = new Timer();
+
+    private Rotation2d lastTurretAngle = Rotation2d.kZero;
 
     private final Field2d field = new Field2d();
     private Pose2d[] activeTrajectory;
@@ -139,11 +140,12 @@ public class RobotState {
     }
 
     public void addTurretObservation(Rotation2d turretAngle, double timestamp) {
+        lastTurretAngle = turretAngle;
         turretAngleBuffer.addSample(timestamp, turretAngle);
     }
 
-    public boolean addVisionMeasurement(AprilVisionIO.PoseObservation visionPose) {
-        if (shouldAcceptVision(visionPose) && resetTimer.hasElapsed(0.1)) {
+    public boolean addVisionMeasurement(AprilTagVisionIO.PoseObservation visionPose) {
+        if (shouldAcceptVision(visionPose) && poseResetTimer.hasElapsed(0.1)) {
             poseEstimator.addVisionMeasurement(
                     visionPose.estimatedPoseMeters().toPose2d(), visionPose.timestampSecs(), getStdDevs(visionPose));
             return true;
@@ -151,7 +153,24 @@ public class RobotState {
         return false;
     }
 
-    private boolean shouldAcceptVision(AprilVisionIO.PoseObservation poseObservation) {
+    public boolean addTurretVisionMeasurement(AprilTagVisionIO.PoseObservation turretPose) {
+        if (shouldAcceptVision(turretPose) && poseResetTimer.hasElapsed(0.1)) {
+            Rotation2d turretAngleAtMeasurement =
+                    turretAngleBuffer.getSample(turretPose.timestampSecs()).orElse(lastTurretAngle);
+            Pose2d robotPose = turretPose
+                    .estimatedPoseMeters()
+                    .transformBy(new Transform3d(
+                                    TurretConstants.ROBOT_TO_TURRET_3D.getTranslation(),
+                                    new Rotation3d(0.0, 0.0, turretAngleAtMeasurement.getRadians()))
+                            .inverse())
+                    .toPose2d();
+            poseEstimator.addVisionMeasurement(robotPose, turretPose.timestampSecs(), getStdDevs(turretPose));
+            return true;
+        }
+        return false;
+    }
+
+    private boolean shouldAcceptVision(AprilTagVisionIO.PoseObservation poseObservation) {
         Pose3d estimatedPose = poseObservation.estimatedPoseMeters();
         return poseObservation.numTagsSeen() >= MIN_ACCEPTED_NUM_TAGS // Must see sufficient tags
                 && (poseObservation.numTagsSeen() > 1
@@ -165,7 +184,7 @@ public class RobotState {
                 && Math.abs(estimatedPose.getZ()) <= MAX_ROBOT_Z_TOLERANCE;
     }
 
-    private Matrix<N3, N1> getStdDevs(AprilVisionIO.PoseObservation poseObservation) {
+    private Matrix<N3, N1> getStdDevs(AprilTagVisionIO.PoseObservation poseObservation) {
         double xyStdDev =
                 XY_STD_DEV_COEFF * Math.pow(poseObservation.avgTagDistance(), 2.0) / poseObservation.numTagsSeen();
         double rotStdDev =
@@ -214,15 +233,17 @@ public class RobotState {
                 lowShuffleShooterSpeedMap.get(distanceToTargetMeters));
     }
 
-    public AimingParameters getShootOnTheMoveAimingParameters(Translation2d target){
-        Pose2d currentPose= getEstimatedPose();
+    public AimingParameters getShootOnTheMoveAimingParameters(Translation2d target) {
+        Pose2d currentPose = getEstimatedPose();
         Translation2d turretToTarget = target.minus(getEstimatedPose()
                 .transformBy(TurretConstants.ROBOT_TO_TURRET_2D)
                 .getTranslation());
 
         double time = shootOnTheMoveTimeMap.get(target.getNorm());
 
-        Translation2d turretMovement = new Translation2d((getFieldRelativeVelocity().vxMetersPerSecond*time),(getFieldRelativeVelocity().vyMetersPerSecond*time));
+        Translation2d turretMovement = new Translation2d(
+                (getFieldRelativeVelocity().vxMetersPerSecond * time),
+                (getFieldRelativeVelocity().vyMetersPerSecond * time));
         Translation2d futureTargetPos = turretToTarget.plus(turretMovement);
 
         return new AimingParameters(

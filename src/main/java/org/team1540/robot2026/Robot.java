@@ -86,7 +86,10 @@ public class Robot extends LoggedRobot {
         // and put our autonomous chooser on the dashboard.
         robotContainer = new RobotContainer();
 
-        CommandScheduler.getInstance().schedule(Commands.waitSeconds(0.5).andThen(robotContainer.turret.zeroCommand()));
+        CommandScheduler.getInstance()
+                .schedule(Commands.waitSeconds(0.5)
+                        .andThen(robotContainer.turret.zeroCommand())
+                        .ignoringDisable(true));
     }
 
     /** This function is called periodically during all modes. */

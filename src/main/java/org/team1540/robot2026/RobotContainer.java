@@ -20,6 +20,7 @@ import org.team1540.robot2026.subsystems.intake.Intake;
 import org.team1540.robot2026.subsystems.shooter.Shooter;
 import org.team1540.robot2026.subsystems.spindexer.Spindexer;
 import org.team1540.robot2026.subsystems.turret.Turret;
+import org.team1540.robot2026.subsystems.vision.AprilTagVision;
 import org.team1540.robot2026.util.JoystickUtil;
 import org.team1540.robot2026.util.LoggedTunableNumber;
 import org.team1540.robot2026.util.auto.LoggedAutoChooser;
@@ -35,6 +36,7 @@ public class RobotContainer {
     final Turret turret;
     final Hood hood;
     final Climber climber;
+    final AprilTagVision vision;
 
     private final LoggedAutoChooser autoChooser = new LoggedAutoChooser("Auto Chooser");
 
@@ -62,6 +64,7 @@ public class RobotContainer {
                 turret = Turret.createReal();
                 hood = Hood.createReal();
                 climber = Climber.createReal();
+                vision = AprilTagVision.createReal();
             }
             case SIM -> {
                 // Initialize simulated hardware IOs
@@ -72,6 +75,7 @@ public class RobotContainer {
                 turret = Turret.createSim();
                 hood = Hood.createSim();
                 climber = Climber.createSim();
+                vision = AprilTagVision.createDummy();
 
                 RobotState.getInstance().resetPose(new Pose2d(3.0, 3.0, Rotation2d.kZero));
             }
@@ -84,6 +88,7 @@ public class RobotContainer {
                 turret = Turret.createDummy();
                 hood = Hood.createDummy();
                 climber = Climber.createDummy();
+                vision = AprilTagVision.createDummy();
             }
         }
 

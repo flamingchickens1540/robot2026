@@ -1,14 +1,13 @@
 package org.team1540.robot2026.subsystems.leds;
 
 import static edu.wpi.first.units.Units.Second;
+import static edu.wpi.first.units.Units.Value;
 import static org.team1540.robot2026.subsystems.leds.LEDConstants.LEDS_LENGTH;
 import static org.team1540.robot2026.subsystems.leds.LEDConstants.LEDS_PWM_PORT;
 
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
-import static edu.wpi.first.units.Units.Value;
-
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -16,7 +15,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
-
 import org.team1540.robot2026.util.LoggedTracer;
 
 public class LEDs extends SubsystemBase {

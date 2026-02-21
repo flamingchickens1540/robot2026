@@ -11,7 +11,7 @@ import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
 import org.team1540.robot2026.FieldConstants;
 
-public class AprilTagVisionIOPhoton extends AprilVisionIO {
+public class AprilTagVisionIOPhoton extends AprilTagVisionIO {
     protected final PhotonCamera camera;
     protected final Transform3d cameraTransformMeters;
 

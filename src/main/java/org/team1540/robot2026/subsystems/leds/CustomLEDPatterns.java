@@ -1,22 +1,19 @@
 package org.team1540.robot2026.subsystems.leds;
 
+import static edu.wpi.first.units.Units.Microseconds;
+import static edu.wpi.first.units.Units.Seconds;
+import static org.team1540.robot2026.subsystems.leds.LEDConstants.*;
+
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.LEDPattern;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.util.Color;
+import java.util.function.DoubleSupplier;
 import org.team1540.robot2026.RobotState;
 import org.team1540.robot2026.subsystems.drive.DrivetrainConstants;
 import org.team1540.robot2026.subsystems.hood.HoodConstants;
-
-import java.util.function.DoubleSupplier;
-
-import static edu.wpi.first.units.Units.Microseconds;
-import static edu.wpi.first.units.Units.Seconds;
-
-import static org.team1540.robot2026.subsystems.leds.LEDConstants.*;
-
 
 public class CustomLEDPatterns {
     private static final Time DEFAULT_STROBE_DURATION = Seconds.of(0.07);
@@ -62,8 +59,10 @@ public class CustomLEDPatterns {
                         () -> hoodAngleDegrees.getAsDouble() / HoodConstants.MAX_ANGLE.getDegrees()));
     }
 
-//    public static LEDPattern redRSL = LEDPattern.solid(Color.kRed).synchronizedBlink(RobotController::getRSLState);
-//
-//    public static LEDPattern redYellow = LEDPattern.gradient(LEDPattern.GradientType.kContinuous, Color.kRed, Color.kYellow);
+    //    public static LEDPattern redRSL =
+    // LEDPattern.solid(Color.kRed).synchronizedBlink(RobotController::getRSLState);
+    //
+    //    public static LEDPattern redYellow = LEDPattern.gradient(LEDPattern.GradientType.kContinuous, Color.kRed,
+    // Color.kYellow);
 
 }

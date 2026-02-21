@@ -109,7 +109,7 @@ public class Turret extends SubsystemBase {
         Rotation2d rawPosition = Rotation2d.fromRotations(out);
         Logger.recordOutput("Turret/RawPosition", rawPosition);
 
-        return rawPosition.minus(ANGLE_OFFSET);
+        return Rotation2d.fromRotations(rawPosition.getRotations() - ANGLE_OFFSET.getRotations());
     }
 
     public Rotation2d unwrapTurretAngle(Rotation2d targetAngle) {
