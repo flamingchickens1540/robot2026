@@ -36,4 +36,4 @@ public interface ClimberIO {
     default void configFF(double kS, double kV, double kG) {}
 
     default void setBrakeMode(boolean setBrake) {}
-} 
+}
