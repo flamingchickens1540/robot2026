@@ -32,7 +32,7 @@ public class Turret extends SubsystemBase {
     private final TurretIO io;
     private final TurretIOInputsAutoLogged inputs = new TurretIOInputsAutoLogged();
 
-    private Rotation2d setpointRotation;
+    private Rotation2d setpointRotation = Rotation2d.kZero;
 
     private final Debouncer zeroedDebouncer = new Debouncer(0.25);
 
@@ -126,12 +126,12 @@ public class Turret extends SubsystemBase {
     }
 
     public Command commandToSetpoint(Supplier<Rotation2d> rotation) {
-        return Commands.runOnce(
-                () -> setSetpoint((Rotation2d) rotation), this); // setSetpoint((Rotation2d) rotation),this
+        return Commands.runEnd(
+                () -> setSetpoint(rotation.get()), this::stop, this); // setSetpoint((Rotation2d) rotation),this
     }
 
     public Command zeroCommand() {
-        return Commands.run(() -> io.setMotorPosition(calculateTurretAngle()), this);
+        return Commands.runOnce(() -> io.setMotorPosition(calculateTurretAngle()), this);
     }
 
     public static Turret createReal() {

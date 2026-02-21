@@ -1,6 +1,5 @@
 package org.team1540.robot2026.subsystems.turret;
 
-import static edu.wpi.first.units.Units.Rotations;
 import static org.team1540.robot2026.subsystems.turret.TurretConstants.*;
 
 import com.ctre.phoenix6.BaseStatusSignal;
@@ -43,7 +42,7 @@ public class TurretIOTalonFX implements TurretIO {
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
-        config.Feedback.SensorToMechanismRatio = DRIVEN_TO_DRIVE_RATIO;
+        config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
         config.CurrentLimits.SupplyCurrentLimit = 70.0;
         config.CurrentLimits.SupplyCurrentLowerLimit = 40.0;
@@ -113,12 +112,12 @@ public class TurretIOTalonFX implements TurretIO {
 
     @Override
     public void setSetpoint(Rotation2d position) {
-        motor.setControl(profiledPositionControl.withPosition(Rotations.of(position.getDegrees())));
+        motor.setControl(profiledPositionControl.withPosition(position.getRotations()));
     }
 
     @Override
     public void setMotorPosition(Rotation2d position) {
-        motor.setPosition(Rotations.of(position.getDegrees()));
+        motor.setPosition(position.getRotations());
     }
 
     @Override

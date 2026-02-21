@@ -57,7 +57,9 @@ public class RobotContainer {
         drivetrain.setDefaultCommand(drivetrain.teleopDriveCommand(driver.getHID()));
         driver.x().onTrue(drivetrain.runOnce(drivetrain::stopWithX));
         driver.start().onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual));
-        driver.y().onTrue(turret.zeroCommand());
+
+        copilot.x().onTrue(turret.zeroCommand());
+        copilot.leftTrigger().onTrue(turret.commandToSetpoint(() -> Rotation2d.fromDegrees(60)));
     }
 
     private void configureAutoRoutines() {
