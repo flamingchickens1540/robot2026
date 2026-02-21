@@ -11,6 +11,8 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
+import org.littletonrobotics.junction.AutoLog;
+import org.littletonrobotics.junction.AutoLogOutput;
 import org.team1540.robot2026.commands.CharacterizationCommands;
 import org.team1540.robot2026.subsystems.climber.Climber;
 import org.team1540.robot2026.subsystems.drive.Drivetrain;
@@ -38,6 +40,9 @@ public class RobotContainer {
     private final LoggedAutoChooser autoChooser = new LoggedAutoChooser("Auto Chooser");
 
     private final RobotState robotState = RobotState.getInstance();
+
+    @AutoLogOutput(key="ClimbMode")
+    private boolean climbMode = false;
 
     // TODO remove tunables
     private final LoggedTunableNumber hoodDegrees = new LoggedTunableNumber("Hood/SetpointDegrees", 30.0);
@@ -107,6 +112,26 @@ public class RobotContainer {
                         .alongWith(shooter.commandVelocity(shooterRPM)));
         copilot.rightTrigger().whileTrue(spindexer.runCommand(spindexerPercent, feederPercent));
         copilot.start().whileTrue(hood.zeroCommand());
+
+        drivetrain.setDefaultCommand(drivetrain.teleopDriveCommand(driver.getHID()));
+
+        driver.leftTrigger().whileTrue(Commands.either(
+                intake.commandRunIntake(0.67),
+                climber.run(() -> climber.setVoltage(-0.67 * 12.0)),
+                ()->climbMode));
+        driver.leftStick().whileTrue(intake.commandRunIntake(-0.67));
+        driver.povLeft().onTrue(intake.commandToSetpoint(Intake.IntakeState.STOW));
+        driver.rightStick().onTrue(hood.setpointCommand(()->Rotation2d.kZero));
+//        driver.povRight().onTrue(Commands.parallel(ClimbAutoAlign, Commands.run(()->climbMode=!climbMode)));
+//        driver.rightTrigger().whileTrue(Commands.either(
+//                ShootSequence,
+//                climber.run(() -> climber.setVoltage(0.67 * 12.0)),
+//                ()->climbMode));
+
+        driver.start().whileTrue(turret.zeroCommand());
+        driver.back().onTrue(Commands.run(drivetrain::zeroFieldOrientation));
+
+
     }
 
     private void configureAutoRoutines() {
