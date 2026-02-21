@@ -29,7 +29,6 @@ import org.team1540.robot2026.subsystems.vision.AprilVisionIO;
 import org.team1540.robot2026.util.AimingParameters;
 
 public class RobotState {
-
     private final Timer resetTimer = new Timer();
     private static RobotState instance = null;
 
@@ -67,6 +66,8 @@ public class RobotState {
     private final InterpolatingTreeMap<Double, Rotation2d> lowShuffleHoodAngleMap =
             new InterpolatingTreeMap<>(InverseInterpolator.forDouble(), Rotation2d::interpolate);
     private final InterpolatingDoubleTreeMap lowShuffleShooterSpeedMap = new InterpolatingDoubleTreeMap();
+
+    private final InterpolatingDoubleTreeMap shootOnTheMoveTimeMap = new InterpolatingDoubleTreeMap();
 
     private RobotState() {
         poseResetTimer.start();
@@ -211,5 +212,23 @@ public class RobotState {
                 -getRobotVelocity().omegaRadiansPerSecond,
                 lowShuffleHoodAngleMap.get(distanceToTargetMeters),
                 lowShuffleShooterSpeedMap.get(distanceToTargetMeters));
+    }
+
+    public AimingParameters getShootOnTheMoveAimingParameters(Translation2d target){
+        Pose2d currentPose= getEstimatedPose();
+        Translation2d turretToTarget = target.minus(getEstimatedPose()
+                .transformBy(TurretConstants.ROBOT_TO_TURRET_2D)
+                .getTranslation());
+
+        double time = shootOnTheMoveTimeMap.get(target.getNorm());
+
+        Translation2d turretMovement = new Translation2d((getFieldRelativeVelocity().vxMetersPerSecond*time),(getFieldRelativeVelocity().vyMetersPerSecond*time));
+        Translation2d futureTargetPos = turretToTarget.plus(turretMovement);
+
+        return new AimingParameters(
+                turretToTarget.getAngle(),
+                -getRobotVelocity().omegaRadiansPerSecond,
+                lowShuffleHoodAngleMap.get(futureTargetPos.getNorm()),
+                lowShuffleShooterSpeedMap.get(futureTargetPos.getNorm()));
     }
 }
