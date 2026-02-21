@@ -32,7 +32,7 @@ public class TurretConstants {
     public static final int SMALL_ENCODER_CANCODER_ID = 21;
     public static final int BIG_ENCODER_CANCODER_ID = 22;
 
-    public static final double POS_ERR_TOLERANCE_DEGREES = 2;
+    public static final double POS_ERR_TOLERANCE_DEGREES = 10;
 
     public static final double SMALL_ENCODER_MAGNET_SENSOR_OFFSET = -0.5021953125;
     public static final double BIG_ENCODER_MAGNET_SENSOR_OFFSET = -0.1240234375;
