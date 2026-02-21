@@ -33,13 +33,18 @@ public class Turret extends SubsystemBase {
 
     @AutoLogOutput(key = "Turret/CRTError")
     private Rotation2d lastCRTError = Rotation2d.kZero;
+
     @AutoLogOutput(key = "Turret/ZeroingCRTError")
     private Rotation2d zeroingCRTError = Rotation2d.kZero;
 
     private final Alert motorDisconnectedAlert = new Alert("Turret motor disconnected", Alert.AlertType.kError);
-    private final Alert smallEncoderDisconnectedAlert = new Alert("Turret " + SMALL_ENCODER_GEAR_TOOTH_COUNT + "t encoder disconnected", Alert.AlertType.kError);
-    private final Alert bigEncoderDisconnectedAlert = new Alert("Turret " + BIG_ENCODER_GEAR_TOOTH_COUNT + "t encoder disconnected", Alert.AlertType.kError);
-    private final Alert zeroingErrorAlert = new Alert("Large encoder error of " + zeroingCRTError.getDegrees() + " degrees during zeroing", Alert.AlertType.kWarning);
+    private final Alert smallEncoderDisconnectedAlert =
+            new Alert("Turret " + SMALL_ENCODER_GEAR_TOOTH_COUNT + "t encoder disconnected", Alert.AlertType.kError);
+    private final Alert bigEncoderDisconnectedAlert =
+            new Alert("Turret " + BIG_ENCODER_GEAR_TOOTH_COUNT + "t encoder disconnected", Alert.AlertType.kError);
+    private final Alert zeroingErrorAlert = new Alert(
+            "Large encoder error of " + zeroingCRTError.getDegrees() + " degrees during zeroing",
+            Alert.AlertType.kWarning);
 
     public Turret(TurretIO turretIO) {
         if (hasInstance) throw new IllegalStateException("Instance of turret already exists");
@@ -114,10 +119,13 @@ public class Turret extends SubsystemBase {
         Rotation2d bestAngle = null;
         for (int i = -2; i <= 2; i++) {
             Rotation2d candidateAngle = targetAngle.plus(Rotation2d.fromRotations(i));
-            if (candidateAngle.getDegrees() < MIN_ANGLE.getDegrees() || candidateAngle.getDegrees() > MAX_ANGLE.getDegrees()) {
+            if (candidateAngle.getDegrees() < MIN_ANGLE.getDegrees()
+                    || candidateAngle.getDegrees() > MAX_ANGLE.getDegrees()) {
                 continue;
             }
-            if (bestAngle == null || Math.abs(candidateAngle.minus(currentAngle).getRadians()) < Math.abs(bestAngle.minus(currentAngle).getRadians())) {
+            if (bestAngle == null
+                    || Math.abs(candidateAngle.minus(currentAngle).getRadians())
+                            < Math.abs(bestAngle.minus(currentAngle).getRadians())) {
                 bestAngle = candidateAngle;
             }
         }

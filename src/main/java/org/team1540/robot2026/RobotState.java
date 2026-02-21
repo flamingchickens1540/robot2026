@@ -1,8 +1,11 @@
 package org.team1540.robot2026;
 
+import static org.team1540.robot2026.subsystems.vision.AprilTagVisionConstants.*;
+
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
@@ -11,6 +14,9 @@ import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -19,9 +25,12 @@ import org.littletonrobotics.junction.AutoLogOutputManager;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.subsystems.drive.DrivetrainConstants;
 import org.team1540.robot2026.subsystems.turret.TurretConstants;
+import org.team1540.robot2026.subsystems.vision.AprilVisionIO;
 import org.team1540.robot2026.util.AimingParameters;
 
 public class RobotState {
+
+    private final Timer resetTimer = new Timer();
     private static RobotState instance = null;
 
     public static RobotState getInstance() {
@@ -130,6 +139,40 @@ public class RobotState {
 
     public void addTurretObservation(Rotation2d turretAngle, double timestamp) {
         turretAngleBuffer.addSample(timestamp, turretAngle);
+    }
+
+    public boolean addVisionMeasurement(AprilVisionIO.PoseObservation visionPose) {
+        if (shouldAcceptVision(visionPose) && resetTimer.hasElapsed(0.1)) {
+            poseEstimator.addVisionMeasurement(
+                    visionPose.estimatedPoseMeters().toPose2d(), visionPose.timestampSecs(), getStdDevs(visionPose));
+            return true;
+        }
+        return false;
+    }
+
+    private boolean shouldAcceptVision(AprilVisionIO.PoseObservation poseObservation) {
+        Pose3d estimatedPose = poseObservation.estimatedPoseMeters();
+        return poseObservation.numTagsSeen() >= MIN_ACCEPTED_NUM_TAGS // Must see sufficient tags
+                && (poseObservation.numTagsSeen() > 1
+                        || poseObservation.ambiguity() < MAX_AMBIGUITY) // Must be multiple tags or low ambiguity
+                // Must be within field roughly
+                && estimatedPose.getX() >= -MAX_OUTSIDE_OF_FIELD_TOLERANCE
+                && estimatedPose.getX() <= FieldConstants.fieldLength + MAX_OUTSIDE_OF_FIELD_TOLERANCE
+                && estimatedPose.getY() >= -MAX_OUTSIDE_OF_FIELD_TOLERANCE
+                && estimatedPose.getY() <= FieldConstants.fieldWidth + MAX_OUTSIDE_OF_FIELD_TOLERANCE
+                // Must not be actively flying
+                && Math.abs(estimatedPose.getZ()) <= MAX_ROBOT_Z_TOLERANCE;
+    }
+
+    private Matrix<N3, N1> getStdDevs(AprilVisionIO.PoseObservation poseObservation) {
+        double xyStdDev =
+                XY_STD_DEV_COEFF * Math.pow(poseObservation.avgTagDistance(), 2.0) / poseObservation.numTagsSeen();
+        double rotStdDev =
+                ROT_STD_DEV_COEFF * Math.pow(poseObservation.avgTagDistance(), 2.0) / poseObservation.numTagsSeen();
+        return VecBuilder.fill(
+                xyStdDev,
+                xyStdDev,
+                DriverStation.isEnabled() && poseObservation.numTagsSeen() <= 1 ? Double.POSITIVE_INFINITY : rotStdDev);
     }
 
     public AimingParameters getHubAimingParameters() {

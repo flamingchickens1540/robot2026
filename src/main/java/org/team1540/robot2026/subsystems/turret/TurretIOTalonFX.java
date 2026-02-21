@@ -93,7 +93,8 @@ public class TurretIOTalonFX implements TurretIO {
         inputs.connected = Status.isOK();
 
         inputs.position = Rotation2d.fromRotations(position.getValueAsDouble());
-        inputs.positionTimestamp = Timer.getFPGATimestamp() - position.getTimestamp().getLatency();
+        inputs.positionTimestamp =
+                Timer.getFPGATimestamp() - position.getTimestamp().getLatency();
         inputs.velocityRPS = velocity.getValueAsDouble();
 
         inputs.supplyCurrentAmps = motorSupplyCurrent.getValueAsDouble();

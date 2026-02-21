@@ -11,7 +11,6 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
-import org.littletonrobotics.junction.AutoLog;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.team1540.robot2026.commands.CharacterizationCommands;
 import org.team1540.robot2026.subsystems.climber.Climber;
@@ -41,7 +40,7 @@ public class RobotContainer {
 
     private final RobotState robotState = RobotState.getInstance();
 
-    @AutoLogOutput(key="ClimbMode")
+    @AutoLogOutput(key = "ClimbMode")
     private boolean climbMode = false;
 
     // TODO remove tunables
@@ -115,23 +114,22 @@ public class RobotContainer {
 
         drivetrain.setDefaultCommand(drivetrain.teleopDriveCommand(driver.getHID()));
 
-        driver.leftTrigger().whileTrue(Commands.either(
-                intake.commandRunIntake(0.67),
-                climber.run(() -> climber.setVoltage(-0.67 * 12.0)),
-                ()->climbMode));
+        driver.leftTrigger()
+                .whileTrue(Commands.either(
+                        intake.commandRunIntake(0.67),
+                        climber.run(() -> climber.setVoltage(-0.67 * 12.0)),
+                        () -> climbMode));
         driver.leftStick().whileTrue(intake.commandRunIntake(-0.67));
         driver.povLeft().onTrue(intake.commandToSetpoint(Intake.IntakeState.STOW));
-        driver.rightStick().onTrue(hood.setpointCommand(()->Rotation2d.kZero));
-//        driver.povRight().onTrue(Commands.parallel(ClimbAutoAlign, Commands.run(()->climbMode=!climbMode)));
-//        driver.rightTrigger().whileTrue(Commands.either(
-//                ShootSequence,
-//                climber.run(() -> climber.setVoltage(0.67 * 12.0)),
-//                ()->climbMode));
+        driver.rightStick().onTrue(hood.setpointCommand(() -> Rotation2d.kZero));
+        //        driver.povRight().onTrue(Commands.parallel(ClimbAutoAlign, Commands.run(()->climbMode=!climbMode)));
+        //        driver.rightTrigger().whileTrue(Commands.either(
+        //                ShootSequence,
+        //                climber.run(() -> climber.setVoltage(0.67 * 12.0)),
+        //                ()->climbMode));
 
         driver.start().whileTrue(turret.zeroCommand());
         driver.back().onTrue(Commands.run(drivetrain::zeroFieldOrientation));
-
-
     }
 
     private void configureAutoRoutines() {
