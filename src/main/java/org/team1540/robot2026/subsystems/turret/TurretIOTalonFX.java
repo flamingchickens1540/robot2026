@@ -16,6 +16,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.*;
+import edu.wpi.first.wpilibj.Timer;
 
 public class TurretIOTalonFX implements TurretIO {
     // Motion Magic
@@ -90,12 +91,15 @@ public class TurretIOTalonFX implements TurretIO {
                 smallCANcoderPosition, bigCANcoderPosition);
 
         inputs.connected = Status.isOK();
+
+        inputs.position = Rotation2d.fromRotations(position.getValueAsDouble());
+        inputs.positionTimestamp = Timer.getFPGATimestamp() - position.getTimestamp().getLatency();
+        inputs.velocityRPS = velocity.getValueAsDouble();
+
         inputs.supplyCurrentAmps = motorSupplyCurrent.getValueAsDouble();
         inputs.appliedVolts = appliedVoltage.getValueAsDouble();
         inputs.tempCelsius = motorTemp.getValueAsDouble();
         inputs.statorCurrentAmps = motorStatorCurrent.getValueAsDouble();
-        inputs.position = Rotation2d.fromRotations(position.getValueAsDouble());
-        inputs.velocityRPS = velocity.getValueAsDouble();
 
         inputs.smallEncoderConnected = smallCANcoder.isConnected();
         inputs.bigEncoderConnected = smallCANcoder.isConnected();

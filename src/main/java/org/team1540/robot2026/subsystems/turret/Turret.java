@@ -30,7 +30,16 @@ public class Turret extends SubsystemBase {
     private final TurretIOInputsAutoLogged inputs = new TurretIOInputsAutoLogged();
 
     private Rotation2d setpointRotation = Rotation2d.kZero;
+
+    @AutoLogOutput(key = "Turret/CRTError")
+    private Rotation2d lastCRTError = Rotation2d.kZero;
+    @AutoLogOutput(key = "Turret/ZeroingCRTError")
+    private Rotation2d zeroingCRTError = Rotation2d.kZero;
+
     private final Alert motorDisconnectedAlert = new Alert("Turret motor disconnected", Alert.AlertType.kError);
+    private final Alert smallEncoderDisconnectedAlert = new Alert("Turret " + SMALL_ENCODER_GEAR_TOOTH_COUNT + "t encoder disconnected", Alert.AlertType.kError);
+    private final Alert bigEncoderDisconnectedAlert = new Alert("Turret " + BIG_ENCODER_GEAR_TOOTH_COUNT + "t encoder disconnected", Alert.AlertType.kError);
+    private final Alert zeroingErrorAlert = new Alert("Large encoder error of " + zeroingCRTError.getDegrees() + " degrees during zeroing", Alert.AlertType.kWarning);
 
     public Turret(TurretIO turretIO) {
         if (hasInstance) throw new IllegalStateException("Instance of turret already exists");
@@ -45,13 +54,21 @@ public class Turret extends SubsystemBase {
         io.updateInputs(inputs);
         Logger.processInputs("Turret", inputs);
 
-        if (DriverStation.isDisabled()) stop();
+        if (DriverStation.isDisabled()) {
+            stop();
+            Logger.recordOutput("Turret/CalculatedPosition", calculateTurretAngle());
+        }
+
+        RobotState.getInstance().addTurretObservation(getPosition(), inputs.positionTimestamp);
 
         LoggedTunableNumber.ifChanged(hashCode(), () -> io.configPID(kP.get(), kI.get(), kD.get()), kP, kI, kD);
         LoggedTunableNumber.ifChanged(hashCode(), () -> io.configFF(kS.get(), kV.get()), kS, kV);
 
-        motorDisconnectedAlert.set(!inputs.connected || !inputs.smallEncoderConnected || !inputs.bigEncoderConnected);
-        Logger.recordOutput("Turret/CalculatedPosition", calculateTurretAngle());
+        motorDisconnectedAlert.set(!inputs.connected);
+        smallEncoderDisconnectedAlert.set(!inputs.smallEncoderConnected);
+        bigEncoderDisconnectedAlert.set(!inputs.bigEncoderConnected);
+        zeroingErrorAlert.setText("Large encoder error of " + zeroingCRTError.getDegrees() + " degrees during zeroing");
+        zeroingErrorAlert.set(zeroingCRTError.getDegrees() > 5.0);
 
         LoggedTracer.record("Turret");
     }
@@ -82,11 +99,29 @@ public class Turret extends SubsystemBase {
                 }
             }
         }
+        lastCRTError = Rotation2d.fromRotations(minValue);
 
         Rotation2d rawPosition = Rotation2d.fromRotations(out);
         Logger.recordOutput("Turret/RawPosition", rawPosition);
 
         return rawPosition.minus(ANGLE_OFFSET);
+    }
+
+    public Rotation2d unwrapTurretAngle(Rotation2d targetAngle) {
+        targetAngle = Rotation2d.fromRadians(MathUtil.angleModulus(targetAngle.getRadians()));
+        Rotation2d currentAngle = getPosition();
+
+        Rotation2d bestAngle = null;
+        for (int i = -2; i <= 2; i++) {
+            Rotation2d candidateAngle = targetAngle.plus(Rotation2d.fromRotations(i));
+            if (candidateAngle.getDegrees() < MIN_ANGLE.getDegrees() || candidateAngle.getDegrees() > MAX_ANGLE.getDegrees()) {
+                continue;
+            }
+            if (bestAngle == null || Math.abs(candidateAngle.minus(currentAngle).getRadians()) < Math.abs(bestAngle.minus(currentAngle).getRadians())) {
+                bestAngle = candidateAngle;
+            }
+        }
+        return bestAngle;
     }
 
     public void stop() {
@@ -108,8 +143,7 @@ public class Turret extends SubsystemBase {
     }
 
     public void setSetpoint(Rotation2d position, double velocityRadPerSec) {
-        setpointRotation = Rotation2d.fromDegrees(
-                MathUtil.clamp(position.getDegrees(), MIN_ANGLE.getDegrees(), MAX_ANGLE.getDegrees()));
+        setpointRotation = unwrapTurretAngle(position);
         io.setSetpoint(setpointRotation, velocityRadPerSec);
     }
 
@@ -119,6 +153,10 @@ public class Turret extends SubsystemBase {
 
     public Rotation2d getPosition() {
         return inputs.position;
+    }
+
+    public Rotation2d getFieldRelativePosition() {
+        return getPosition().plus(RobotState.getInstance().getRobotHeading());
     }
 
     public double getVelocity() {
@@ -143,7 +181,10 @@ public class Turret extends SubsystemBase {
     }
 
     public Command zeroCommand() {
-        return runOnce(this::stop).andThen(runOnce(() -> io.setMotorPosition(calculateTurretAngle())));
+        return runOnce(this::stop).andThen(runOnce(() -> {
+            io.setMotorPosition(calculateTurretAngle());
+            zeroingCRTError = lastCRTError;
+        }));
     }
 
     public static Turret createReal() {

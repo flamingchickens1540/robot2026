@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
@@ -21,8 +22,8 @@ public class Intake extends SubsystemBase {
     private static boolean hasInstance = false;
 
     public enum IntakeState {
-        STOW(new LoggedTunableNumber("Intake/Setpoints/Stow/AngleDegrees", PIVOT_MAX_ANGLE.getDegrees())),
-        INTAKE(new LoggedTunableNumber("Intake/Setpoints/Intake/AngleDegrees", PIVOT_MIN_ANGLE.getDegrees()));
+        STOW(new LoggedTunableNumber("Intake/Setpoints/Stow/AngleDegrees", PIVOT_MIN_ANGLE.getDegrees())),
+        INTAKE(new LoggedTunableNumber("Intake/Setpoints/Intake/AngleDegrees", PIVOT_MAX_ANGLE.getDegrees()));
 
         private final DoubleSupplier pivotPosition;
 
@@ -89,13 +90,21 @@ public class Intake extends SubsystemBase {
         io.setIntakeVoltage(voltage);
     }
 
-    public void setPivotPosition(Rotation2d rotations) {
+    public void setPivotSetpoint(Rotation2d rotations) {
         pivotSetpoint = rotations;
         io.setPivotSetpoint(rotations);
     }
 
+    public void resetPivotPosition(Rotation2d position) {
+        io.resetPivotPosition(position);
+    }
+
     public Rotation2d getPivotPosition() {
         return inputs.pivotPosition;
+    }
+
+    public double getPivotVelocityRPS() {
+        return inputs.pivotMotorVelocityRPS;
     }
 
     public void setPivotVoltage(double voltage) {
@@ -108,7 +117,7 @@ public class Intake extends SubsystemBase {
     }
 
     public void holdPivot() {
-        setPivotPosition(inputs.pivotPosition);
+        setPivotSetpoint(inputs.pivotPosition);
     }
 
     @AutoLogOutput(key = "Intake/PivotAtSetpoint")
@@ -122,7 +131,7 @@ public class Intake extends SubsystemBase {
     }
 
     public Command commandToSetpoint(IntakeState state) {
-        return (Commands.run(() -> setPivotPosition(state.pivotPosition()), this)
+        return (Commands.run(() -> setPivotSetpoint(state.pivotPosition()), this)
                         .until(this::isPivotAtSetpoint))
                 .handleInterrupt(this::holdPivot);
     }
@@ -132,11 +141,11 @@ public class Intake extends SubsystemBase {
     }
 
     public Command zeroCommand() {
-        return Commands.runOnce(() -> setPivotVoltage(0.3 * 12))
-                .andThen(Commands.waitSeconds(0.5))
-                .andThen(Commands.waitUntil(() -> Math.abs(inputs.pivotStatorCurrentAmps) > 20)
-                        .andThen(Commands.runOnce(() -> setPivotPosition(Rotation2d.fromDegrees(90))))
-                        .andThen(commandToSetpoint(IntakeState.STOW)));
+        return runOnce(() -> setPivotVoltage(-2))
+                .andThen(
+                        Commands.waitUntil(new Trigger(() -> inputs.pivotStatorCurrentAmps >= 20).debounce(0.5)),
+                        runOnce(() -> resetPivotPosition(Rotation2d.kZero)),
+                        commandToSetpoint(IntakeState.STOW));
     }
 
     public static Intake createReal() {

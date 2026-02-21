@@ -17,7 +17,6 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.wpilibj.DigitalInput;
 
 public class ClimberIOTalonFX implements ClimberIO {
     private final TalonFX motor = new TalonFX(MOTOR_ID);
@@ -29,9 +28,6 @@ public class ClimberIOTalonFX implements ClimberIO {
     private final StatusSignal<Temperature> temp = motor.getDeviceTemp();
 
     private final MotionMagicVoltage profiledPositionControl = new MotionMagicVoltage(0.0).withEnableFOC(true);
-
-    private final DigitalInput upperLimitSwitch = new DigitalInput(UPPER_LIMIT_ID);
-    private final DigitalInput lowerLimitSwitch = new DigitalInput(LOWER_LIMIT_ID);
 
     public ClimberIOTalonFX() {
         TalonFXConfiguration config = new TalonFXConfiguration();
@@ -73,9 +69,6 @@ public class ClimberIOTalonFX implements ClimberIO {
         inputs.statorCurrentAmps = statorCurrent.getValueAsDouble();
         inputs.supplyCurrentAmps = supplyCurrent.getValueAsDouble();
         inputs.tempCelsius = temp.getValueAsDouble();
-
-        inputs.atUpperLimit = upperLimitSwitch.get();
-        inputs.atLowerLimit = lowerLimitSwitch.get();
     }
 
     @Override

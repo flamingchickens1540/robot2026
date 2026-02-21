@@ -4,7 +4,7 @@ import edu.wpi.first.math.util.Units;
 
 public class ClimberConstants {
     // CONSTANTS NEED TO BE UPDATED
-    public static final int MOTOR_ID = 0;
+    public static final int MOTOR_ID = 10;
     public static final int UPPER_LIMIT_ID = 0;
     public static final int LOWER_LIMIT_ID = 0;
 

@@ -8,6 +8,7 @@ public interface TurretIO {
     class TurretIOInputs {
         public boolean connected = false;
         public Rotation2d position = Rotation2d.kZero;
+        public double positionTimestamp = 0.0;
         public double velocityRPS = 0.0;
         public double appliedVolts = 0.0;
         public double supplyCurrentAmps = 0.0;
