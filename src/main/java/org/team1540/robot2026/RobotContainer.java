@@ -1,23 +1,28 @@
 package org.team1540.robot2026;
 
+import static edu.wpi.first.units.Units.Seconds;
 import static org.team1540.robot2026.subsystems.climber.ClimberConstants.SPROCKET_RADIUS_M;
+import static org.team1540.robot2026.subsystems.leds.CustomLEDPatterns.purple;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.LEDPattern;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
-import org.littletonrobotics.junction.AutoLog;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.team1540.robot2026.commands.CharacterizationCommands;
 import org.team1540.robot2026.subsystems.climber.Climber;
 import org.team1540.robot2026.subsystems.drive.Drivetrain;
 import org.team1540.robot2026.subsystems.hood.Hood;
 import org.team1540.robot2026.subsystems.intake.Intake;
+import org.team1540.robot2026.subsystems.leds.CustomLEDPatterns;
+import org.team1540.robot2026.subsystems.leds.Leds;
 import org.team1540.robot2026.subsystems.shooter.Shooter;
 import org.team1540.robot2026.subsystems.spindexer.Spindexer;
 import org.team1540.robot2026.subsystems.turret.Turret;
@@ -41,7 +46,7 @@ public class RobotContainer {
 
     private final RobotState robotState = RobotState.getInstance();
 
-    @AutoLogOutput(key="ClimbMode")
+    @AutoLogOutput(key = "ClimbMode")
     private boolean climbMode = false;
 
     // TODO remove tunables
@@ -115,23 +120,22 @@ public class RobotContainer {
 
         drivetrain.setDefaultCommand(drivetrain.teleopDriveCommand(driver.getHID()));
 
-        driver.leftTrigger().whileTrue(Commands.either(
-                intake.commandRunIntake(0.67),
-                climber.run(() -> climber.setVoltage(-0.67 * 12.0)),
-                ()->climbMode));
+        driver.leftTrigger()
+                .whileTrue(Commands.either(
+                        intake.commandRunIntake(0.67),
+                        climber.run(() -> climber.setVoltage(-0.67 * 12.0)),
+                        () -> climbMode));
         driver.leftStick().whileTrue(intake.commandRunIntake(-0.67));
         driver.povLeft().onTrue(intake.commandToSetpoint(Intake.IntakeState.STOW));
-        driver.rightStick().onTrue(hood.setpointCommand(()->Rotation2d.kZero));
-//        driver.povRight().onTrue(Commands.parallel(ClimbAutoAlign, Commands.run(()->climbMode=!climbMode)));
-//        driver.rightTrigger().whileTrue(Commands.either(
-//                ShootSequence,
-//                climber.run(() -> climber.setVoltage(0.67 * 12.0)),
-//                ()->climbMode));
+        driver.rightStick().onTrue(hood.setpointCommand(() -> Rotation2d.kZero));
+        //        driver.povRight().onTrue(Commands.parallel(ClimbAutoAlign, Commands.run(()->climbMode=!climbMode)));
+        //        driver.rightTrigger().whileTrue(Commands.either(
+        //                ShootSequence,
+        //                climber.run(() -> climber.setVoltage(0.67 * 12.0)),
+        //                ()->climbMode));
 
         driver.start().whileTrue(turret.zeroCommand());
         driver.back().onTrue(Commands.run(drivetrain::zeroFieldOrientation));
-
-
     }
 
     private void configureAutoRoutines() {
@@ -190,5 +194,19 @@ public class RobotContainer {
      */
     public Command getAutonomousCommand() {
         return autoChooser.selectedCommand();
+    }
+
+    private void configureLEDBindings() {
+        RobotModeTriggers.disabled().onTrue(Leds.viewFull.commandDefaultPattern(() -> CustomLEDPatterns.movingRainbow));
+        RobotModeTriggers.autonomous()
+                .onTrue(Leds.viewFull.commandDefaultPattern(() -> LEDPattern.solid(Leds.getAllianceColor())));
+        RobotModeTriggers.teleop()
+                .onTrue(Leds.viewFull.commandDefaultPattern(
+                        () -> LEDPattern.solid(Leds.getAllianceColor()).blink(Seconds.of(1.0))));
+
+        new Trigger(intake::isPivotAtSetpoint).whileTrue(Leds.viewFull.commandShowPattern(purple));
+        // new
+        // Trigger(DriverStation.getMatchTime()==30||DriverStation.getMatchTime()==15||DriverStation.getMatchTime()==10).onTrue(Leds.viewFull.commandShowPattern(flash).withTimeout(1));
+        // add when done zeroing and when hood and climber are up
     }
 }
