@@ -19,10 +19,13 @@ public class Leds extends SubsystemBase {
             LEDPattern.solid(new Color("#ff3700")).synchronizedBlink(RobotController::getRSLState);
 
     private final List<LedWindow> children = new ArrayList<LedWindow>();
+    public final LedWindow viewFull = new LedWindow(0, LED_LENGTH - 1);
+    public final LedWindow viewTop = new LedWindow(LED_LENGTH - 6, LED_LENGTH - 1);
 
     public Leds() {
         ledStrip.setLength(ledBuffer.getLength());
-        ledStrip.start();
+        ledStrip.start(); 
+        viewFull.setDefaultPattern(CustomLEDPatterns.movingRainbow);
     }
 
     public class LedWindow extends SubsystemBase {
