@@ -120,7 +120,7 @@ public class RobotContainer {
 
         intake.setDefaultCommand(intake.run(() -> {
             double percent = JoystickUtil.smartDeadzone(copilot.getRightY(), 0.1);
-            if (intake.getPivotPosition().getDegrees() <= 67 && percent < 0 && !copilot.leftBumper().getAsBoolean()) percent = 0;
+            if (intake.getPivotPosition().getDegrees() <= 67 && percent < 0 && !copilot.rightBumper().getAsBoolean()) percent = 0;
             intake.setPivotVoltage(6 * percent);
         }));
         copilot.b()
