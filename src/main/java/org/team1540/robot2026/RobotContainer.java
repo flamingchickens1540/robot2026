@@ -54,6 +54,7 @@ public class RobotContainer {
 
     @AutoLogOutput(key = "ClimbMode")
     private boolean climbMode = false;
+    @AutoLogOutput(key = "SOTMEnabled")
     private boolean sotm = false;
 
     // TODO remove tunables
