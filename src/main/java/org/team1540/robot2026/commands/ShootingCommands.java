@@ -48,6 +48,18 @@ public class ShootingCommands {
                         () -> RobotState.getInstance().getHubAimingParameters().hoodAngle()));
     }
 
+    public static Command hubSOTMAimCommand(Turret turret, Shooter shooter, Hood hood) {
+        return Commands.parallel(
+                turret.commandToSetpoint(
+                        () -> RobotState.getInstance().getHubSOTMAimingParameters().turretAngle(),
+                        () -> RobotState.getInstance().getHubSOTMAimingParameters().turretVelocityRadPerSec(),
+                        true),
+                shooter.commandVelocity(
+                        () -> RobotState.getInstance().getHubSOTMAimingParameters().shooterRPM()),
+                hood.setpointCommand(
+                        () -> RobotState.getInstance().getHubSOTMAimingParameters().hoodAngle()));
+    }
+
     public static Command highShuffleAimCommand(Turret turret, Shooter shooter, Hood hood) {
         return Commands.parallel(
                 turret.commandToSetpoint(

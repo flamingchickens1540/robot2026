@@ -54,6 +54,7 @@ public class RobotContainer {
 
     @AutoLogOutput(key = "ClimbMode")
     private boolean climbMode = false;
+    private boolean sotm = false;
 
     // TODO remove tunables
     private final LoggedTunableNumber hoodDegrees = new LoggedTunableNumber("Hood/SetpointDegrees", 30.0);
@@ -71,7 +72,7 @@ public class RobotContainer {
                 intake = Intake.createReal();
                 spindexer = Spindexer.createReal();
                 shooter = Shooter.createReal();
-                turret = Turret.createReal();
+                turret = Turret.createDummy();
                 hood = Hood.createReal();
                 climber = Climber.createReal();
                 vision = AprilTagVision.createReal();
@@ -130,6 +131,7 @@ public class RobotContainer {
         copilot.start().whileTrue(hood.zeroCommand());
         copilot.back().whileTrue(intake.zeroCommand());
         copilot.leftBumper().whileTrue(spindexer.runCommand(() -> -0.67, () -> -0.67));
+        copilot.x().onTrue(Commands.runOnce(() -> sotm = !sotm));
 
         drivetrain.setDefaultCommand(drivetrain.teleopDriveCommand(driver.getHID()));
 
@@ -148,7 +150,10 @@ public class RobotContainer {
         driver.povRight().onTrue(Commands.runOnce(() -> climbMode = !climbMode));
 
         driver.rightBumper()
-                .toggleOnTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
+                .toggleOnTrue(Commands.either(
+                        ShootingCommands.hubSOTMAimCommand(turret, shooter, hood),
+                        ShootingCommands.hubAimCommand(turret, shooter, hood),
+                        () -> sotm)
                         .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0)));
         driver.leftBumper()
                 .toggleOnTrue(ShootingCommands.highShuffleAimCommand(turret, shooter, hood)
