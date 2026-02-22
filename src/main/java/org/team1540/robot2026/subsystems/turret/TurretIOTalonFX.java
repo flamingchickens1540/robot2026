@@ -15,6 +15,7 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.Timer;
 
@@ -44,6 +45,11 @@ public class TurretIOTalonFX implements TurretIO {
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
         config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
+        config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+        config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = MAX_ANGLE.getRotations() + Units.degreesToRotations(5);
+        config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+        config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = MIN_ANGLE.getRotations() - Units.degreesToRotations(5);
+
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
         config.CurrentLimits.SupplyCurrentLimit = 70.0;
         config.CurrentLimits.SupplyCurrentLowerLimit = 40.0;

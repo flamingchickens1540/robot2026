@@ -266,7 +266,7 @@ public class RobotState {
                 turretToTarget.getAngle(),
                 -getRobotVelocity().omegaRadiansPerSecond,
                 Rotation2d.fromDegrees(45),
-                0.67 * 5);
+                0.67 * 5500);
     }
 
     public AimingParameters getLowShuffleAimingParameters(Translation2d shuffleTarget) {

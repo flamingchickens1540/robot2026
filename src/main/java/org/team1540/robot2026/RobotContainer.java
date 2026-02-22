@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.team1540.robot2026.commands.CharacterizationCommands;
 import org.team1540.robot2026.commands.ShootingCommands;
@@ -166,12 +167,9 @@ public class RobotContainer {
                 .whileTrue(leds.viewFull.commandShowPattern(CustomLEDPatterns.movingRainbow(Hertz.of(0.5))));
         RobotModeTriggers.teleop()
                 .or(RobotModeTriggers.autonomous())
-                .whileTrue(leds.viewFull.commandDefaultPattern(() -> {
-                    if (climbMode) return LEDPattern.solid(Color.kLightCyan);
-                    else
-                        return LEDPattern.gradient(LEDPattern.GradientType.kContinuous, Color.kRed, Color.kOrange)
-                                .scrollAtRelativeSpeed(Hertz.of(0.67));
-                }));
+                .whileTrue(leds.viewFull.commandDefaultPattern(() -> LEDPattern.gradient(LEDPattern.GradientType.kContinuous, Color.kRed, Color.kOrange)
+                                .scrollAtRelativeSpeed(Hertz.of(0.67))));
+        new Trigger(() -> climbMode).whileTrue(leds.viewFull.commandShowPattern(LEDPattern.solid(Color.kCyan)));
         MatchTriggers.timeRemaining(30)
                 .or(MatchTriggers.timeRemaining(15))
                 .or(MatchTriggers.timeRemaining(10))

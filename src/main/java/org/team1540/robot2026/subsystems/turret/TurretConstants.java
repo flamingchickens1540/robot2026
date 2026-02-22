@@ -37,7 +37,7 @@ public class TurretConstants {
     public static final double SMALL_ENCODER_MAGNET_SENSOR_OFFSET = -0.5021953125;
     public static final double BIG_ENCODER_MAGNET_SENSOR_OFFSET = -0.1240234375;
 
-    public static final double CRUISE_VELOCITY_RPS = 0.5; // was 3
+    public static final double CRUISE_VELOCITY_RPS = 0.75; // was 3
     public static final double MAX_ACCEL_RPS2 = 2; // was 7
 
     public static final Transform2d ROBOT_TO_TURRET_2D =
