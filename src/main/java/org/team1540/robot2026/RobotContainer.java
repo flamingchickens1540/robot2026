@@ -119,15 +119,16 @@ public class RobotContainer {
         driver.start().onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual));
 
         intake.setDefaultCommand(intake.run(() -> {
-            intake.setPivotVoltage(6 * JoystickUtil.smartDeadzone(copilot.getRightY(), 0.1));
-            if (copilot.leftTrigger().getAsBoolean()) intake.setRollerVoltage(12.0 * intakePercent.get());
-            else intake.setRollerVoltage(0);
+            double percent = JoystickUtil.smartDeadzone(copilot.getRightY(), 0.1);
+            if (intake.getPivotPosition().getDegrees() < 67 && percent < 0) percent = 0;
+            intake.setPivotVoltage(6 * percent);
         }));
         copilot.b()
                 .toggleOnTrue(turret.run(
                         () -> turret.setVoltage(-JoystickUtil.smartDeadzone(copilot.getLeftX(), 0.1) * 0.5 * 12.0)));
         copilot.a().onTrue(hood.setpointCommand(() -> Rotation2d.fromDegrees(15)));
         copilot.start().whileTrue(hood.zeroCommand());
+        copilot.back().whileTrue(intake.zeroCommand());
         copilot.leftBumper().whileTrue(spindexer.runCommand(() -> -0.67, () -> -0.67));
 
         drivetrain.setDefaultCommand(drivetrain.teleopDriveCommand(driver.getHID()));
@@ -177,7 +178,7 @@ public class RobotContainer {
     }
 
     private void configureAutoRoutines() {
-        autoChooser.addCmd("Shoot Preload", () -> hood.zeroCommand()
+        autoChooser.addCmd("Shoot Preload", () -> hood.zeroCommand().alongWith(intake.zeroCommand()).withTimeout(1.0)
                 .andThen(ShootingCommands.hubAimCommand(turret, shooter, hood)
                         .withDeadline(Commands.waitUntil(
                                         () -> turret.atSetpoint() && shooter.atSetpoint() && hood.isAtSetpoint())
