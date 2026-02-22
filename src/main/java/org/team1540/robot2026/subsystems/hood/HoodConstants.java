@@ -13,7 +13,7 @@ public class HoodConstants {
 
     public static final double ZERO_CURRENT_AMPS = 30;
 
-    public static final double KP = 118.0;
+    public static final double KP = 254.0;
     public static final double KI = 0.0;
     public static final double KD = 0.0;
     public static final double KS = 0.0;

@@ -27,6 +27,7 @@ import org.team1540.robot2026.subsystems.drive.DrivetrainConstants;
 import org.team1540.robot2026.subsystems.turret.TurretConstants;
 import org.team1540.robot2026.subsystems.vision.AprilTagVisionIO;
 import org.team1540.robot2026.util.AimingParameters;
+import org.team1540.robot2026.util.AllianceFlipUtil;
 
 public class RobotState {
     private static RobotState instance = null;
@@ -73,6 +74,20 @@ public class RobotState {
     private RobotState() {
         poseResetTimer.start();
         SmartDashboard.putData(field);
+
+        // Set up interpolations
+        hubHoodAngleMap.put(2.713, Rotation2d.fromDegrees(22));
+        hubHoodAngleMap.put(1.724, Rotation2d.fromDegrees(17));
+        hubHoodAngleMap.put(1.414, Rotation2d.fromDegrees(15));
+        hubHoodAngleMap.put(4.888, Rotation2d.fromDegrees(29));
+        hubHoodAngleMap.put(3.700, Rotation2d.fromDegrees(25));
+
+        hubShooterSpeedMap.put(2.713, 1400.0);
+        hubShooterSpeedMap.put(1.724, 1250.0);
+        hubShooterSpeedMap.put(1.414, 1150.0);
+        hubShooterSpeedMap.put(4.888, 1650.0);
+        hubShooterSpeedMap.put(3.700, 1500.0);
+
         AutoLogOutputManager.addObject(this);
     }
 
@@ -196,8 +211,7 @@ public class RobotState {
     }
 
     public AimingParameters getHubAimingParameters() {
-        Translation2d turretToHub = FieldConstants.Hub.topCenterPoint
-                .toTranslation2d()
+        Translation2d turretToHub = AllianceFlipUtil.apply(FieldConstants.Hub.topCenterPoint.toTranslation2d())
                 .minus(getEstimatedPose()
                         .transformBy(TurretConstants.ROBOT_TO_TURRET_2D)
                         .getTranslation());
@@ -209,6 +223,40 @@ public class RobotState {
                 hubShooterSpeedMap.get(distanceToHubMeters));
     }
 
+    public AimingParameters getHubSOTMAimingParameters() {
+        Translation2d turretToHub = AllianceFlipUtil.apply(FieldConstants.Hub.topCenterPoint.toTranslation2d())
+                .minus(getEstimatedPose()
+                        .transformBy(TurretConstants.ROBOT_TO_TURRET_2D)
+                        .getTranslation());
+        double distanceToHubMeters = turretToHub.getNorm();
+        double regularShotSpeed = hubShooterSpeedMap.get(distanceToHubMeters);
+        Rotation2d regularHoodAngle = Rotation2d.kCCW_90deg.minus(hubHoodAngleMap.get(distanceToHubMeters));
+
+        double thetaH = Math.atan2(
+                regularShotSpeed
+                                * regularHoodAngle.getCos()
+                                * turretToHub.getAngle().getSin()
+                        + getRobotVelocity().vyMetersPerSecond,
+                regularShotSpeed
+                                * regularHoodAngle.getCos()
+                                * turretToHub.getAngle().getCos()
+                        + turretToHub.getX()
+                        + getRobotVelocity().vxMetersPerSecond);
+        double thetaV = Math.atan(regularShotSpeed
+                * regularHoodAngle.getSin()
+                * Math.cos(thetaH)
+                / (regularShotSpeed
+                                * regularHoodAngle.getCos()
+                                * turretToHub.getAngle().getCos()
+                        + getRobotVelocity().vxMetersPerSecond));
+
+        return new AimingParameters(
+                Rotation2d.fromRadians(thetaH),
+                -getRobotVelocity().omegaRadiansPerSecond,
+                Rotation2d.kCCW_90deg.minus(Rotation2d.fromRadians(thetaV)),
+                hubShooterSpeedMap.get(distanceToHubMeters) * (regularHoodAngle.getSin() / Math.sin(thetaV)));
+    }
+
     public AimingParameters getHighShuffleAimingParameters(Translation2d shuffleTarget) {
         Translation2d turretToTarget = shuffleTarget.minus(getEstimatedPose()
                 .transformBy(TurretConstants.ROBOT_TO_TURRET_2D)
@@ -217,8 +265,8 @@ public class RobotState {
         return new AimingParameters(
                 turretToTarget.getAngle(),
                 -getRobotVelocity().omegaRadiansPerSecond,
-                highShuffleHoodAngleMap.get(distanceToTargetMeters),
-                highShuffleShooterSpeedMap.get(distanceToTargetMeters));
+                Rotation2d.fromDegrees(45),
+                0.67 * 5);
     }
 
     public AimingParameters getLowShuffleAimingParameters(Translation2d shuffleTarget) {

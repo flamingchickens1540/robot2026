@@ -113,23 +113,21 @@ public class Turret extends SubsystemBase {
     }
 
     public Rotation2d unwrapTurretAngle(Rotation2d targetAngle) {
-        targetAngle = Rotation2d.fromRadians(MathUtil.angleModulus(targetAngle.getRadians()));
-        Rotation2d currentAngle = getPosition();
-
-        Rotation2d bestAngle = null;
+        double targetRot = targetAngle.plus(Rotation2d.kZero).getRotations();
+        double currentRot = getPosition().getRotations();
+        double bestRot = 0.0;
+        boolean hasBestRot = false;
         for (int i = -2; i <= 2; i++) {
-            Rotation2d candidateAngle = targetAngle.plus(Rotation2d.fromRotations(i));
-            if (candidateAngle.getDegrees() < MIN_ANGLE.getDegrees()
-                    || candidateAngle.getDegrees() > MAX_ANGLE.getDegrees()) {
+            double candidate = targetRot + i;
+            if (candidate < MIN_ANGLE.getRotations() || candidate > MAX_ANGLE.getRotations()) {
                 continue;
             }
-            if (bestAngle == null
-                    || Math.abs(candidateAngle.minus(currentAngle).getRadians())
-                            < Math.abs(bestAngle.minus(currentAngle).getRadians())) {
-                bestAngle = candidateAngle;
+            if (!hasBestRot || Math.abs(candidate - currentRot) < Math.abs(bestRot - currentRot)) {
+                hasBestRot = true;
+                bestRot = candidate;
             }
         }
-        return bestAngle;
+        return Rotation2d.fromRotations(bestRot);
     }
 
     public void stop() {
