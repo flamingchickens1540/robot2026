@@ -202,7 +202,7 @@ public class Drivetrain extends SubsystemBase {
         Command activeCmd = CommandScheduler.getInstance().requiring(this);
         Logger.recordOutput(
                 "Drivetrain/ActiveCommand",
-                activeCmd != null ? activeCmd.getName() + "_" + activeCmd.hashCode() : "None");
+                activeCmd != null ? activeCmd.getName() + "_" + Integer.toHexString(activeCmd.hashCode()) : "None");
 
         LoggedTracer.record("Drivetrain");
     }
