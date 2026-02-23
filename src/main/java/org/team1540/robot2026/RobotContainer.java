@@ -2,7 +2,6 @@ package org.team1540.robot2026;
 
 import static edu.wpi.first.units.Units.Hertz;
 import static edu.wpi.first.units.Units.Seconds;
-import static org.team1540.robot2026.subsystems.climber.ClimberConstants.SPROCKET_RADIUS_M;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -20,8 +19,10 @@ import org.littletonrobotics.junction.AutoLogOutput;
 import org.team1540.robot2026.commands.CharacterizationCommands;
 import org.team1540.robot2026.commands.ShootingCommands;
 import org.team1540.robot2026.subsystems.climber.Climber;
+import org.team1540.robot2026.subsystems.climber.ClimberConstants;
 import org.team1540.robot2026.subsystems.drive.Drivetrain;
 import org.team1540.robot2026.subsystems.hood.Hood;
+import org.team1540.robot2026.subsystems.hood.HoodConstants;
 import org.team1540.robot2026.subsystems.intake.Intake;
 import org.team1540.robot2026.subsystems.leds.CustomLEDPatterns;
 import org.team1540.robot2026.subsystems.leds.LEDs;
@@ -30,7 +31,6 @@ import org.team1540.robot2026.subsystems.spindexer.Spindexer;
 import org.team1540.robot2026.subsystems.turret.Turret;
 import org.team1540.robot2026.subsystems.vision.AprilTagVision;
 import org.team1540.robot2026.util.JoystickUtil;
-import org.team1540.robot2026.util.LoggedTunableNumber;
 import org.team1540.robot2026.util.MatchTriggers;
 import org.team1540.robot2026.util.auto.LoggedAutoChooser;
 
@@ -54,15 +54,6 @@ public class RobotContainer {
 
     @AutoLogOutput(key = "ClimbMode")
     private boolean climbMode = false;
-    @AutoLogOutput(key = "SOTMEnabled")
-    private boolean sotm = false;
-
-    // TODO remove tunables
-    private final LoggedTunableNumber hoodDegrees = new LoggedTunableNumber("Hood/SetpointDegrees", 30.0);
-    private final LoggedTunableNumber shooterRPM = new LoggedTunableNumber("Shooter/SetpointRPM", 1000);
-    private final LoggedTunableNumber spindexerPercent = new LoggedTunableNumber("Spindexer/SpinPercent", 0.75);
-    private final LoggedTunableNumber feederPercent = new LoggedTunableNumber("Spindexer/FeedPercent", 0.75);
-    private final LoggedTunableNumber intakePercent = new LoggedTunableNumber("Intake/Percent", 0.75);
 
     /** The container for the robot. Contains subsystems, IO devices, and commands. */
     public RobotContainer() {
@@ -119,23 +110,12 @@ public class RobotContainer {
                 true));
 
         driver.start().onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual));
+        driver.back()
+                .whileTrue(turret.zeroCommand()
+                        .andThen(leds.viewFull.commandShowPattern(
+                                CustomLEDPatterns.strobe(Color.kGreen, Seconds.of(0.5)))));
 
-        intake.setDefaultCommand(intake.run(() -> {
-            double percent = JoystickUtil.smartDeadzone(copilot.getRightY(), 0.1);
-            if (intake.getPivotPosition().getDegrees() <= 67 && percent < 0 && !copilot.rightBumper().getAsBoolean()) percent = 0;
-            intake.setPivotVoltage(6 * percent);
-        }));
-        copilot.b()
-                .toggleOnTrue(turret.run(
-                        () -> turret.setVoltage(-JoystickUtil.smartDeadzone(copilot.getLeftX(), 0.1) * 0.5 * 12.0)));
-        copilot.a().onTrue(hood.setpointCommand(() -> Rotation2d.fromDegrees(15)));
-        copilot.start().whileTrue(hood.zeroCommand());
-        copilot.back().whileTrue(intake.zeroCommand());
-        copilot.leftBumper().whileTrue(spindexer.runCommand(() -> -0.67, () -> -0.67));
-        copilot.x().onTrue(Commands.runOnce(() -> sotm = !sotm));
-
-        drivetrain.setDefaultCommand(drivetrain.teleopDriveCommand(driver.getHID()));
-
+        driver.povRight().onTrue(Commands.runOnce(() -> climbMode = !climbMode));
         driver.leftTrigger()
                 .whileTrue(Commands.either(
                         climber.runEnd(() -> climber.setVoltage(-0.67 * 12.0), climber::stop),
@@ -144,20 +124,12 @@ public class RobotContainer {
                         () -> climbMode));
         driver.leftStick().whileTrue(intake.commandRunIntake(-0.67));
         driver.povLeft().onTrue(intake.commandToSetpoint(Intake.IntakeState.STOW));
-        driver.rightStick().onTrue(hood.setpointCommand(() -> Rotation2d.kZero));
-        //                driver.povRight().onTrue(Commands.parallel(ClimbAutoAlign,
-        // Commands.run(()->climbMode=!climbMode)));
-
-        driver.povRight().onTrue(Commands.runOnce(() -> climbMode = !climbMode));
-
+        driver.rightStick().onTrue(hood.setpointCommand(() -> HoodConstants.MIN_ANGLE));
         driver.rightBumper()
-                .toggleOnTrue(Commands.either(
-                        ShootingCommands.hubSOTMAimCommand(turret, shooter, hood),
-                        ShootingCommands.hubAimCommand(turret, shooter, hood),
-                        () -> sotm)
+                .toggleOnTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
                         .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0)));
         driver.leftBumper()
-                .toggleOnTrue(ShootingCommands.highShuffleAimCommand(turret, shooter, hood)
+                .toggleOnTrue(ShootingCommands.shuffleAimCommand(turret, shooter, hood)
                         .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0)));
         driver.rightTrigger()
                 .whileTrue(Commands.either(
@@ -165,8 +137,26 @@ public class RobotContainer {
                         spindexer.runCommand(() -> 1.0, () -> 1.0),
                         () -> climbMode));
 
-        driver.start().whileTrue(turret.zeroCommand());
-        driver.back().onTrue(Commands.run(drivetrain::zeroFieldOrientation));
+        intake.setDefaultCommand(intake.run(() -> {
+            double percent = JoystickUtil.smartDeadzone(copilot.getRightY(), 0.1);
+            if (intake.getPivotPosition().getDegrees() <= 67
+                    && percent < 0
+                    && !copilot.rightBumper().getAsBoolean()) percent = 0;
+            intake.setPivotVoltage(6 * percent);
+        }));
+        copilot.b()
+                .toggleOnTrue(turret.run(
+                        () -> turret.setVoltage(-JoystickUtil.smartDeadzone(copilot.getLeftX(), 0.1) * 0.5 * 12.0)));
+        copilot.a().onTrue(hood.setpointCommand(() -> HoodConstants.MIN_ANGLE));
+        copilot.start()
+                .whileTrue(hood.zeroCommand()
+                        .andThen(leds.viewFull.commandShowPattern(
+                                CustomLEDPatterns.strobe(Color.kGreen, Seconds.of(0.5)))));
+        copilot.back()
+                .whileTrue(intake.zeroCommand()
+                        .andThen(leds.viewFull.commandShowPattern(
+                                CustomLEDPatterns.strobe(Color.kGreen, Seconds.of(0.5)))));
+        copilot.leftBumper().whileTrue(spindexer.runCommand(() -> -0.67, () -> -0.67));
     }
 
     private void configureLEDBindings() {
@@ -174,7 +164,8 @@ public class RobotContainer {
                 .whileTrue(leds.viewFull.commandShowPattern(CustomLEDPatterns.movingRainbow(Hertz.of(0.5))));
         RobotModeTriggers.teleop()
                 .or(RobotModeTriggers.autonomous())
-                .whileTrue(leds.viewFull.commandDefaultPattern(() -> LEDPattern.gradient(LEDPattern.GradientType.kContinuous, Color.kRed, Color.kOrange)
+                .whileTrue(leds.viewFull.commandDefaultPattern(
+                        () -> LEDPattern.gradient(LEDPattern.GradientType.kContinuous, Color.kRed, Color.kOrange)
                                 .scrollAtRelativeSpeed(Hertz.of(0.67))));
         new Trigger(() -> climbMode).whileTrue(leds.viewFull.commandShowPattern(LEDPattern.solid(Color.kCyan)));
         MatchTriggers.timeRemaining(30)
@@ -184,7 +175,9 @@ public class RobotContainer {
     }
 
     private void configureAutoRoutines() {
-        autoChooser.addCmd("Shoot Preload", () -> hood.zeroCommand().alongWith(intake.zeroCommand()).withTimeout(1.0)
+        autoChooser.addCmd("Shoot Preload", () -> hood.zeroCommand()
+                .alongWith(intake.zeroCommand())
+                .withTimeout(1.0)
                 .andThen(ShootingCommands.hubAimCommand(turret, shooter, hood)
                         .withDeadline(Commands.waitUntil(
                                         () -> turret.atSetpoint() && shooter.atSetpoint() && hood.isAtSetpoint())
@@ -217,7 +210,7 @@ public class RobotContainer {
                     "Climber FF Characterization",
                     () -> CharacterizationCommands.feedforward(
                             climber::setVoltage,
-                            () -> climber.getVelocityMPS() / 2 * Math.PI * SPROCKET_RADIUS_M,
+                            () -> climber.getVelocityMPS() / 2 * Math.PI * ClimberConstants.SPROCKET_RADIUS_M,
                             climber));
         }
     }
@@ -230,6 +223,7 @@ public class RobotContainer {
 
     private void configurePeriodicCallbacks() {
         addPeriodicCallback(autoChooser::update, "AutoChooserUpdate");
+        addPeriodicCallback(robotState::periodic, "RobotStatePeriodic");
         if (Constants.CURRENT_MODE == Constants.Mode.SIM) {
             addPeriodicCallback(SimState.getInstance()::update, "SimulationUpdate");
         }

@@ -31,10 +31,10 @@ public class Turret extends SubsystemBase {
 
     private Rotation2d setpointRotation = Rotation2d.kZero;
 
-    @AutoLogOutput(key = "Turret/CRTError")
+    @AutoLogOutput(key = "Turret/CRT/Error")
     private Rotation2d lastCRTError = Rotation2d.kZero;
 
-    @AutoLogOutput(key = "Turret/ZeroingCRTError")
+    @AutoLogOutput(key = "Turret/CRT/ZeroingError")
     private Rotation2d zeroingCRTError = Rotation2d.kZero;
 
     private final Alert motorDisconnectedAlert = new Alert("Turret motor disconnected", Alert.AlertType.kError);
@@ -61,7 +61,7 @@ public class Turret extends SubsystemBase {
 
         if (DriverStation.isDisabled()) {
             stop();
-            Logger.recordOutput("Turret/CalculatedPosition", calculateTurretAngle());
+            Logger.recordOutput("Turret/CRT/CalculatedPosition", calculateTurretAngle());
         }
 
         RobotState.getInstance().addTurretObservation(getPosition(), inputs.positionTimestamp);
@@ -107,7 +107,7 @@ public class Turret extends SubsystemBase {
         lastCRTError = Rotation2d.fromRotations(minValue);
 
         Rotation2d rawPosition = Rotation2d.fromRotations(out);
-        Logger.recordOutput("Turret/RawPosition", rawPosition);
+        Logger.recordOutput("Turret/CRT/RawPosition", rawPosition);
 
         return Rotation2d.fromRotations(rawPosition.getRotations() - ANGLE_OFFSET.getRotations());
     }
