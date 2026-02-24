@@ -58,6 +58,7 @@ public class AprilTagVision extends SubsystemBase {
 
         lastAcceptedTurretPoses.clear();
         lastRejectedTurretPoses.clear();
+        lastSeenTagPoses.clear();
         turretCameraDisconnectedAlert.set(!turretCameraInputs.connected);
         for (PoseObservation observation : turretCameraInputs.poseObservations) {
             if (robotState.addTurretVisionMeasurement(observation)) {
@@ -78,7 +79,6 @@ public class AprilTagVision extends SubsystemBase {
 
         lastAcceptedPoses.clear();
         lastRejectedPoses.clear();
-        lastSeenTagPoses.clear();
         for (int i = 0; i < visionIOs.length; i++) {
             disconnectedAlerts[i].set(!cameraInputs[i].connected);
 
