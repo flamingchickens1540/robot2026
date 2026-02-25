@@ -64,7 +64,7 @@ public class RobotContainer {
                 intake = Intake.createReal();
                 spindexer = Spindexer.createReal();
                 shooter = Shooter.createReal();
-                turret = Turret.createDummy();
+                turret = Turret.createReal();
                 hood = Hood.createReal();
                 climber = Climber.createReal();
                 vision = AprilTagVision.createReal();
