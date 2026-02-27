@@ -35,7 +35,7 @@ public class EnvisionController extends GenericHID {
     public enum Axis {
         LEFT_X(0),
         LEFT_Y(1),
-        RIGHT_X(3),
+        RIGHT_X(2),
         RIGHT_Y(5),
         LEFT_TRIGGER(3),
         RIGHT_TRIGGER(4);
