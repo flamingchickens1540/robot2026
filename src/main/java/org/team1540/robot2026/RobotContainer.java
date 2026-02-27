@@ -30,12 +30,13 @@ import org.team1540.robot2026.subsystems.shooter.Shooter;
 import org.team1540.robot2026.subsystems.spindexer.Spindexer;
 import org.team1540.robot2026.subsystems.turret.Turret;
 import org.team1540.robot2026.subsystems.vision.AprilTagVision;
-import org.team1540.robot2026.util.JoystickUtil;
+import org.team1540.robot2026.util.hid.CommandEnvisionController;
+import org.team1540.robot2026.util.hid.JoystickUtil;
 import org.team1540.robot2026.util.MatchTriggers;
 import org.team1540.robot2026.util.auto.LoggedAutoChooser;
 
 public class RobotContainer {
-    private final CommandXboxController driver = new CommandXboxController(0);
+    private final CommandEnvisionController driver = new CommandEnvisionController(0);
     private final CommandXboxController copilot = new CommandXboxController(1);
 
     final Drivetrain drivetrain;
@@ -122,9 +123,9 @@ public class RobotContainer {
                         intake.commandRunIntake(1.0)
                                 .alongWith(leds.viewFull.commandShowPattern(LEDPattern.solid(Color.kPurple))),
                         () -> climbMode));
-        driver.leftStick().whileTrue(intake.commandRunIntake(-0.67));
+        driver.leftOuterPaddle().whileTrue(intake.commandRunIntake(-0.67));
         driver.povLeft().onTrue(intake.commandToSetpoint(Intake.IntakeState.STOW));
-        driver.rightStick().onTrue(hood.setpointCommand(() -> HoodConstants.MIN_ANGLE));
+        driver.rightOuterPaddle().onTrue(hood.setpointCommand(() -> HoodConstants.MIN_ANGLE));
         driver.rightBumper()
                 .toggleOnTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
                         .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0)));
