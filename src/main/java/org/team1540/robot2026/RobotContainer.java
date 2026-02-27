@@ -119,7 +119,7 @@ public class RobotContainer {
         driver.leftTrigger()
                 .whileTrue(Commands.either(
                         climber.runEnd(() -> climber.setVoltage(-0.67 * 12.0), climber::stop),
-                        intake.commandRunIntake(0.5)
+                        intake.commandRunIntake(1.0)
                                 .alongWith(leds.viewFull.commandShowPattern(LEDPattern.solid(Color.kPurple))),
                         () -> climbMode));
         driver.leftStick().whileTrue(intake.commandRunIntake(-0.67));
