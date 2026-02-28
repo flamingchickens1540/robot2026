@@ -162,7 +162,8 @@ public class RobotContainer {
 
     private void configureLEDBindings() {
         RobotModeTriggers.disabled()
-                .whileTrue(leds.viewFull.commandShowPattern(CustomLEDPatterns.movingRainbow(Hertz.of(0.5))));
+                .whileTrue(leds.viewFull.commandShowPattern(CustomLEDPatterns.movingRainbow(Hertz.of(0.5))))
+                .onTrue(Commands.runOnce(() -> climbMode = false).ignoringDisable(true));
         RobotModeTriggers.teleop()
                 .or(RobotModeTriggers.autonomous())
                 .whileTrue(leds.viewFull.commandDefaultPattern(
