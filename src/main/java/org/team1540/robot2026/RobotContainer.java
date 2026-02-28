@@ -119,7 +119,7 @@ public class RobotContainer {
         driver.povRight().onTrue(Commands.runOnce(() -> climbMode = !climbMode));
         driver.leftTrigger()
                 .whileTrue(Commands.either(
-                        climber.runEnd(() -> climber.setVoltage(-0.67 * 12.0), climber::stop),
+                        climber.runEnd(() -> climber.setVoltage(-0.67 * 12.0), climber::stop).asProxy(),
                         intake.commandRunIntake(1.0)
                                 .alongWith(leds.viewFull.commandShowPattern(LEDPattern.solid(Color.kPurple))),
                         () -> climbMode));
@@ -134,7 +134,7 @@ public class RobotContainer {
                         .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0)));
         driver.rightTrigger()
                 .whileTrue(Commands.either(
-                        climber.runEnd(() -> climber.setVoltage(0.67 * 12.0), climber::stop),
+                        climber.runEnd(() -> climber.setVoltage(0.67 * 12.0), climber::stop).asProxy(),
                         spindexer.runCommand(() -> 1.0, () -> 1.0),
                         () -> climbMode));
 
