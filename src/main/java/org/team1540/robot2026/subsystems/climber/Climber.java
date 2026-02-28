@@ -31,6 +31,7 @@ public class Climber extends SubsystemBase {
 
     private Climber(ClimberIO io) {
         if (hasInstance) throw new IllegalStateException("Instance of climber already exists");
+        hasInstance = true;
         this.io = io;
         hasInstance = true;
     }

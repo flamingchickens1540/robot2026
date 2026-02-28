@@ -31,6 +31,7 @@ import org.team1540.robot2026.Constants;
 import org.team1540.robot2026.RobotState;
 import org.team1540.robot2026.SimState;
 import org.team1540.robot2026.generated.TunerConstants;
+import org.team1540.robot2026.subsystems.PieceDetection.PieceDetection;
 import org.team1540.robot2026.util.AllianceFlipUtil;
 import org.team1540.robot2026.util.JoystickUtil;
 import org.team1540.robot2026.util.LoggedTracer;
@@ -62,6 +63,8 @@ public class Drivetrain extends SubsystemBase {
     private final SwerveDriveKinematics kinematics = RobotState.getInstance().getKinematics();
     private SwerveModulePosition[] lastModulePositions = new SwerveModulePosition[4];
     private double lastOdometryUpdateTimeSecs = 0.0;
+
+    private final PieceDetection pieceDetection = new PieceDetection();
 
     private final ProfiledPIDController headingController = new ProfiledPIDController(
             rotationKP.get(),
@@ -309,6 +312,13 @@ public class Drivetrain extends SubsystemBase {
                                 -controller.getLeftY(), -controller.getLeftX(), 0.1),
                         () -> JoystickUtil.smartDeadzone(-controller.getRightX(), 0.1))
                 .withName("TeleopDriveCommand");
+    }
+    public Command teleopDriveCommandWithPieceDetection(XboxController controller, double kp, double ki, double kd){
+        return percentDriveCommand(
+                () -> JoystickUtil.deadzonedJoystickTranslation(
+                        -controller.getLeftY(), -controller.getLeftX(), 0.1),
+                () -> JoystickUtil.smartDeadzone(-controller.getRightX()+pieceDetection.getPieceDetectionAngle(kp, ki, kd), 0.1))
+                .withName("teleopDriveCommandWithPieceDetection");
     }
 
     public static Drivetrain createReal() {

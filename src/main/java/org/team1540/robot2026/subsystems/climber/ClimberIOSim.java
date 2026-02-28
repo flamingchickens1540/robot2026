@@ -28,7 +28,7 @@ public class ClimberIOSim implements ClimberIO {
     private double appliedVolts = 0.0;
     private final ProfiledPIDController controller = new ProfiledPIDController(
             SIM_KP, SIM_KI, SIM_KD, new TrapezoidProfile.Constraints(CRUISE_VELOCITY_MPS, ACCELERATION_MPS2));
-    private final ElevatorFeedforward feedforward = new ElevatorFeedforward(SIM_KS, SIM_KG, SIM_KV);
+    private ElevatorFeedforward feedforward = new ElevatorFeedforward(SIM_KS, SIM_KG, SIM_KV);
     private boolean isClosedLoop;
     private TrapezoidProfile.State setpoint;
 
