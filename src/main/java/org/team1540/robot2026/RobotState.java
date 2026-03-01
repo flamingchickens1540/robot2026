@@ -275,7 +275,7 @@ public class RobotState {
 
         return new AimingParameters(
                 target.minus(lookaheadPose.getTranslation()).getAngle(),
-                getRobotVelocity().omegaRadiansPerSecond,
+                -getRobotVelocity().omegaRadiansPerSecond,
                 hoodAngleMap.apply(lookaheadDistance),
                 shooterSpeedMap.applyAsDouble(lookaheadDistance));
     }
