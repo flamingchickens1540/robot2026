@@ -19,8 +19,8 @@ public class IntakeConstants {
     public static double SPIN_GEAR_RATIO = 1.0;
     public static double PIVOT_GEAR_RATIO = 48.75;
 
-    public static Rotation2d PIVOT_MIN_ANGLE = Rotation2d.fromDegrees(0.0);
-    public static Rotation2d PIVOT_MAX_ANGLE = Rotation2d.fromDegrees(123.0);
+    public static Rotation2d PIVOT_MIN_ANGLE = Rotation2d.fromDegrees(-120.0);
+    public static Rotation2d PIVOT_MAX_ANGLE = Rotation2d.fromDegrees(0.0);
 
     public static double PIVOT_MOI_KGM2 = 0.2089;
 }
