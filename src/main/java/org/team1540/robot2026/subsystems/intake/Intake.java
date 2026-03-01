@@ -131,9 +131,7 @@ public class Intake extends SubsystemBase {
     }
 
     public Command commandToSetpoint(IntakeState state) {
-        return (Commands.run(() -> setPivotSetpoint(state.pivotPosition()), this)
-                        .until(this::isPivotAtSetpoint))
-                .handleInterrupt(this::holdPivot);
+        return startEnd(() -> setPivotSetpoint(state.pivotPosition()), this::holdPivot);
     }
 
     public Command commandRunIntake(double percent) {
