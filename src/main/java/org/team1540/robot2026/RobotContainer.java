@@ -138,6 +138,8 @@ public class RobotContainer {
                         spindexer.runCommand(() -> 1.0, () -> 1.0),
                         () -> climbMode));
 
+        //driver buttons
+        //co-pilot buttons
         intake.setDefaultCommand(intake.run(() -> {
             double percent = JoystickUtil.smartDeadzone(copilot.getRightY(), 0.1);
             if (intake.getPivotPosition().getDegrees() <= 67
@@ -158,6 +160,8 @@ public class RobotContainer {
                         .andThen(leds.viewFull.commandShowPattern(
                                 CustomLEDPatterns.strobe(Color.kGreen, Seconds.of(0.5)))));
         copilot.leftBumper().whileTrue(spindexer.runCommand(() -> -0.67, () -> -0.67));
+        copilot.rightTrigger().whileTrue(intake.jiggle(0.1));
+
     }
 
     private void configureLEDBindings() {

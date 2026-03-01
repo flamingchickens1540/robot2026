@@ -23,7 +23,8 @@ public class Intake extends SubsystemBase {
 
     public enum IntakeState {
         STOW(new LoggedTunableNumber("Intake/Setpoints/Stow/AngleDegrees", PIVOT_MIN_ANGLE.getDegrees())),
-        INTAKE(new LoggedTunableNumber("Intake/Setpoints/Intake/AngleDegrees", PIVOT_MAX_ANGLE.getDegrees()));
+        INTAKE(new LoggedTunableNumber("Intake/Setpoints/Intake/AngleDegrees", PIVOT_MAX_ANGLE.getDegrees())),
+        JIGGLE(new LoggedTunableNumber("Intake/Setpoints/Jiggle/AngleDegrees", PIVOT_JIGGLE_ANGLE.getDegrees()));
 
         private final DoubleSupplier pivotPosition;
 
@@ -140,6 +141,9 @@ public class Intake extends SubsystemBase {
         return Commands.startEnd(() -> this.setRollerVoltage(percent * 12), () -> this.setRollerVoltage(0), this);
     }
 
+    public Command jiggle(double intensityPercent){
+        return commandToSetpoint(IntakeState.JIGGLE).andThen(commandToSetpoint(IntakeState.JIGGLE));
+    }
     public Command zeroCommand() {
         return runOnce(() -> setPivotVoltage(-2))
                 .andThen(
