@@ -145,8 +145,14 @@ public class Intake extends SubsystemBase {
         }, this);
     }
 
-    public Command jiggle(double intensityPercent){
-        return commandToSetpoint(IntakeState.JIGGLE).andThen(commandToSetpoint(IntakeState.STOW));
+    public Command jiggleCommand(){
+        return Commands.runOnce(() -> setRollerVoltage(12.0)).andThen(Commands.repeatingSequence(
+                commandToSetpoint(IntakeState.JIGGLE),
+                Commands.waitSeconds(0.5),
+                commandToSetpoint(IntakeState.STOW)).finallyDo(() -> {
+                    this.holdPivot();
+                    this.setRollerVoltage(0.0);
+                }));
     }
     public Command zeroCommand() {
         return runOnce(() -> setPivotVoltage(-2))

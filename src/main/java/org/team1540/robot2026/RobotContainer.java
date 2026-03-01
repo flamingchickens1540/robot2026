@@ -117,11 +117,13 @@ public class RobotContainer {
                                 CustomLEDPatterns.strobe(Color.kGreen, Seconds.of(0.5)))));
 
         driver.povRight().onTrue(Commands.runOnce(() -> climbMode = !climbMode));
+
+        Command intakeCommand = intake.commandRunIntake(1.0)
+                .alongWith(leds.viewFull.commandShowPattern(LEDPattern.solid(Color.kPurple)));
         driver.leftTrigger()
                 .whileTrue(Commands.either(
                         climber.runEnd(() -> climber.setVoltage(-0.67 * 12.0), climber::stop).asProxy(),
-                        intake.commandRunIntake(1.0)
-                                .alongWith(leds.viewFull.commandShowPattern(LEDPattern.solid(Color.kPurple))),
+                        intakeCommand,
                         () -> climbMode));
         driver.leftOuterPaddle().whileTrue(intake.commandRunIntake(-0.67));
         driver.povLeft().onTrue(intake.commandToSetpoint(Intake.IntakeState.STOW));
@@ -135,7 +137,7 @@ public class RobotContainer {
         driver.rightTrigger()
                 .whileTrue(Commands.either(
                         climber.runEnd(() -> climber.setVoltage(0.67 * 12.0), climber::stop).asProxy(),
-                        spindexer.runCommand(() -> 1.0, () -> 1.0),
+                        spindexer.runCommand(() -> 1.0, () -> 1.0).alongWith(intake.jiggleCommand().asProxy().unless(intakeCommand::isScheduled)),
                         () -> climbMode));
 
 //        intake.setDefaultCommand(intake.run(() -> {
@@ -158,7 +160,7 @@ public class RobotContainer {
                         .andThen(leds.viewFull.commandShowPattern(
                                 CustomLEDPatterns.strobe(Color.kGreen)).withTimeout(0.5)));
         copilot.leftBumper().whileTrue(spindexer.runCommand(() -> -0.67, () -> -0.67));
-        copilot.rightTrigger().whileTrue(intake.jiggle(0.1));
+        copilot.rightTrigger().whileTrue(intake.jiggleCommand());
 
     }
 
