@@ -17,7 +17,6 @@ public interface IntakeIO {
 
         public boolean pivotConnected = true;
         public Rotation2d pivotPosition = Rotation2d.kZero;
-        public Rotation2d pivotSetpoint = PIVOT_MIN_ANGLE;
         public double pivotMotorVelocityRPS = 0;
         public double pivotMotorAppliedVolts = 0;
         public double pivotSupplyCurrentAmps = 0;

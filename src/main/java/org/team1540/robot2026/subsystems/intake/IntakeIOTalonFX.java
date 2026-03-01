@@ -27,7 +27,7 @@ public class IntakeIOTalonFX implements IntakeIO {
     private final StatusSignal<Current> spinStatorCurrentAmps = spinMotor.getStatorCurrent();
     private final StatusSignal<Temperature> spinMotorTemp = spinMotor.getDeviceTemp();
 
-    private final StatusSignal<Angle> pivotSetpoint = pivotMotor.getPosition();
+    private final StatusSignal<Angle> pivotPositon = pivotMotor.getPosition();
     private final StatusSignal<AngularVelocity> pivotMotorVelocityRPS = pivotMotor.getVelocity();
     private final StatusSignal<Current> pivotStatorCurrentAmps = pivotMotor.getStatorCurrent();
     private final StatusSignal<Temperature> pivotMotorTemp = pivotMotor.getDeviceTemp();
@@ -82,7 +82,7 @@ public class IntakeIOTalonFX implements IntakeIO {
                 spinStatorCurrentAmps,
                 spinMotorTemp,
                 pivotMotorVelocityRPS,
-                pivotSetpoint,
+                pivotPositon,
                 pivotMotorAppliedVolts,
                 pivotSupplyCurrentAmps,
                 pivotStatorCurrentAmps,
@@ -101,23 +101,21 @@ public class IntakeIOTalonFX implements IntakeIO {
                 spinMotorTemp);
         StatusCode pivotStatus = BaseStatusSignal.refreshAll(
                 pivotMotorVelocityRPS,
-                pivotSetpoint,
+                pivotPositon,
                 pivotMotorAppliedVolts,
                 pivotSupplyCurrentAmps,
                 pivotStatorCurrentAmps,
                 pivotMotorTemp);
 
-        // inputs.spinConnected = spinConnectedDebounce.calculate(spinStatus.isOK()); remake this to work for this
-
+        inputs.spinConnected = spinStatus.isOK();
         inputs.spinMotorVelocityRPS = spinMotorVelocityRPS.getValueAsDouble();
         inputs.spinMotorAppliedVolts = spinMotorAppliedVolts.getValueAsDouble();
         inputs.spinSupplyCurrentAmps = spinSupplyCurrentAmps.getValueAsDouble();
         inputs.spinStatorCurrentAmps = spinStatorCurrentAmps.getValueAsDouble();
         inputs.spinMotorTemp = spinMotorTemp.getValueAsDouble();
 
-        // inputs.pivotConnected = pivotConnectedDebounce.calculate(pivotStatus.isOK()); remake that to work for this
-
-        inputs.pivotPosition = Rotation2d.fromRotations(pivotSetpoint.getValueAsDouble());
+        inputs.pivotConnected = pivotStatus.isOK();
+        inputs.pivotPosition = Rotation2d.fromRotations(pivotPositon.getValueAsDouble());
         inputs.pivotMotorVelocityRPS = pivotMotorVelocityRPS.getValueAsDouble();
         inputs.pivotMotorAppliedVolts = pivotMotorAppliedVolts.getValueAsDouble();
         inputs.pivotSupplyCurrentAmps = pivotSupplyCurrentAmps.getValueAsDouble();
