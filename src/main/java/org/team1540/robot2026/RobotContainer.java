@@ -138,13 +138,13 @@ public class RobotContainer {
                         spindexer.runCommand(() -> 1.0, () -> 1.0),
                         () -> climbMode));
 
-        intake.setDefaultCommand(intake.run(() -> {
-            double percent = JoystickUtil.smartDeadzone(copilot.getRightY(), 0.1);
-            if (intake.getPivotPosition().getDegrees() <= -67
-                    && percent < 0
-                    && !copilot.rightBumper().getAsBoolean()) percent = 0;
-            intake.setPivotVoltage(6 * percent);
-        }));
+//        intake.setDefaultCommand(intake.run(() -> {
+//            double percent = JoystickUtil.smartDeadzone(copilot.getRightY(), 0.1);
+//            if (intake.getPivotPosition().getDegrees() <= -67
+//                    && percent < 0
+//                    && !copilot.rightBumper().getAsBoolean()) percent = 0;
+//            intake.setPivotVoltage(6 * percent);
+//        }));
         copilot.b()
                 .toggleOnTrue(turret.run(
                         () -> turret.setVoltage(-JoystickUtil.smartDeadzone(copilot.getLeftX(), 0.1) * 0.5 * 12.0)));
