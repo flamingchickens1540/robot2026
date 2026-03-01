@@ -152,11 +152,11 @@ public class RobotContainer {
         copilot.start()
                 .whileTrue(hood.zeroCommand()
                         .andThen(leds.viewFull.commandShowPattern(
-                                CustomLEDPatterns.strobe(Color.kGreen, Seconds.of(0.5)))));
+                                CustomLEDPatterns.strobe(Color.kGreen)).withTimeout(0.5)));
         copilot.back()
                 .whileTrue(intake.zeroCommand()
                         .andThen(leds.viewFull.commandShowPattern(
-                                CustomLEDPatterns.strobe(Color.kGreen, Seconds.of(0.5)))));
+                                CustomLEDPatterns.strobe(Color.kGreen)).withTimeout(0.5)));
         copilot.leftBumper().whileTrue(spindexer.runCommand(() -> -0.67, () -> -0.67));
     }
 
@@ -173,7 +173,7 @@ public class RobotContainer {
         MatchTriggers.timeRemaining(30)
                 .or(MatchTriggers.timeRemaining(15))
                 .or(MatchTriggers.timeRemaining(10))
-                .onTrue(leds.viewFull.commandShowPattern(CustomLEDPatterns.strobe(Color.kWhite, Seconds.of(1.5))));
+                .onTrue(leds.viewFull.commandShowPattern(CustomLEDPatterns.strobe(Color.kWhite)).withTimeout(1.5));
     }
 
     private void configureAutoRoutines() {
