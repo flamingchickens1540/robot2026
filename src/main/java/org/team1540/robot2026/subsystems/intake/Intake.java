@@ -142,7 +142,7 @@ public class Intake extends SubsystemBase {
     }
 
     public Command jiggle(double intensityPercent){
-        return commandToSetpoint(IntakeState.JIGGLE).andThen(commandToSetpoint(IntakeState.JIGGLE));
+        return commandToSetpoint(IntakeState.JIGGLE).andThen(commandToSetpoint(IntakeState.STOW));
     }
     public Command zeroCommand() {
         return runOnce(() -> setPivotVoltage(-2))
