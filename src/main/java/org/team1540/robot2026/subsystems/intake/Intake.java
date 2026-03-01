@@ -147,9 +147,8 @@ public class Intake extends SubsystemBase {
 
     public Command jiggleCommand(){
         return Commands.runOnce(() -> setRollerVoltage(12.0)).andThen(Commands.repeatingSequence(
-                commandToSetpoint(IntakeState.JIGGLE),
-                Commands.waitSeconds(0.5),
-                commandToSetpoint(IntakeState.STOW)).finallyDo(() -> {
+                commandToSetpoint(IntakeState.JIGGLE).withTimeout(0.5),
+                commandToSetpoint(IntakeState.STOW).withTimeout(0.5)).finallyDo(() -> {
                     this.holdPivot();
                     this.setRollerVoltage(0.0);
                 }));
