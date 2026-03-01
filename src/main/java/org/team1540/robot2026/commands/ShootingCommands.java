@@ -8,6 +8,7 @@ import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.FieldConstants;
 import org.team1540.robot2026.RobotState;
 import org.team1540.robot2026.subsystems.hood.Hood;
+import org.team1540.robot2026.subsystems.hood.HoodConstants;
 import org.team1540.robot2026.subsystems.shooter.Shooter;
 import org.team1540.robot2026.subsystems.turret.Turret;
 import org.team1540.robot2026.subsystems.turret.TurretConstants;
@@ -38,31 +39,39 @@ public class ShootingCommands {
 
     public static Command hubAimCommand(Turret turret, Shooter shooter, Hood hood) {
         return Commands.parallel(
-                turret.commandToSetpoint(
-                        () -> RobotState.getInstance().getHubAimingParameters().turretAngle(),
-                        () -> RobotState.getInstance().getHubAimingParameters().turretVelocityRadPerSec(),
-                        true),
-                shooter.commandVelocity(
-                        () -> RobotState.getInstance().getHubAimingParameters().shooterRPM()),
-                hood.setpointCommand(
-                        () -> RobotState.getInstance().getHubAimingParameters().hoodAngle()));
+                        turret.commandToSetpoint(
+                                () -> RobotState.getInstance()
+                                        .getHubAimingParameters()
+                                        .turretAngle(),
+                                () -> RobotState.getInstance()
+                                        .getHubAimingParameters()
+                                        .turretVelocityRadPerSec(),
+                                true),
+                        shooter.commandVelocity(() -> RobotState.getInstance()
+                                .getHubAimingParameters()
+                                .shooterRPM()),
+                        hood.setpointCommand(() -> RobotState.getInstance()
+                                .getHubAimingParameters()
+                                .hoodAngle()))
+                .finallyDo(() -> hood.setSetpoint(HoodConstants.MIN_ANGLE));
     }
 
-    public static Command highShuffleAimCommand(Turret turret, Shooter shooter, Hood hood) {
+    public static Command shuffleAimCommand(Turret turret, Shooter shooter, Hood hood) {
         return Commands.parallel(
-                turret.commandToSetpoint(
-                        () -> RobotState.getInstance()
-                                .getHighShuffleAimingParameters(AllianceFlipUtil.apply(SHUFFLE_TARGET))
-                                .turretAngle(),
-                        () -> RobotState.getInstance()
-                                .getHighShuffleAimingParameters(AllianceFlipUtil.apply(SHUFFLE_TARGET))
-                                .turretVelocityRadPerSec(),
-                        true),
-                shooter.commandVelocity(() -> RobotState.getInstance()
-                        .getHighShuffleAimingParameters(AllianceFlipUtil.apply(SHUFFLE_TARGET))
-                        .shooterRPM()),
-                hood.setpointCommand(() -> RobotState.getInstance()
-                        .getHighShuffleAimingParameters(AllianceFlipUtil.apply(SHUFFLE_TARGET))
-                        .hoodAngle()));
+                        turret.commandToSetpoint(
+                                () -> RobotState.getInstance()
+                                        .getShuffleAimingParameters(AllianceFlipUtil.apply(SHUFFLE_TARGET))
+                                        .turretAngle(),
+                                () -> RobotState.getInstance()
+                                        .getShuffleAimingParameters(AllianceFlipUtil.apply(SHUFFLE_TARGET))
+                                        .turretVelocityRadPerSec(),
+                                true),
+                        shooter.commandVelocity(() -> RobotState.getInstance()
+                                .getShuffleAimingParameters(AllianceFlipUtil.apply(SHUFFLE_TARGET))
+                                .shooterRPM()),
+                        hood.setpointCommand(() -> RobotState.getInstance()
+                                .getShuffleAimingParameters(AllianceFlipUtil.apply(SHUFFLE_TARGET))
+                                .hoodAngle()))
+                .finallyDo(() -> hood.setSetpoint(HoodConstants.MIN_ANGLE));
     }
 }

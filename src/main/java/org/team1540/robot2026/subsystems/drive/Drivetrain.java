@@ -32,7 +32,8 @@ import org.team1540.robot2026.RobotState;
 import org.team1540.robot2026.SimState;
 import org.team1540.robot2026.generated.TunerConstants;
 import org.team1540.robot2026.util.AllianceFlipUtil;
-import org.team1540.robot2026.util.JoystickUtil;
+import org.team1540.robot2026.util.hid.EnvisionController;
+import org.team1540.robot2026.util.hid.JoystickUtil;
 import org.team1540.robot2026.util.LoggedTracer;
 import org.team1540.robot2026.util.LoggedTunableNumber;
 import org.team1540.robot2026.util.swerve.TrajectoryController;
@@ -308,6 +309,14 @@ public class Drivetrain extends SubsystemBase {
                         () -> JoystickUtil.deadzonedJoystickTranslation(
                                 -controller.getLeftY(), -controller.getLeftX(), 0.1),
                         () -> JoystickUtil.smartDeadzone(-controller.getRightX(), 0.1))
+                .withName("TeleopDriveCommand");
+    }
+
+    public Command teleopDriveCommand(EnvisionController controller) {
+        return percentDriveCommand(
+                () -> JoystickUtil.deadzonedJoystickTranslation(
+                        -controller.getLeftY(), -controller.getLeftX(), 0.1),
+                () -> JoystickUtil.smartDeadzone(-controller.getRightX(), 0.1))
                 .withName("TeleopDriveCommand");
     }
 

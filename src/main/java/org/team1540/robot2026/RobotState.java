@@ -20,6 +20,8 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import java.util.function.DoubleFunction;
+import java.util.function.DoubleUnaryOperator;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.AutoLogOutputManager;
 import org.littletonrobotics.junction.Logger;
@@ -28,6 +30,7 @@ import org.team1540.robot2026.subsystems.turret.TurretConstants;
 import org.team1540.robot2026.subsystems.vision.AprilTagVisionIO;
 import org.team1540.robot2026.util.AimingParameters;
 import org.team1540.robot2026.util.AllianceFlipUtil;
+import org.team1540.robot2026.util.LoggedTunableNumber;
 
 public class RobotState {
     private static RobotState instance = null;
@@ -36,6 +39,8 @@ public class RobotState {
         if (instance == null) instance = new RobotState();
         return instance;
     }
+
+    private static final LoggedTunableNumber aimingPhaseDelay = new LoggedTunableNumber("Aiming/PhaseDelay", 0.03);
 
     private Rotation2d lastGyroRotation = Rotation2d.kZero;
     private SwerveModulePosition[] lastModulePositions = new SwerveModulePosition[] {
@@ -51,25 +56,26 @@ public class RobotState {
 
     private Rotation2d lastTurretAngle = Rotation2d.kZero;
 
-    private final Field2d field = new Field2d();
-    private Pose2d[] activeTrajectory;
-
     private final TimeInterpolatableBuffer<Pose2d> poseBuffer = TimeInterpolatableBuffer.createBuffer(0.5);
     private final TimeInterpolatableBuffer<Rotation2d> turretAngleBuffer = TimeInterpolatableBuffer.createBuffer(0.5);
+
+    private final Field2d field = new Field2d();
+    private Pose2d[] activeTrajectory;
 
     private final InterpolatingTreeMap<Double, Rotation2d> hubHoodAngleMap =
             new InterpolatingTreeMap<>(InverseInterpolator.forDouble(), Rotation2d::interpolate);
     private final InterpolatingDoubleTreeMap hubShooterSpeedMap = new InterpolatingDoubleTreeMap();
+    private final InterpolatingDoubleTreeMap hubTOFMap = new InterpolatingDoubleTreeMap();
 
-    private final InterpolatingTreeMap<Double, Rotation2d> highShuffleHoodAngleMap =
+    private final InterpolatingTreeMap<Double, Rotation2d> shuffleHoodAngleMap =
             new InterpolatingTreeMap<>(InverseInterpolator.forDouble(), Rotation2d::interpolate);
-    private final InterpolatingDoubleTreeMap highShuffleShooterSpeedMap = new InterpolatingDoubleTreeMap();
+    private final InterpolatingDoubleTreeMap shuffleShooterSpeedMap = new InterpolatingDoubleTreeMap();
 
-    private final InterpolatingTreeMap<Double, Rotation2d> lowShuffleHoodAngleMap =
-            new InterpolatingTreeMap<>(InverseInterpolator.forDouble(), Rotation2d::interpolate);
-    private final InterpolatingDoubleTreeMap lowShuffleShooterSpeedMap = new InterpolatingDoubleTreeMap();
+    @AutoLogOutput(key = "Aiming/Hub/LastParameters")
+    private AimingParameters lastHubAimingParameters;
 
-    private final InterpolatingDoubleTreeMap shootOnTheMoveTimeMap = new InterpolatingDoubleTreeMap();
+    @AutoLogOutput(key = "Aiming/Shuffle/LastParameters")
+    private AimingParameters lastShuffleAimingParameters;
 
     private RobotState() {
         poseResetTimer.start();
@@ -88,7 +94,17 @@ public class RobotState {
         hubShooterSpeedMap.put(4.888, 1650.0);
         hubShooterSpeedMap.put(3.700, 1500.0);
 
+        hubTOFMap.put(2.713, 1.040466598);
+        hubTOFMap.put(1.724, 0.9290552488);
+        hubTOFMap.put(1.414, 0.8884556774);
+        hubTOFMap.put(4.888, 1.229432436);
+        hubTOFMap.put(3.700, 1.153830441);
+
         AutoLogOutputManager.addObject(this);
+    }
+
+    public void periodic() {
+        clearAimingParameters();
     }
 
     public SwerveDriveKinematics getKinematics() {
@@ -210,94 +226,80 @@ public class RobotState {
                 DriverStation.isEnabled() && poseObservation.numTagsSeen() <= 1 ? Double.POSITIVE_INFINITY : rotStdDev);
     }
 
+    private AimingParameters getCompensatedAimingParameters(
+            Translation2d target,
+            DoubleFunction<Rotation2d> hoodAngleMap,
+            DoubleUnaryOperator shooterSpeedMap,
+            DoubleUnaryOperator tofMap,
+            String loggingKey) {
+        double phaseDelay = aimingPhaseDelay.getAsDouble();
+        Pose2d estimatedPose = getEstimatedPose();
+        ChassisSpeeds velocity = getRobotVelocity();
+        estimatedPose = estimatedPose.exp(new Twist2d(
+                velocity.vxMetersPerSecond * phaseDelay,
+                velocity.vyMetersPerSecond * phaseDelay,
+                velocity.omegaRadiansPerSecond * phaseDelay));
+
+        Pose2d turretPose = estimatedPose.transformBy(TurretConstants.ROBOT_TO_TURRET_2D);
+        double targetDistance = target.getDistance(turretPose.getTranslation());
+
+        Logger.recordOutput("Aiming/" + loggingKey + "/ActualTarget", target);
+        Logger.recordOutput("Aiming/" + loggingKey + "/ActualTargetDistanceMeters", targetDistance);
+
+        double turretVelocityX = getFieldRelativeVelocity().vxMetersPerSecond;
+        double turretVelocityY = getFieldRelativeVelocity().vyMetersPerSecond;
+
+        double timeOfFlight = tofMap.applyAsDouble(targetDistance);
+        Pose2d lookaheadPose = turretPose;
+        double lookaheadDistance = targetDistance;
+
+        for (int i = 0; i < 20; i++) {
+            double offsetX = turretVelocityX * timeOfFlight;
+            double offsetY = turretVelocityY * timeOfFlight;
+            lookaheadPose = new Pose2d(
+                    turretPose.getTranslation().plus(new Translation2d(offsetX, offsetY)), turretPose.getRotation());
+            lookaheadDistance = target.getDistance(lookaheadPose.getTranslation());
+            timeOfFlight = tofMap.applyAsDouble(lookaheadDistance);
+        }
+
+        Logger.recordOutput(
+                "Aiming/" + loggingKey + "/CompensatedTurretPose",
+                lookaheadPose.rotateAround(lookaheadPose.getTranslation(), lastTurretAngle));
+        Logger.recordOutput(
+                "Aiming/" + loggingKey + "/CompensatedRobotPose",
+                lookaheadPose.transformBy(TurretConstants.ROBOT_TO_TURRET_2D.inverse()));
+        Logger.recordOutput(
+                "Aiming/" + loggingKey + "/CompensatedTarget",
+                target.plus(turretPose.getTranslation().minus(lookaheadPose.getTranslation())));
+        Logger.recordOutput("Aiming/" + loggingKey + "/CompensatedTargetDistanceMeters", lookaheadDistance);
+
+        return new AimingParameters(
+                target.minus(lookaheadPose.getTranslation()).getAngle(),
+                getRobotVelocity().omegaRadiansPerSecond,
+                hoodAngleMap.apply(lookaheadDistance),
+                shooterSpeedMap.applyAsDouble(lookaheadDistance));
+    }
+
     public AimingParameters getHubAimingParameters() {
-        Translation2d turretToHub = AllianceFlipUtil.apply(FieldConstants.Hub.topCenterPoint.toTranslation2d())
-                .minus(getEstimatedPose()
-                        .transformBy(TurretConstants.ROBOT_TO_TURRET_2D)
-                        .getTranslation());
-        double distanceToHubMeters = turretToHub.getNorm();
-        return new AimingParameters(
-                turretToHub.getAngle(),
-                -getRobotVelocity().omegaRadiansPerSecond,
-                hubHoodAngleMap.get(distanceToHubMeters),
-                hubShooterSpeedMap.get(distanceToHubMeters));
+        if (lastHubAimingParameters != null) return lastHubAimingParameters;
+        lastHubAimingParameters = getCompensatedAimingParameters(
+                AllianceFlipUtil.apply(FieldConstants.Hub.topCenterPoint.toTranslation2d()),
+                hubHoodAngleMap::get,
+                hubShooterSpeedMap::get,
+                hubTOFMap::get,
+                "Hub");
+        return lastHubAimingParameters;
     }
 
-    public AimingParameters getHubSOTMAimingParameters() {
-        Translation2d turretToHub = AllianceFlipUtil.apply(FieldConstants.Hub.topCenterPoint.toTranslation2d())
-                .minus(getEstimatedPose()
-                        .transformBy(TurretConstants.ROBOT_TO_TURRET_2D)
-                        .getTranslation());
-        double distanceToHubMeters = turretToHub.getNorm();
-        double regularShotSpeed = hubShooterSpeedMap.get(distanceToHubMeters);
-        Rotation2d regularHoodAngle = Rotation2d.kCCW_90deg.minus(hubHoodAngleMap.get(distanceToHubMeters));
-
-        double thetaH = Math.atan2(
-                regularShotSpeed
-                                * regularHoodAngle.getCos()
-                                * turretToHub.getAngle().getSin()
-                        + getRobotVelocity().vyMetersPerSecond,
-                regularShotSpeed
-                                * regularHoodAngle.getCos()
-                                * turretToHub.getAngle().getCos()
-                        + turretToHub.getX()
-                        + getRobotVelocity().vxMetersPerSecond);
-        double thetaV = Math.atan(regularShotSpeed
-                * regularHoodAngle.getSin()
-                * Math.cos(thetaH)
-                / (regularShotSpeed
-                                * regularHoodAngle.getCos()
-                                * turretToHub.getAngle().getCos()
-                        + getRobotVelocity().vxMetersPerSecond));
-
-        return new AimingParameters(
-                Rotation2d.fromRadians(thetaH),
-                -getRobotVelocity().omegaRadiansPerSecond,
-                Rotation2d.kCCW_90deg.minus(Rotation2d.fromRadians(thetaV)),
-                hubShooterSpeedMap.get(distanceToHubMeters) * (regularHoodAngle.getSin() / Math.sin(thetaV)));
+    public AimingParameters getShuffleAimingParameters(Translation2d shuffleTarget) {
+        if (lastShuffleAimingParameters != null) return lastShuffleAimingParameters;
+        lastShuffleAimingParameters = getCompensatedAimingParameters(
+                shuffleTarget, d -> Rotation2d.fromDegrees(45), d -> 0.45 * 5500, d -> 0.0, "Shuffle");
+        return lastShuffleAimingParameters;
     }
 
-    public AimingParameters getHighShuffleAimingParameters(Translation2d shuffleTarget) {
-        Translation2d turretToTarget = shuffleTarget.minus(getEstimatedPose()
-                .transformBy(TurretConstants.ROBOT_TO_TURRET_2D)
-                .getTranslation());
-        double distanceToTargetMeters = turretToTarget.getNorm();
-        return new AimingParameters(
-                turretToTarget.getAngle(),
-                -getRobotVelocity().omegaRadiansPerSecond,
-                Rotation2d.fromDegrees(45),
-                0.67 * 5);
-    }
-
-    public AimingParameters getLowShuffleAimingParameters(Translation2d shuffleTarget) {
-        Translation2d turretToTarget = shuffleTarget.minus(getEstimatedPose()
-                .transformBy(TurretConstants.ROBOT_TO_TURRET_2D)
-                .getTranslation());
-        double distanceToTargetMeters = turretToTarget.getNorm();
-        return new AimingParameters(
-                turretToTarget.getAngle(),
-                -getRobotVelocity().omegaRadiansPerSecond,
-                lowShuffleHoodAngleMap.get(distanceToTargetMeters),
-                lowShuffleShooterSpeedMap.get(distanceToTargetMeters));
-    }
-
-    public AimingParameters getShootOnTheMoveAimingParameters(Translation2d target) {
-        Pose2d currentPose = getEstimatedPose();
-        Translation2d turretToTarget = target.minus(getEstimatedPose()
-                .transformBy(TurretConstants.ROBOT_TO_TURRET_2D)
-                .getTranslation());
-
-        double time = shootOnTheMoveTimeMap.get(target.getNorm());
-
-        Translation2d turretMovement = new Translation2d(
-                (getFieldRelativeVelocity().vxMetersPerSecond * time),
-                (getFieldRelativeVelocity().vyMetersPerSecond * time));
-        Translation2d futureTargetPos = turretToTarget.plus(turretMovement);
-
-        return new AimingParameters(
-                turretToTarget.getAngle(),
-                -getRobotVelocity().omegaRadiansPerSecond,
-                lowShuffleHoodAngleMap.get(futureTargetPos.getNorm()),
-                lowShuffleShooterSpeedMap.get(futureTargetPos.getNorm()));
+    public void clearAimingParameters() {
+        lastHubAimingParameters = null;
+        lastShuffleAimingParameters = null;
     }
 }

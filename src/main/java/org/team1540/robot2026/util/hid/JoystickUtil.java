@@ -1,4 +1,4 @@
-package org.team1540.robot2026.util;
+package org.team1540.robot2026.util.hid;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -6,6 +6,7 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 
 public class JoystickUtil {
     public static double smartDeadzone(double rawInput, double deadzone) {
@@ -38,9 +39,13 @@ public class JoystickUtil {
         return new Translation2d(linearMagnitude, linearDirection);
     }
 
-    public static Command rumbleCommand(XboxController controller, double amount) {
+    public static Command rumbleCommand(CommandGenericHID hid, double amount) {
+        return rumbleCommand(hid.getHID(), amount);
+    }
+
+    public static Command rumbleCommand(GenericHID hid, double amount) {
         return Commands.startEnd(
-                () -> controller.setRumble(GenericHID.RumbleType.kBothRumble, amount),
-                () -> controller.setRumble(GenericHID.RumbleType.kBothRumble, 0));
+                () -> hid.setRumble(GenericHID.RumbleType.kBothRumble, amount),
+                () -> hid.setRumble(GenericHID.RumbleType.kBothRumble, 0));
     }
 }
