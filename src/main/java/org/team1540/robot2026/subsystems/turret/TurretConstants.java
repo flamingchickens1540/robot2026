@@ -34,8 +34,8 @@ public class TurretConstants {
 
     public static final double POS_ERR_TOLERANCE_DEGREES = 10;
 
-    public static final double SMALL_ENCODER_MAGNET_SENSOR_OFFSET = -0.91943359375;
-    public static final double BIG_ENCODER_MAGNET_SENSOR_OFFSET = -0.740966796875;
+    public static final double SMALL_ENCODER_MAGNET_SENSOR_OFFSET = -0.740966796875;
+    public static final double BIG_ENCODER_MAGNET_SENSOR_OFFSET = -0.91943359375;
 
     public static final double CRUISE_VELOCITY_RPS = 0.5; // was 3
     public static final double MAX_ACCEL_RPS2 = 2; // was 7
