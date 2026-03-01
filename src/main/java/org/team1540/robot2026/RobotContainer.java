@@ -158,6 +158,8 @@ public class RobotContainer {
                         .andThen(leds.viewFull.commandShowPattern(
                                 CustomLEDPatterns.strobe(Color.kGreen)).withTimeout(0.5)));
         copilot.leftBumper().whileTrue(spindexer.runCommand(() -> -0.67, () -> -0.67));
+        copilot.rightTrigger().whileTrue(intake.jiggle(0.1));
+
     }
 
     private void configureLEDBindings() {

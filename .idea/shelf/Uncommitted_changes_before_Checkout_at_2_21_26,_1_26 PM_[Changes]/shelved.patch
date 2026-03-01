@@ -1,0 +1,72 @@
+Index: src/main/java/org/team1540/robot2026/subsystems/PieceDetection/PieceDetectionIO.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package org.team1540.robot2026.subsystems.PieceDetection;\n\nimport org.littletonrobotics.junction.AutoLog;\nimport org.team1540.robot2026.subsystems.Shooter.FlywheelsIO;\n\npublic interface PieceDetectionIO {\n    @AutoLog\n    class PieceDetectionIOInputs {\n        public double lattencyMills = 0;\n        public int fuelCount = 0;\n    }\n    default void updateInputs(PieceDetectionIOInputs inputs) {}\n\n}\n
+===================================================================
+diff --git a/src/main/java/org/team1540/robot2026/subsystems/PieceDetection/PieceDetectionIO.java b/src/main/java/org/team1540/robot2026/subsystems/PieceDetection/PieceDetectionIO.java
+--- a/src/main/java/org/team1540/robot2026/subsystems/PieceDetection/PieceDetectionIO.java	(revision 9ca074f1f9bf9efeca01bd802d94c1cea9ab61fa)
++++ b/src/main/java/org/team1540/robot2026/subsystems/PieceDetection/PieceDetectionIO.java	(date 1771709183240)
+@@ -1,13 +1,17 @@
+ package org.team1540.robot2026.subsystems.PieceDetection;
+ 
++import edu.wpi.first.math.geometry.Translation3d;
+ import org.littletonrobotics.junction.AutoLog;
+ import org.team1540.robot2026.subsystems.Shooter.FlywheelsIO;
+ 
++import java.util.ArrayList;
++
+ public interface PieceDetectionIO {
+     @AutoLog
+     class PieceDetectionIOInputs {
+         public double lattencyMills = 0;
+         public int fuelCount = 0;
++        public ArrayList<Translation3d> fuels;
+     }
+     default void updateInputs(PieceDetectionIOInputs inputs) {}
+ 
+Index: src/main/java/org/team1540/robot2026/subsystems/PieceDetection/PieceDetectionIOReal.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package org.team1540.robot2026.subsystems.PieceDetection;\n\nimport edu.wpi.first.math.geometry.*;\n\nimport java.util.ArrayList;\n\npublic class PieceDetectionIOReal implements PieceDetectionIO{\n    private static String limelightName = \"limelight-bill\";// don't ask me why it's called that I didn't name it\n    public static ArrayList<Translation3d> getPoses(){\n        ArrayList<Translation3d> poses =  new ArrayList();\n        for (LimelightHelpers.RawDetection rawDetections: LimelightHelpers.getRawDetections(limelightName)){\n            double ballDiameterPixels = (Math.abs(rawDetections.corner1_X - rawDetections.corner0_X)+Math.abs(rawDetections.corner2_Y - rawDetections.corner0_Y))/2;\n\n            double distanceCm = (PieceDetectionConstants.FUEL_DIAMETER_CM * PieceDetectionConstants.FOCAL_LENGTH)/ballDiameterPixels;\n\n            new Rotation3d(0, Rotation2d.fromDegrees(rawDetections.tync).getRadians(), Rotation2d.fromDegrees(rawDetections.txnc).getRadians()); // angle between camera and the line ypu could draw from the camera to the fuel\n\n            double yawRad =\n                    Math.toRadians(rawDetections.txnc);\n\n            double pitchRad =\n                    Math.toRadians(rawDetections.tync);\n\n            double x =\n                    distanceCm * Math.cos(pitchRad) * Math.cos(yawRad);\n\n            double y =\n                    distanceCm * Math.cos(pitchRad) * Math.sin(yawRad);\n\n            double z =\n                    distanceCm * Math.sin(pitchRad);\n\n            poses.add(new Translation3d(x,y,z));\n\n\n        }\n        return poses;\n    }\n    @Override\n    public void updateInputs(PieceDetectionIOInputs inputs) {\n        inputs.fuelCount = LimelightHelpers.getTargetCount(limelightName);\n        inputs.lattencyMills = LimelightHelpers.getLatency_Capture(limelightName);\n    }\n}\n
+===================================================================
+diff --git a/src/main/java/org/team1540/robot2026/subsystems/PieceDetection/PieceDetectionIOReal.java b/src/main/java/org/team1540/robot2026/subsystems/PieceDetection/PieceDetectionIOReal.java
+--- a/src/main/java/org/team1540/robot2026/subsystems/PieceDetection/PieceDetectionIOReal.java	(revision 9ca074f1f9bf9efeca01bd802d94c1cea9ab61fa)
++++ b/src/main/java/org/team1540/robot2026/subsystems/PieceDetection/PieceDetectionIOReal.java	(date 1771709183238)
+@@ -30,7 +30,7 @@
+             double z =
+                     distanceCm * Math.sin(pitchRad);
+ 
+-            poses.add(new Translation3d(x,y,z));
++            poses.add(new Translation3d(x,y,z).plus(PieceDetectionConstants.CAMERA_POS));
+ 
+ 
+         }
+@@ -40,5 +40,6 @@
+     public void updateInputs(PieceDetectionIOInputs inputs) {
+         inputs.fuelCount = LimelightHelpers.getTargetCount(limelightName);
+         inputs.lattencyMills = LimelightHelpers.getLatency_Capture(limelightName);
++        inputs.fuels = getPoses();
+     }
+ }
+Index: src/main/java/org/team1540/robot2026/subsystems/PieceDetection/PieceDetectionConstants.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package org.team1540.robot2026.subsystems.PieceDetection;\n\nimport edu.wpi.first.math.geometry.Pose3d;\nimport edu.wpi.first.math.geometry.Rotation3d;\n\npublic class PieceDetectionConstants {\n    public static double FOCAL_LENGTH = 0;\n    public static double FUEL_DIAMETER_CM = 15.24;\n    public static Pose3d CAMERA_POS = new Pose3d(0, 0, 0, new Rotation3d(0, 0, 0));\n}\n
+===================================================================
+diff --git a/src/main/java/org/team1540/robot2026/subsystems/PieceDetection/PieceDetectionConstants.java b/src/main/java/org/team1540/robot2026/subsystems/PieceDetection/PieceDetectionConstants.java
+--- a/src/main/java/org/team1540/robot2026/subsystems/PieceDetection/PieceDetectionConstants.java	(revision 9ca074f1f9bf9efeca01bd802d94c1cea9ab61fa)
++++ b/src/main/java/org/team1540/robot2026/subsystems/PieceDetection/PieceDetectionConstants.java	(date 1771638657235)
+@@ -2,9 +2,11 @@
+ 
+ import edu.wpi.first.math.geometry.Pose3d;
+ import edu.wpi.first.math.geometry.Rotation3d;
++import edu.wpi.first.math.geometry.Transform3d;
++import edu.wpi.first.math.geometry.Translation3d;
+ 
+ public class PieceDetectionConstants {
+-    public static double FOCAL_LENGTH = 0;
++    public static double FOCAL_LENGTH = 0; // To-do: solve
+     public static double FUEL_DIAMETER_CM = 15.24;
+-    public static Pose3d CAMERA_POS = new Pose3d(0, 0, 0, new Rotation3d(0, 0, 0));
++    public static Translation3d CAMERA_POS = new Translation3d(0,0,0); // To-do: solve
+ }
