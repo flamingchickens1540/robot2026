@@ -22,7 +22,7 @@ public class Intake extends SubsystemBase {
     private static boolean hasInstance = false;
 
     public enum IntakeState {
-        STOW(new LoggedTunableNumber("Intake/Setpoints/Stow/AngleDegrees", -100)),
+        STOW(new LoggedTunableNumber("Intake/Setpoints/Stow/AngleDegrees", -120)),
         INTAKE(new LoggedTunableNumber("Intake/Setpoints/Intake/AngleDegrees", PIVOT_MAX_ANGLE.getDegrees()));
 
         private final DoubleSupplier pivotPosition;
