@@ -112,8 +112,7 @@ public class Hood extends SubsystemBase {
                 .andThen(
                         Commands.waitUntil(new Trigger(() -> Math.abs(inputs.statorCurrentAmps) >= ZERO_CURRENT_AMPS)
                                 .debounce(0.5)),
-                        runOnce(() -> resetPosition(MIN_ANGLE)),
-                        runOnce(this::stop));
+                        runOnce(() -> resetPosition(MIN_ANGLE))).finallyDo(this::stop);
     }
 
     public static Hood createReal() {
