@@ -137,7 +137,7 @@ public class Intake extends SubsystemBase {
     public Command commandRunIntake(double percent) {
         return Commands.startEnd(() -> {
             this.setRollerVoltage(percent * 12);
-            this.commandToSetpoint(IntakeState.INTAKE);
+            this.setPivotSetpoint(IntakeState.INTAKE.pivotPosition());
         }, () -> {
             this.setRollerVoltage(0);
             this.holdPivot();
