@@ -111,46 +111,41 @@ public class RobotContainer {
                 true));
 
         driver.start().onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual));
-        driver.back()
-                .whileTrue(turret.zeroCommand()
-                        .andThen(leds.viewFull.commandShowPattern(
-                                CustomLEDPatterns.strobe(Color.kGreen, Seconds.of(0.5)))));
 
-        driver.povRight().onTrue(Commands.runOnce(() -> climbMode = !climbMode));
-
-        Command intakeCommand = intake.commandRunIntake(1.0)
-                .alongWith(leds.viewFull.commandShowPattern(LEDPattern.solid(Color.kPurple)));
-        driver.leftTrigger()
-                .whileTrue(Commands.either(
-                        climber.runEnd(() -> climber.setVoltage(-0.67 * 12.0), climber::stop).asProxy(),
-                        intakeCommand,
-                        () -> climbMode));
-        driver.leftOuterPaddle().whileTrue(intake.commandRunIntake(-0.67));
-        driver.povLeft().onTrue(intake.commandToSetpoint(Intake.IntakeState.STOW));
-        driver.rightOuterPaddle().onTrue(hood.setpointCommand(() -> HoodConstants.MIN_ANGLE));
+        // Targeting controls
         driver.rightBumper()
                 .toggleOnTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
                         .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0)));
         driver.leftBumper()
                 .toggleOnTrue(ShootingCommands.shuffleAimCommand(turret, shooter, hood)
                         .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0)));
-        driver.rightTrigger()
-                .whileTrue(Commands.either(
-                        climber.runEnd(() -> climber.setVoltage(0.67 * 12.0), climber::stop).asProxy(),
-                        spindexer.runCommand(() -> 1.0, () -> 1.0).alongWith(intake.jiggleCommand().asProxy().unless(intakeCommand::isScheduled)),
-                        () -> climbMode));
 
-//        intake.setDefaultCommand(intake.run(() -> {
-//            double percent = JoystickUtil.smartDeadzone(copilot.getRightY(), 0.1);
-//            if (intake.getPivotPosition().getDegrees() <= -67
-//                    && percent < 0
-//                    && !copilot.rightBumper().getAsBoolean()) percent = 0;
-//            intake.setPivotVoltage(6 * percent);
-//        }));
+        // Shoot/intake controls
+        Command intakeCmd = intake.commandRunIntake(1.0)
+                .alongWith(leds.viewFull.commandShowPattern(LEDPattern.solid(Color.kPurple)));
+        Command feedShooterCmd = spindexer.runCommand(() -> 1.0, () -> 1.0);
+        driver.leftTrigger().and(driver.rightTrigger().negate()).whileTrue(intakeCmd);
+        driver.rightTrigger().and(driver.leftTrigger().negate()).whileTrue(feedShooterCmd.alongWith(intake.jiggleCommand()));
+        driver.rightTrigger().and(driver.leftTrigger()).whileTrue(feedShooterCmd.alongWith(intakeCmd));
+
+        // Climb controls
+        driver.leftSideButton().whileTrue(climber.runEnd(() -> climber.setVoltage(-0.67 * 12.0), climber::stop));
+        driver.rightSideButton().whileTrue(climber.runEnd(() -> climber.setVoltage(0.67 * 12.0), climber::stop));
+
+        // Misc controls
+        driver.leftOuterPaddle().whileTrue(intake.commandRunIntake(-0.67));
+        driver.leftInnerPaddle().onTrue(intake.commandToSetpoint(Intake.IntakeState.STOW));
+        driver.rightOuterPaddle().onTrue(hood.setpointCommand(() -> HoodConstants.MIN_ANGLE));
+        driver.back()
+                .whileTrue(turret.zeroCommand()
+                        .andThen(leds.viewFull.commandShowPattern(
+                                CustomLEDPatterns.strobe(Color.kGreen, Seconds.of(0.5)))));
+
+        copilot.a().onTrue(hood.setpointCommand(() -> HoodConstants.MIN_ANGLE));
         copilot.b()
                 .toggleOnTrue(turret.run(
                         () -> turret.setVoltage(-JoystickUtil.smartDeadzone(copilot.getLeftX(), 0.1) * 0.5 * 12.0)));
-        copilot.a().onTrue(hood.setpointCommand(() -> HoodConstants.MIN_ANGLE));
+        copilot.x().toggleOnTrue(intake.run(() -> intake.setPivotVoltage(JoystickUtil.smartDeadzone(copilot.getRightY(), 0.1) * 0.5 * 12.0)));
         copilot.start()
                 .whileTrue(hood.zeroCommand()
                         .andThen(leds.viewFull.commandShowPattern(
@@ -160,8 +155,6 @@ public class RobotContainer {
                         .andThen(leds.viewFull.commandShowPattern(
                                 CustomLEDPatterns.strobe(Color.kGreen)).withTimeout(0.5)));
         copilot.leftBumper().whileTrue(spindexer.runCommand(() -> -0.67, () -> -0.67));
-        copilot.rightTrigger().whileTrue(intake.jiggleCommand());
-
     }
 
     private void configureLEDBindings() {
