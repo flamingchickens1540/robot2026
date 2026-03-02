@@ -35,6 +35,8 @@ import org.team1540.robot2026.util.hid.JoystickUtil;
 import org.team1540.robot2026.util.MatchTriggers;
 import org.team1540.robot2026.util.auto.LoggedAutoChooser;
 
+import java.util.function.Supplier;
+
 public class RobotContainer {
     private final CommandEnvisionController driver = new CommandEnvisionController(0);
     private final CommandXboxController copilot = new CommandXboxController(1);
@@ -121,12 +123,12 @@ public class RobotContainer {
                         .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0)));
 
         // Shoot/intake controls
-        Command intakeCmd = intake.commandRunIntake(1.0)
+        Supplier<Command> intakeCmd = () -> intake.commandRunIntake(1.0)
                 .alongWith(leds.viewFull.commandShowPattern(LEDPattern.solid(Color.kPurple)));
-        Command feedShooterCmd = spindexer.runCommand(() -> 1.0, () -> 1.0);
-        driver.leftTrigger().and(driver.rightTrigger().negate()).whileTrue(intakeCmd);
-        driver.rightTrigger().and(driver.leftTrigger().negate()).whileTrue(feedShooterCmd.alongWith(intake.jiggleCommand()));
-        driver.rightTrigger().and(driver.leftTrigger()).whileTrue(feedShooterCmd.alongWith(intakeCmd));
+        Supplier<Command> feedShooterCmd = () -> spindexer.runCommand(() -> 1.0, () -> 1.0);
+        driver.leftTrigger().and(driver.rightTrigger().negate()).whileTrue(intakeCmd.get());
+        driver.rightTrigger().and(driver.leftTrigger().negate()).whileTrue(feedShooterCmd.get().alongWith(intake.jiggleCommand()));
+        driver.rightTrigger().and(driver.leftTrigger()).whileTrue(feedShooterCmd.get().alongWith(intakeCmd.get()));
 
         // Climb controls
         driver.leftSideButton().whileTrue(climber.runEnd(() -> climber.setVoltage(-0.67 * 12.0), climber::stop));
