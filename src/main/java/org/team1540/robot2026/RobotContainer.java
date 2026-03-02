@@ -50,6 +50,7 @@ public class RobotContainer {
     final Climber climber;
     final AprilTagVision vision;
     final LEDs leds = new LEDs();
+    final Boolean turretLockedMode = false;
 
     private final LoggedAutoChooser autoChooser = new LoggedAutoChooser("Auto Chooser");
 
@@ -116,9 +117,12 @@ public class RobotContainer {
 
         // Targeting controls
         driver.rightBumper()
+                .and(() -> !turretLockedMode)
                 .toggleOnTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
                         .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0)));
+//        driver.rightBumper().and(() -> turretLockedMode).toggleOnTrue(drivetrain.)
         driver.leftBumper()
+                .and(() -> !turretLockedMode)
                 .toggleOnTrue(ShootingCommands.shuffleAimCommand(turret, shooter, hood)
                         .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0)));
 
@@ -157,6 +161,8 @@ public class RobotContainer {
                         .andThen(leds.viewFull.commandShowPattern(
                                 CustomLEDPatterns.strobe(Color.kGreen)).withTimeout(0.5)));
         copilot.leftBumper().whileTrue(spindexer.runCommand(() -> -0.67, () -> -0.67));
+        copilot.y().toggleOnTrue(turret.run(() -> turret.stop()));
+
     }
 
     private void configureLEDBindings() {
