@@ -109,8 +109,8 @@ public class RobotContainer {
                 () -> robotState.getHubAimingParameters().turretAngle(),
                 () -> robotState.getHubAimingParameters().turretVelocityRadPerSec(),
                 true));
-
         driver.start().onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual));
+        driver.rightInnerPaddle().onTrue(drivetrain.runOnce(drivetrain::stop));
 
         // Targeting controls
         driver.rightBumper()
