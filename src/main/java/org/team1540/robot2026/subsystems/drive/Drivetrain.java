@@ -313,11 +313,11 @@ public class Drivetrain extends SubsystemBase {
                         () -> JoystickUtil.smartDeadzone(-controller.getRightX(), 0.1))
                 .withName("TeleopDriveCommand");
     }
-    public Command teleopDriveCommandWithPieceDetection(XboxController controller, double kp, double ki, double kd){
+    public Command teleopDriveCommandWithPieceDetection(XboxController controller){
         return percentDriveCommand(
                 () -> JoystickUtil.deadzonedJoystickTranslation(
                         -controller.getLeftY(), -controller.getLeftX(), 0.1),
-                () -> JoystickUtil.smartDeadzone(-controller.getRightX()+pieceDetection.getPieceDetectionAngle(kp, ki, kd), 0.1))
+                () -> JoystickUtil.smartDeadzone(-controller.getRightX()+pieceDetection.getPieceDetectionAngle(this.getFFCharacterizationVelocity()), 0.1))
                 .withName("teleopDriveCommandWithPieceDetection");
     }
 
