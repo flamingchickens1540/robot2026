@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.Arrays;
 import java.util.concurrent.locks.Lock;
@@ -320,6 +321,16 @@ public class Drivetrain extends SubsystemBase {
                 .withName("TeleopDriveCommand");
     }
 
+    public Command teleopDriveWithHeadingCommand(EnvisionController controller, Supplier<Rotation2d> heading) {
+        return percentDriveCommand(() -> JoystickUtil.deadzonedJoystickTranslation(-controller.getLeftY(), -controller.getLeftX(), 0.1),() -> headingController.calculate(
+                RobotState.getInstance().getRobotHeading()
+                        .getRadians()))
+                .beforeStarting(() -> headingController.reset(
+                        RobotState.getInstance().getRobotHeading().getRadians(),
+                        RobotState.getInstance().getRobotVelocity().omegaRadiansPerSecond))
+                .alongWith(Commands.run(() -> Logger.recordOutput("Drivetrain/HeadingGoal", heading.get())))
+                .until(() -> Math.abs(controller.getRightX()) >= 0.1);
+    }
     public static Drivetrain createReal() {
         if (Constants.CURRENT_MODE != Constants.Mode.REAL)
             DriverStation.reportWarning("Using real drivetrain on simulated robot", false);
