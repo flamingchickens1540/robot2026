@@ -321,8 +321,7 @@ public class Drivetrain extends SubsystemBase {
                 .withName("TeleopDriveCommand");
     }
 
-    public Command teleopDriveWithHeadingCommand(
-            EnvisionController controller, Supplier<Rotation2d> heading, BooleanSupplier fieldRelative) {
+    public Command teleopDriveWithHeadingCommand(EnvisionController controller, Supplier<Rotation2d> heading) {
         return percentDriveCommand(() -> JoystickUtil.deadzonedJoystickTranslation(-controller.getLeftY(), -controller.getLeftX(), 0.1),() -> headingController.calculate(
                 RobotState.getInstance().getRobotHeading()
                         .getRadians()))

@@ -50,7 +50,7 @@ public class RobotContainer {
     final Climber climber;
     final AprilTagVision vision;
     final LEDs leds = new LEDs();
-    final Boolean turretLockedMode = false;
+    private boolean turretLockedMode = false;
 
     private final LoggedAutoChooser autoChooser = new LoggedAutoChooser("Auto Chooser");
 
@@ -116,15 +116,21 @@ public class RobotContainer {
         driver.rightInnerPaddle().onTrue(drivetrain.runOnce(drivetrain::stop));
 
         // Targeting controls
-        driver.rightBumper()
-                .and(() -> !turretLockedMode)
-                .toggleOnTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
-                        .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0)));
-//        driver.rightBumper().and(() -> turretLockedMode).toggleOnTrue(drivetrain.)
-        driver.leftBumper()
-                .and(() -> !turretLockedMode)
-                .toggleOnTrue(ShootingCommands.shuffleAimCommand(turret, shooter, hood)
-                        .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0)));
+        driver.rightBumper().toggleOnTrue(
+                Commands.either(
+                        ShootingCommands.hubAimTurretLockedCommand(driver.getHID(), drivetrain, shooter, hood, turret),
+                        ShootingCommands.hubAimCommand(turret, shooter, hood)
+                                .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0))
+                        ,()->turretLockedMode
+                )
+        );
+
+        driver.leftBumper().toggleOnTrue(
+                Commands.either(
+                        ShootingCommands.shuffleAimTurretLockedCommand(driver.getHID(), drivetrain, shooter, hood, turret),
+                        ShootingCommands.shuffleAimCommand(turret, shooter, hood)
+                                .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0)),
+                        () -> turretLockedMode));
 
         // Shoot/intake controls
         Supplier<Command> intakeCmd = () -> intake.commandRunIntake(1.0)
@@ -143,12 +149,14 @@ public class RobotContainer {
         driver.leftInnerPaddle().onTrue(intake.commandToSetpoint(Intake.IntakeState.STOW));
         driver.rightOuterPaddle().onTrue(hood.setpointCommand(() -> HoodConstants.MIN_ANGLE));
         driver.back()
+                .and(() -> !turretLockedMode)
                 .whileTrue(turret.zeroCommand()
                         .andThen(leds.viewFull.commandShowPattern(
                                 CustomLEDPatterns.strobe(Color.kGreen, Seconds.of(0.5)))));
 
         copilot.a().onTrue(hood.setpointCommand(() -> HoodConstants.MIN_ANGLE));
         copilot.b()
+                .and(() -> !turretLockedMode)
                 .toggleOnTrue(turret.run(
                         () -> turret.setVoltage(-JoystickUtil.smartDeadzone(copilot.getLeftX(), 0.1) * 0.5 * 12.0)));
         copilot.x().toggleOnTrue(intake.run(() -> intake.setPivotVoltage(JoystickUtil.smartDeadzone(copilot.getRightY(), 0.1) * 0.5 * 12.0)));
@@ -161,7 +169,7 @@ public class RobotContainer {
                         .andThen(leds.viewFull.commandShowPattern(
                                 CustomLEDPatterns.strobe(Color.kGreen)).withTimeout(0.5)));
         copilot.leftBumper().whileTrue(spindexer.runCommand(() -> -0.67, () -> -0.67));
-        copilot.y().toggleOnTrue(turret.run(() -> turret.stop()));
+        copilot.y().toggleOnTrue(turret.run(() -> turret.stop()).andThen(() -> turretLockedMode = true));
 
     }
 
@@ -192,6 +200,7 @@ public class RobotContainer {
                                 .andThen(spindexer
                                         .runCommand(() -> 1.0, () -> 1.0)
                                         .withTimeout(5.0)))));
+
         // Characterization routines
         if (Constants.isTuningMode()) {
             autoChooser.addCmd(
