@@ -132,32 +132,42 @@ public class Intake extends SubsystemBase {
     }
 
     public Command commandToSetpoint(IntakeState state) {
-        return startEnd(() -> setPivotSetpoint(state.pivotPosition()), this::holdPivot);
+        return startEnd(() -> setPivotSetpoint(state.pivotPosition()), this::holdPivot)
+                .withName("IntakeSetpointCommand");
     }
 
     public Command commandRunIntake(double percent) {
-        return Commands.startEnd(() -> {
-            this.setRollerVoltage(percent * 12);
-            this.setPivotSetpoint(IntakeState.INTAKE.pivotPosition());
-        }, () -> {
-            this.setRollerVoltage(0);
-            this.holdPivot();
-        }, this);
+        return Commands.startEnd(
+                        () -> {
+                            this.setRollerVoltage(percent * 12);
+                            this.setPivotSetpoint(IntakeState.INTAKE.pivotPosition());
+                        },
+                        () -> {
+                            this.setRollerVoltage(0);
+                            this.holdPivot();
+                        },
+                        this)
+                .withName("RunIntakeCommand");
     }
 
-    public Command jiggleCommand(){
-        return Commands.runOnce(() -> setRollerVoltage(12.0)).andThen(Commands.repeatingSequence(
-                commandToSetpoint(IntakeState.JIGGLE).withTimeout(0.5),
-                commandToSetpoint(IntakeState.INTAKE).withTimeout(0.5)).finallyDo(() -> {
-                    this.holdPivot();
-                    this.setRollerVoltage(0.0);
-                }));
+    public Command jiggleCommand() {
+        return Commands.runOnce(() -> setRollerVoltage(12.0))
+                .andThen(Commands.repeatingSequence(
+                                commandToSetpoint(IntakeState.JIGGLE).withTimeout(0.5),
+                                commandToSetpoint(IntakeState.INTAKE).withTimeout(0.5))
+                        .finallyDo(() -> {
+                            this.holdPivot();
+                            this.setRollerVoltage(0.0);
+                        }))
+                .withName("IntakeJiggleCommand");
     }
+
     public Command zeroCommand() {
-        return runOnce(() -> setPivotVoltage(-2))
+        return runOnce(() -> setPivotVoltage(-4))
                 .andThen(
                         Commands.waitUntil(new Trigger(() -> inputs.pivotStatorCurrentAmps >= 20).debounce(0.5)),
-                        runOnce(() -> resetPivotPosition(PIVOT_MIN_ANGLE))).finallyDo(this::stopAll);
+                        runOnce(() -> resetPivotPosition(PIVOT_MIN_ANGLE)))
+                .finallyDo(this::stopAll);
     }
 
     public static Intake createReal() {

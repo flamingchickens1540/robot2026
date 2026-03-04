@@ -112,15 +112,15 @@ public class RobotContainer {
                 () -> robotState.getHubAimingParameters().turretAngle(),
                 () -> robotState.getHubAimingParameters().turretVelocityRadPerSec(),
                 true));
-        driver.start().onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual));
-        driver.rightInnerPaddle().onTrue(drivetrain.runOnce(drivetrain::stop));
+        driver.start().onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual).withName("ManualDriveZero"));
+        driver.rightInnerPaddle().onTrue(drivetrain.runOnce(drivetrain::stop).withName("DriveXMode"));
 
         // Targeting controls
         driver.rightBumper().toggleOnTrue(
                 Commands.either(
                         ShootingCommands.hubAimTurretLockedCommand(driver.getHID(), drivetrain, shooter, hood, turret),
                         ShootingCommands.hubAimCommand(turret, shooter, hood)
-                                .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0))
+                                .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0).withName("HubAimCommand"))
                         ,()->turretLockedMode
                 )
         );
@@ -129,64 +129,81 @@ public class RobotContainer {
                 Commands.either(
                         ShootingCommands.shuffleAimTurretLockedCommand(driver.getHID(), drivetrain, shooter, hood, turret),
                         ShootingCommands.shuffleAimCommand(turret, shooter, hood)
-                                .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0)),
+                                .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0).withName("ShuffleAimCommand")),
                         () -> turretLockedMode));
 
         // Shoot/intake controls
-        Supplier<Command> intakeCmd = () -> intake.commandRunIntake(1.0)
-                .alongWith(leds.viewFull.commandShowPattern(LEDPattern.solid(Color.kPurple)));
-        Supplier<Command> feedShooterCmd = () -> spindexer.runCommand(() -> 1.0, () -> 1.0);
-        driver.leftTrigger().and(driver.rightTrigger().negate()).whileTrue(intakeCmd.get());
-        driver.rightTrigger().and(driver.leftTrigger().negate()).whileTrue(feedShooterCmd.get().alongWith(intake.jiggleCommand()));
-        driver.rightTrigger().and(driver.leftTrigger()).whileTrue(feedShooterCmd.get().alongWith(intakeCmd.get()));
+        Command intakeCmd = intake.commandRunIntake(1.0)
+                .alongWith(leds.viewFull.commandShowPattern(LEDPattern.solid(Color.kPurple)))
+                .withName("IntakeCommand");
+        Command feedShooterCmd = spindexer.runCommand(() -> 1.0, () -> 1.0);
+
+        driver.leftTrigger().toggleOnTrue(intakeCmd);
+        driver.rightTrigger()
+                .toggleOnTrue(feedShooterCmd
+                        .alongWith(intake.jiggleCommand()
+                                .asProxy()
+                                .unless(intakeCmd::isScheduled)
+                                .repeatedly())
+                        .withName("FeedShooterCommand"));
 
         // Climb controls
-        driver.leftSideButton().whileTrue(climber.runEnd(() -> climber.setVoltage(-0.67 * 12.0), climber::stop));
-        driver.rightSideButton().whileTrue(climber.runEnd(() -> climber.setVoltage(0.67 * 12.0), climber::stop));
+        driver.leftSideButton()
+                .whileTrue(climber.runEnd(() -> climber.setVoltage(-0.67 * 12.0), climber::stop)
+                        .withName("ClimbDownCommand"));
+        driver.rightSideButton()
+                .whileTrue(climber.runEnd(() -> climber.setVoltage(0.67 * 12.0), climber::stop)
+                        .withName("ClimbUpCommand"));
 
         // Misc controls
-        driver.leftOuterPaddle().whileTrue(intake.commandRunIntake(-0.67));
-        driver.leftInnerPaddle().onTrue(intake.commandToSetpoint(Intake.IntakeState.STOW));
-        driver.rightOuterPaddle().onTrue(hood.setpointCommand(() -> HoodConstants.MIN_ANGLE));
+        driver.leftOuterPaddle().whileTrue(intake.commandRunIntake(-0.67).withName("OuttakeCommand"));
+        driver.leftInnerPaddle()
+                .onTrue(intake.commandToSetpoint(Intake.IntakeState.STOW).withName("StowIntakeCommand"));
+        driver.rightOuterPaddle()
+                .onTrue(hood.setpointCommand(() -> HoodConstants.MIN_ANGLE).withName("HoodDownCommand"));
         driver.back()
                 .and(() -> !turretLockedMode)
                 .whileTrue(turret.zeroCommand()
                         .andThen(leds.viewFull.commandShowPattern(
                                 CustomLEDPatterns.strobe(Color.kGreen, Seconds.of(0.5)))));
 
-        copilot.a().onTrue(hood.setpointCommand(() -> HoodConstants.MIN_ANGLE));
+        copilot.a().onTrue(hood.setpointCommand(() -> HoodConstants.MIN_ANGLE).withName("HoodDownCommand"));
         copilot.b()
                 .and(() -> !turretLockedMode)
                 .toggleOnTrue(turret.run(
-                        () -> turret.setVoltage(-JoystickUtil.smartDeadzone(copilot.getLeftX(), 0.1) * 0.5 * 12.0)));
-        copilot.x().toggleOnTrue(intake.run(() -> intake.setPivotVoltage(JoystickUtil.smartDeadzone(copilot.getRightY(), 0.1) * 0.5 * 12.0)));
+                        () -> turret.setVoltage(-JoystickUtil.smartDeadzone(copilot.getLeftX(), 0.1) * 0.5 * 12.0)).withName("TurretManualControl"));
+        copilot.x().toggleOnTrue(intake.run(() -> intake.setPivotVoltage(JoystickUtil.smartDeadzone(copilot.getRightY(), 0.1) * 0.5 * 12.0)).withName("IntakeManualControl"));
         copilot.start()
                 .whileTrue(hood.zeroCommand()
-                        .andThen(leds.viewFull.commandShowPattern(
-                                CustomLEDPatterns.strobe(Color.kGreen)).withTimeout(0.5)));
+                        .andThen(leds.viewFull
+                                .commandShowPattern(CustomLEDPatterns.strobe(Color.kGreen))
+                                .withTimeout(0.5))
+                        .withName("HoodZeroCommand"));
         copilot.back()
                 .whileTrue(intake.zeroCommand()
-                        .andThen(leds.viewFull.commandShowPattern(
-                                CustomLEDPatterns.strobe(Color.kGreen)).withTimeout(0.5)));
-        copilot.leftBumper().whileTrue(spindexer.runCommand(() -> -0.67, () -> -0.67));
+                        .andThen(leds.viewFull
+                                .commandShowPattern(CustomLEDPatterns.strobe(Color.kGreen))
+                                .withTimeout(0.5))
+                        .withName("IntakeZeroCommand"));
+        copilot.leftBumper()
+                .whileTrue(spindexer.runCommand(() -> -0.67, () -> -0.67).withName("SpindexerReverseCommand"));
         copilot.y().toggleOnTrue(turret.run(() -> turret.stop()).andThen(() -> turretLockedMode = true));
-
     }
 
     private void configureLEDBindings() {
         RobotModeTriggers.disabled()
-                .whileTrue(leds.viewFull.commandShowPattern(CustomLEDPatterns.movingRainbow(Hertz.of(0.5))))
-                .onTrue(Commands.runOnce(() -> climbMode = false).ignoringDisable(true));
+                .whileTrue(leds.viewFull.commandShowPattern(CustomLEDPatterns.movingRainbow(Hertz.of(0.5))));
         RobotModeTriggers.teleop()
                 .or(RobotModeTriggers.autonomous())
                 .whileTrue(leds.viewFull.commandDefaultPattern(
                         () -> LEDPattern.gradient(LEDPattern.GradientType.kContinuous, Color.kRed, Color.kOrange)
                                 .scrollAtRelativeSpeed(Hertz.of(0.67))));
-        new Trigger(() -> climbMode).whileTrue(leds.viewFull.commandShowPattern(LEDPattern.solid(Color.kCyan)));
         MatchTriggers.timeRemaining(30)
                 .or(MatchTriggers.timeRemaining(15))
                 .or(MatchTriggers.timeRemaining(10))
-                .onTrue(leds.viewFull.commandShowPattern(CustomLEDPatterns.strobe(Color.kWhite)).withTimeout(1.5));
+                .onTrue(leds.viewFull
+                        .commandShowPattern(CustomLEDPatterns.strobe(Color.kWhite))
+                        .withTimeout(1.5));
     }
 
     private void configureAutoRoutines() {

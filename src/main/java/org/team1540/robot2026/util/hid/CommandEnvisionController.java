@@ -171,7 +171,10 @@ public class CommandEnvisionController extends CommandGenericHID {
     }
 
     public Trigger leftTrigger(double threshold, EventLoop loop) {
-        return axisGreaterThan(EnvisionController.Axis.LEFT_TRIGGER.id, 2 * threshold - 1, loop); // Convert threshold from [0, 1] to [-1, 1]
+        return axisGreaterThan(
+                EnvisionController.Axis.LEFT_TRIGGER.id,
+                2 * threshold - 1,
+                loop); // Convert threshold from [0, 1] to [-1, 1]
     }
 
     public Trigger leftTrigger(double threshold) {
@@ -183,7 +186,10 @@ public class CommandEnvisionController extends CommandGenericHID {
     }
 
     public Trigger rightTrigger(double threshold, EventLoop loop) {
-        return axisGreaterThan(EnvisionController.Axis.RIGHT_TRIGGER.id, 2 * threshold - 1, loop); // Convert threshold from [0, 1] to [-1, 1]
+        return axisGreaterThan(
+                EnvisionController.Axis.RIGHT_TRIGGER.id,
+                2 * threshold - 1,
+                loop); // Convert threshold from [0, 1] to [-1, 1]
     }
 
     public Trigger rightTrigger(double threshold) {
