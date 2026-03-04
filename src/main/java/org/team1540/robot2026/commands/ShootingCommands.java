@@ -58,11 +58,13 @@ public class ShootingCommands {
                 .finallyDo(() -> hood.setSetpoint(HoodConstants.MIN_ANGLE));
     }
 
-    public static Command hubAimTurretLockedCommand(EnvisionController controller, Drivetrain drivetrain, Shooter shooter, Hood hood, Turret turret){
+    public static Command hubAimTurretLockedCommand(
+            EnvisionController controller, Drivetrain drivetrain, Shooter shooter, Hood hood, Turret turret) {
         return Commands.parallel(
                         drivetrain.teleopDriveWithHeadingCommand(controller, () -> RobotState.getInstance()
                                 .getHubAimingParameters()
-                                .turretAngle().minus(turret.getPosition())),
+                                .turretAngle()
+                                .minus(turret.getPosition())),
                         shooter.commandVelocity(() -> RobotState.getInstance()
                                 .getHubAimingParameters()
                                 .shooterRPM()),
@@ -91,11 +93,13 @@ public class ShootingCommands {
                 .finallyDo(() -> hood.setSetpoint(HoodConstants.MIN_ANGLE));
     }
 
-    public static Command shuffleAimTurretLockedCommand(EnvisionController controller, Drivetrain drivetrain, Shooter shooter, Hood hood, Turret turret) {
+    public static Command shuffleAimTurretLockedCommand(
+            EnvisionController controller, Drivetrain drivetrain, Shooter shooter, Hood hood, Turret turret) {
         return Commands.parallel(
                         drivetrain.teleopDriveWithHeadingCommand(controller, () -> (RobotState.getInstance()
-                                .getShuffleAimingParameters(AllianceFlipUtil.apply(SHUFFLE_TARGET))
-                                .turretAngle()).minus(turret.getPosition())),
+                                        .getShuffleAimingParameters(AllianceFlipUtil.apply(SHUFFLE_TARGET))
+                                        .turretAngle())
+                                .minus(turret.getPosition())),
                         shooter.commandVelocity(() -> RobotState.getInstance()
                                 .getShuffleAimingParameters(AllianceFlipUtil.apply(SHUFFLE_TARGET))
                                 .shooterRPM()),

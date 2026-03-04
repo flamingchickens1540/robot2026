@@ -14,8 +14,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
-import org.littletonrobotics.junction.AutoLogOutput;
+import org.team1540.robot2026.autos.Autos;
 import org.team1540.robot2026.commands.CharacterizationCommands;
 import org.team1540.robot2026.commands.ShootingCommands;
 import org.team1540.robot2026.subsystems.climber.Climber;
@@ -30,12 +29,10 @@ import org.team1540.robot2026.subsystems.shooter.Shooter;
 import org.team1540.robot2026.subsystems.spindexer.Spindexer;
 import org.team1540.robot2026.subsystems.turret.Turret;
 import org.team1540.robot2026.subsystems.vision.AprilTagVision;
-import org.team1540.robot2026.util.hid.CommandEnvisionController;
-import org.team1540.robot2026.util.hid.JoystickUtil;
 import org.team1540.robot2026.util.MatchTriggers;
 import org.team1540.robot2026.util.auto.LoggedAutoChooser;
-
-import java.util.function.Supplier;
+import org.team1540.robot2026.util.hid.CommandEnvisionController;
+import org.team1540.robot2026.util.hid.JoystickUtil;
 
 public class RobotContainer {
     private final CommandEnvisionController driver = new CommandEnvisionController(0);
@@ -50,15 +47,14 @@ public class RobotContainer {
     final Climber climber;
     final AprilTagVision vision;
     final LEDs leds = new LEDs();
-    private boolean turretLockedMode = false;
 
     private final LoggedAutoChooser autoChooser = new LoggedAutoChooser("Auto Chooser");
 
     private final RobotState robotState = RobotState.getInstance();
 
-    @AutoLogOutput(key = "ClimbMode")
-    private boolean climbMode = false;
+    private final Autos autos;
 
+    private boolean turretLockedMode = false;
     /** The container for the robot. Contains subsystems, IO devices, and commands. */
     public RobotContainer() {
         switch (Constants.CURRENT_MODE) {
@@ -99,6 +95,8 @@ public class RobotContainer {
             }
         }
 
+        autos = new Autos(drivetrain, intake, spindexer, turret, hood, shooter);
+
         configureButtonBindings();
         configureLEDBindings();
         configureAutoRoutines();
@@ -112,25 +110,34 @@ public class RobotContainer {
                 () -> robotState.getHubAimingParameters().turretAngle(),
                 () -> robotState.getHubAimingParameters().turretVelocityRadPerSec(),
                 true));
-        driver.start().onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual).withName("ManualDriveZero"));
+        driver.start()
+                .onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual).withName("ManualDriveZero"));
         driver.rightInnerPaddle().onTrue(drivetrain.runOnce(drivetrain::stop).withName("DriveXMode"));
 
         // Targeting controls
-        driver.rightBumper().toggleOnTrue(
-                Commands.either(
-                        ShootingCommands.hubAimTurretLockedCommand(driver.getHID(), drivetrain, shooter, hood, turret).asProxy(),
-                        ShootingCommands.hubAimCommand(turret, shooter, hood).asProxy()
-                                .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0).withName("HubAimCommand"))
-                        ,()->turretLockedMode
-                )
-        );
+        driver.rightBumper()
+                .toggleOnTrue(Commands.either(
+                                ShootingCommands.hubAimTurretLockedCommand(
+                                                driver.getHID(), drivetrain, shooter, hood, turret)
+                                        .withName("HubAimTurretLockedCommand")
+                                        .asProxy(),
+                                ShootingCommands.hubAimCommand(turret, shooter, hood)
+                                        .withName("HubAimCommand")
+                                        .asProxy(),
+                                () -> turretLockedMode)
+                        .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0)));
 
-        driver.leftBumper().toggleOnTrue(
-                Commands.either(
-                        ShootingCommands.shuffleAimTurretLockedCommand(driver.getHID(), drivetrain, shooter, hood, turret).asProxy(),
-                        ShootingCommands.shuffleAimCommand(turret, shooter, hood).asProxy()
-                                .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0).withName("ShuffleAimCommand")),
-                        () -> turretLockedMode));
+        driver.leftBumper()
+                .toggleOnTrue(Commands.either(
+                                ShootingCommands.shuffleAimTurretLockedCommand(
+                                                driver.getHID(), drivetrain, shooter, hood, turret)
+                                        .withName("ShuffleAimTurretLockedCommand")
+                                        .asProxy(),
+                                ShootingCommands.shuffleAimCommand(turret, shooter, hood)
+                                        .withName("ShuffleAimCommand")
+                                        .asProxy(),
+                                () -> turretLockedMode)
+                        .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0)));
 
         // Shoot/intake controls
         Command intakeCmd = intake.commandRunIntake(1.0)
@@ -170,9 +177,13 @@ public class RobotContainer {
         copilot.a().onTrue(hood.setpointCommand(() -> HoodConstants.MIN_ANGLE).withName("HoodDownCommand"));
         copilot.b()
                 .and(() -> !turretLockedMode)
-                .toggleOnTrue(turret.run(
-                        () -> turret.setVoltage(-JoystickUtil.smartDeadzone(copilot.getLeftX(), 0.1) * 0.5 * 12.0)).withName("TurretManualControl"));
-        copilot.x().toggleOnTrue(intake.run(() -> intake.setPivotVoltage(JoystickUtil.smartDeadzone(copilot.getRightY(), 0.1) * 0.5 * 12.0)).withName("IntakeManualControl"));
+                .toggleOnTrue(turret.run(() ->
+                                turret.setVoltage(-JoystickUtil.smartDeadzone(copilot.getLeftX(), 0.1) * 0.5 * 12.0))
+                        .withName("TurretManualControl"));
+        copilot.x()
+                .toggleOnTrue(intake.run(() -> intake.setPivotVoltage(
+                                JoystickUtil.smartDeadzone(copilot.getRightY(), 0.1) * 0.5 * 12.0))
+                        .withName("IntakeManualControl"));
         copilot.start()
                 .whileTrue(hood.zeroCommand()
                         .andThen(leds.viewFull
@@ -187,7 +198,11 @@ public class RobotContainer {
                         .withName("IntakeZeroCommand"));
         copilot.leftBumper()
                 .whileTrue(spindexer.runCommand(() -> -0.67, () -> -0.67).withName("SpindexerReverseCommand"));
-        copilot.y().toggleOnTrue(turret.run(() -> turret.stop()).andThen(() -> turretLockedMode = true));
+        copilot.y()
+                .toggleOnTrue(turret.run(turret::stop)
+                        .andThen(() -> turretLockedMode = true)
+                        .finallyDo(() -> turretLockedMode = false)
+                        .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming));
     }
 
     private void configureLEDBindings() {
@@ -217,6 +232,9 @@ public class RobotContainer {
                                 .andThen(spindexer
                                         .runCommand(() -> 1.0, () -> 1.0)
                                         .withTimeout(5.0)))));
+        autoChooser.addRoutine("Test", autos::testPath);
+        autoChooser.addRoutine("DepotTNPH", autos::depotTNPH);
+        autoChooser.addRoutine("DepotTNPHTNH", autos::depotTNPHTNH);
 
         // Characterization routines
         if (Constants.isTuningMode()) {

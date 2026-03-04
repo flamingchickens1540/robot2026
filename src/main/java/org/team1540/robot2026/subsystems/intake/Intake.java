@@ -56,6 +56,7 @@ public class Intake extends SubsystemBase {
         if (hasInstance) throw new IllegalStateException("Instance of intake already exists");
         hasInstance = true;
         this.io = io;
+        io.resetPivotPosition(PIVOT_MIN_ANGLE);
     }
 
     public void periodic() {
@@ -156,7 +157,7 @@ public class Intake extends SubsystemBase {
                                 commandToSetpoint(IntakeState.JIGGLE).withTimeout(0.5),
                                 commandToSetpoint(IntakeState.INTAKE).withTimeout(0.5))
                         .finallyDo(() -> {
-                            this.holdPivot();
+                            this.setPivotSetpoint(IntakeState.INTAKE.pivotPosition());
                             this.setRollerVoltage(0.0);
                         }))
                 .withName("IntakeJiggleCommand");

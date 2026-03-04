@@ -1,7 +1,5 @@
 package org.team1540.robot2026.subsystems.leds;
 
-import static edu.wpi.first.units.Units.Second;
-import static edu.wpi.first.units.Units.Value;
 import static org.team1540.robot2026.subsystems.leds.LEDConstants.LEDS_LENGTH;
 import static org.team1540.robot2026.subsystems.leds.LEDConstants.LEDS_PWM_PORT;
 
@@ -28,7 +26,6 @@ public class LEDs extends SubsystemBase {
     public LEDs() {
         ledStrip.setLength(buffer.getLength());
         ledStrip.start();
-        viewFull.setDefaultPattern(CustomLEDPatterns.movingRainbow(Value.one().div(Second.of(5))));
     }
 
     @Override
@@ -52,7 +49,7 @@ public class LEDs extends SubsystemBase {
     public class LedWindow extends SubsystemBase {
         private final AddressableLEDBufferView view;
         private LEDPattern activePattern;
-        private LEDPattern defaultPattern;
+        private Supplier<LEDPattern> defaultPattern;
 
         private LedWindow(int start, int end) {
             view = buffer.createView(start, end);
@@ -64,7 +61,7 @@ public class LEDs extends SubsystemBase {
             if (activePattern != null) {
                 this.activePattern.applyTo(view);
             } else if (defaultPattern != null) {
-                this.defaultPattern.applyTo(view);
+                this.defaultPattern.get().applyTo(view);
             }
         }
 
@@ -74,16 +71,16 @@ public class LEDs extends SubsystemBase {
         }
 
         public Command commandShowPattern(Supplier<LEDPattern> pattern) {
-            return Commands.startEnd(() -> this.activePattern = pattern.get(), () -> this.activePattern = null, this)
+            return Commands.runEnd(() -> this.activePattern = pattern.get(), () -> this.activePattern = null, this)
                     .ignoringDisable(true);
         }
 
-        public void setDefaultPattern(LEDPattern pattern) {
+        public void setDefaultPattern(Supplier<LEDPattern> pattern) {
             this.defaultPattern = pattern;
         }
 
         public Command commandDefaultPattern(Supplier<LEDPattern> pattern) {
-            return Commands.runOnce(() -> this.setDefaultPattern(pattern.get())).ignoringDisable(true);
+            return Commands.runOnce(() -> this.setDefaultPattern(pattern)).ignoringDisable(true);
         }
 
         public Command showRSLState() {

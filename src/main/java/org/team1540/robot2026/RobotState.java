@@ -293,8 +293,10 @@ public class RobotState {
 
     public AimingParameters getShuffleAimingParameters(Translation2d shuffleTarget) {
         if (lastShuffleAimingParameters != null) return lastShuffleAimingParameters;
+        //        lastShuffleAimingParameters = getCompensatedAimingParameters(
+        //                shuffleTarget, d -> Rotation2d.fromDegrees(45), d -> 0.45 * 5500, d -> 0.0, "Shuffle");
         lastShuffleAimingParameters = getCompensatedAimingParameters(
-                shuffleTarget, d -> Rotation2d.fromDegrees(45), d -> 0.45 * 5500, d -> 0.0, "Shuffle");
+                shuffleTarget, hubHoodAngleMap::get, hubShooterSpeedMap::get, hubTOFMap::get, "Shuffle");
         return lastShuffleAimingParameters;
     }
 

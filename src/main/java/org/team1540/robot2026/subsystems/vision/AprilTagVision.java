@@ -109,7 +109,7 @@ public class AprilTagVision extends SubsystemBase {
         return new AprilTagVision(
                 new AprilTagVisionIOPhoton(TURRET_CAMERA_NAME, TURRET_TO_CAMERA),
                 new AprilTagVisionIOPhoton(BL_CAMERA_NAME, ROBOT_TO_BL_CAMERA),
-                new AprilTagVisionIOPhoton(BR_CAMERA_NAME, ROBOT_TO_FL_CAMERA));
+                new AprilTagVisionIOPhoton(BR_CAMERA_NAME, ROBOT_TO_BR_CAMERA) {});
     }
 
     public static AprilTagVision createDummy() {
