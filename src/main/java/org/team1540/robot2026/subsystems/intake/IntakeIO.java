@@ -1,7 +1,5 @@
 package org.team1540.robot2026.subsystems.intake;
 
-import static org.team1540.robot2026.subsystems.intake.IntakeConstants.PIVOT_MIN_ANGLE;
-
 import edu.wpi.first.math.geometry.Rotation2d;
 import org.littletonrobotics.junction.AutoLog;
 

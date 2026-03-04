@@ -176,21 +176,25 @@ public class Turret extends SubsystemBase {
     public Command commandToSetpoint(
             Supplier<Rotation2d> rotation, DoubleSupplier velocityRadPerSec, boolean isFieldRelative) {
         return runEnd(
-                () -> setSetpoint(
-                        rotation.get()
-                                .minus(
-                                        isFieldRelative
-                                                ? RobotState.getInstance().getRobotHeading()
-                                                : Rotation2d.kZero),
-                        velocityRadPerSec.getAsDouble()),
-                this::stop);
+                        () -> setSetpoint(
+                                rotation.get()
+                                        .minus(
+                                                isFieldRelative
+                                                        ? RobotState.getInstance()
+                                                                .getRobotHeading()
+                                                        : Rotation2d.kZero),
+                                velocityRadPerSec.getAsDouble()),
+                        this::stop)
+                .withName("TurretSetpointCommand");
     }
 
     public Command zeroCommand() {
-        return runOnce(this::stop).andThen(runOnce(() -> {
-            io.setMotorPosition(calculateTurretAngle());
-            zeroingCRTError = lastCRTError;
-        }));
+        return runOnce(this::stop)
+                .andThen(runOnce(() -> {
+                    io.setMotorPosition(calculateTurretAngle());
+                    zeroingCRTError = lastCRTError;
+                }))
+                .withName("TurretZeroCommand");
     }
 
     public static Turret createReal() {
