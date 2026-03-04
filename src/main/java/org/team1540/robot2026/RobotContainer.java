@@ -118,8 +118,8 @@ public class RobotContainer {
         // Targeting controls
         driver.rightBumper().toggleOnTrue(
                 Commands.either(
-                        ShootingCommands.hubAimTurretLockedCommand(driver.getHID(), drivetrain, shooter, hood, turret),
-                        ShootingCommands.hubAimCommand(turret, shooter, hood)
+                        ShootingCommands.hubAimTurretLockedCommand(driver.getHID(), drivetrain, shooter, hood, turret).asProxy(),
+                        ShootingCommands.hubAimCommand(turret, shooter, hood).asProxy()
                                 .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0).withName("HubAimCommand"))
                         ,()->turretLockedMode
                 )
@@ -127,8 +127,8 @@ public class RobotContainer {
 
         driver.leftBumper().toggleOnTrue(
                 Commands.either(
-                        ShootingCommands.shuffleAimTurretLockedCommand(driver.getHID(), drivetrain, shooter, hood, turret),
-                        ShootingCommands.shuffleAimCommand(turret, shooter, hood)
+                        ShootingCommands.shuffleAimTurretLockedCommand(driver.getHID(), drivetrain, shooter, hood, turret).asProxy(),
+                        ShootingCommands.shuffleAimCommand(turret, shooter, hood).asProxy()
                                 .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0).withName("ShuffleAimCommand")),
                         () -> turretLockedMode));
 
