@@ -104,7 +104,7 @@ public class Hood extends SubsystemBase {
     }
 
     public Command setpointCommand(Supplier<Rotation2d> position) {
-        return runEnd(() -> setSetpoint(position.get()), this::stop).withName("HoodSetpointCommands");
+        return runEnd(() -> setSetpoint(position.get()), this::stop).withName("HoodSetpointCommand");
     }
 
     public Command zeroCommand() {
@@ -112,7 +112,9 @@ public class Hood extends SubsystemBase {
                 .andThen(
                         Commands.waitUntil(new Trigger(() -> Math.abs(inputs.statorCurrentAmps) >= ZERO_CURRENT_AMPS)
                                 .debounce(0.5)),
-                        runOnce(() -> resetPosition(MIN_ANGLE))).finallyDo(this::stop);
+                        runOnce(() -> resetPosition(MIN_ANGLE)))
+                .finallyDo(this::stop)
+                .withName("HoodZeroCommand");
     }
 
     public static Hood createReal() {
