@@ -47,6 +47,7 @@ public class SpindexerIOTalonFX implements SpindexerIO {
 
         spinMotor.getConfigurator().apply(config);
 
+        config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         config.Feedback.SensorToMechanismRatio = FEEDER_GEAR_RATIO;
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         feederMotor.getConfigurator().apply(config);

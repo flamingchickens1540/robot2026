@@ -41,6 +41,8 @@ public class RobotState {
     }
 
     private static final LoggedTunableNumber aimingPhaseDelay = new LoggedTunableNumber("Aiming/PhaseDelay", 0.03);
+    private static final LoggedTunableNumber shuffleTargetX =
+            new LoggedTunableNumber("Aiming/ShuffleX", FieldConstants.LinesVertical.starting - 2.0);
 
     private Rotation2d lastGyroRotation = Rotation2d.kZero;
     private SwerveModulePosition[] lastModulePositions = new SwerveModulePosition[] {
@@ -70,6 +72,7 @@ public class RobotState {
     private final InterpolatingTreeMap<Double, Rotation2d> shuffleHoodAngleMap =
             new InterpolatingTreeMap<>(InverseInterpolator.forDouble(), Rotation2d::interpolate);
     private final InterpolatingDoubleTreeMap shuffleShooterSpeedMap = new InterpolatingDoubleTreeMap();
+    private final InterpolatingDoubleTreeMap shuffleTOFMap = new InterpolatingDoubleTreeMap();
 
     @AutoLogOutput(key = "Aiming/Hub/LastParameters")
     private AimingParameters lastHubAimingParameters;
@@ -88,11 +91,11 @@ public class RobotState {
         hubHoodAngleMap.put(4.888, Rotation2d.fromDegrees(29));
         hubHoodAngleMap.put(3.700, Rotation2d.fromDegrees(25));
 
-        hubShooterSpeedMap.put(2.713, 1400.0);
-        hubShooterSpeedMap.put(1.724, 1250.0);
-        hubShooterSpeedMap.put(1.414, 1150.0);
-        hubShooterSpeedMap.put(4.888, 1650.0);
-        hubShooterSpeedMap.put(3.700, 1500.0);
+        hubShooterSpeedMap.put(2.713, 1375.0);
+        hubShooterSpeedMap.put(1.724, 1225.0);
+        hubShooterSpeedMap.put(1.414, 1125.0);
+        hubShooterSpeedMap.put(4.888, 1625.0);
+        hubShooterSpeedMap.put(3.700, 1475.0);
 
         hubTOFMap.put(2.713, 1.040466598);
         hubTOFMap.put(1.724, 0.9290552488);
@@ -100,6 +103,18 @@ public class RobotState {
         hubTOFMap.put(4.888, 1.229432436);
         hubTOFMap.put(3.700, 1.153830441);
 
+        shuffleHoodAngleMap.put(10.02, Rotation2d.fromDegrees(45));
+        shuffleHoodAngleMap.put(1.81, Rotation2d.fromDegrees(45));
+
+        shuffleShooterSpeedMap.put(10.03, 4414.0);
+        shuffleShooterSpeedMap.put(6.364, 1778.0);
+        shuffleShooterSpeedMap.put(4.491, 1540.0);
+        shuffleShooterSpeedMap.put(1.81, 1023.0);
+
+        shuffleTOFMap.put(10.03, 1.356);
+        shuffleTOFMap.put(6.364, 1.045);
+        shuffleTOFMap.put(4.491, 0.843);
+        shuffleTOFMap.put(1.81, 0.405);
         AutoLogOutputManager.addObject(this);
     }
 
@@ -230,6 +245,16 @@ public class RobotState {
                 DriverStation.isEnabled() && poseObservation.numTagsSeen() <= 1 ? Double.POSITIVE_INFINITY : rotStdDev);
     }
 
+    private Translation2d getShuffleTarget() {
+        if (AllianceFlipUtil.apply(getEstimatedPose()).getY() < FieldConstants.LinesHorizontal.center) {
+            return AllianceFlipUtil.apply(
+                    new Translation2d(shuffleTargetX.get(), FieldConstants.LinesHorizontal.rightBumpMiddle));
+        } else {
+            return AllianceFlipUtil.apply(
+                    new Translation2d(shuffleTargetX.get(), FieldConstants.LinesHorizontal.leftBumpMiddle));
+        }
+    }
+
     private AimingParameters getCompensatedAimingParameters(
             Translation2d target,
             DoubleFunction<Rotation2d> hoodAngleMap,
@@ -295,13 +320,19 @@ public class RobotState {
         return lastHubAimingParameters;
     }
 
-    public AimingParameters getShuffleAimingParameters(Translation2d shuffleTarget) {
+    public AimingParameters getShuffleAimingParameters() {
         if (lastShuffleAimingParameters != null) return lastShuffleAimingParameters;
-        //        lastShuffleAimingParameters = getCompensatedAimingParameters(
-        //                shuffleTarget, d -> Rotation2d.fromDegrees(45), d -> 0.45 * 5500, d -> 0.0, "Shuffle");
+        Translation2d shuffleTarget = getShuffleTarget();
         lastShuffleAimingParameters = getCompensatedAimingParameters(
-                shuffleTarget, hubHoodAngleMap::get, hubShooterSpeedMap::get, hubTOFMap::get, "Shuffle");
+                shuffleTarget, shuffleHoodAngleMap::get, shuffleShooterSpeedMap::get, shuffleTOFMap::get, "Shuffle");
         return lastShuffleAimingParameters;
+    }
+
+    public AimingParameters getAimingParameters() {
+        return AllianceFlipUtil.apply(getEstimatedPose()).getX()
+                        < FieldConstants.LinesVertical.allianceZone + Constants.BUMPER_LENGTH_X_METERS
+                ? getHubAimingParameters()
+                : getShuffleAimingParameters();
     }
 
     public void clearAimingParameters() {

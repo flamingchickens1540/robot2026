@@ -1,5 +1,6 @@
 package org.team1540.robot2026.subsystems.leds;
 
+import static edu.wpi.first.units.Units.Hertz;
 import static org.team1540.robot2026.subsystems.leds.LEDConstants.LEDS_LENGTH;
 import static org.team1540.robot2026.subsystems.leds.LEDConstants.LEDS_PWM_PORT;
 
@@ -26,6 +27,7 @@ public class LEDs extends SubsystemBase {
     public LEDs() {
         ledStrip.setLength(buffer.getLength());
         ledStrip.start();
+        viewFull.setDefaultPattern(() -> CustomLEDPatterns.movingRainbow(Hertz.of(0.5)));
     }
 
     @Override

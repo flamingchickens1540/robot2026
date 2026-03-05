@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import org.team1540.robot2026.autos.Autos;
 import org.team1540.robot2026.commands.CharacterizationCommands;
+import org.team1540.robot2026.commands.FeedingCommands;
 import org.team1540.robot2026.commands.ShootingCommands;
 import org.team1540.robot2026.subsystems.climber.Climber;
 import org.team1540.robot2026.subsystems.climber.ClimberConstants;
@@ -107,52 +108,41 @@ public class RobotContainer {
     private void configureButtonBindings() {
         drivetrain.setDefaultCommand(drivetrain.teleopDriveCommand(driver.getHID()));
         turret.setDefaultCommand(turret.commandToSetpoint(
-                () -> robotState.getHubAimingParameters().turretAngle(),
-                () -> robotState.getHubAimingParameters().turretVelocityRadPerSec(),
+                () -> robotState.getAimingParameters().turretAngle(),
+                () -> robotState.getAimingParameters().turretVelocityRadPerSec(),
                 true));
         driver.start()
                 .onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual).withName("ManualDriveZero"));
         driver.rightInnerPaddle().onTrue(drivetrain.runOnce(drivetrain::stop).withName("DriveXMode"));
 
-        // Targeting controls
-        driver.rightBumper()
-                .toggleOnTrue(Commands.either(
-                                ShootingCommands.hubAimTurretLockedCommand(
-                                                driver.getHID(), drivetrain, shooter, hood, turret)
-                                        .withName("HubAimTurretLockedCommand")
-                                        .asProxy(),
-                                ShootingCommands.hubAimCommand(turret, shooter, hood)
-                                        .withName("HubAimCommand")
-                                        .asProxy(),
-                                () -> turretLockedMode)
-                        .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0)));
-
-        driver.leftBumper()
-                .toggleOnTrue(Commands.either(
-                                ShootingCommands.shuffleAimTurretLockedCommand(
-                                                driver.getHID(), drivetrain, shooter, hood, turret)
-                                        .withName("ShuffleAimTurretLockedCommand")
-                                        .asProxy(),
-                                ShootingCommands.shuffleAimCommand(turret, shooter, hood)
-                                        .withName("ShuffleAimCommand")
-                                        .asProxy(),
-                                () -> turretLockedMode)
-                        .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0)));
-
         // Shoot/intake controls
+        Command aimCommand = Commands.either(
+                        ShootingCommands.shooterAimTurretLockedCommand(
+                                        driver.getHID(), drivetrain, shooter, hood, turret)
+                                .withName("ShooterAimTurretLockedCommand")
+                                .asProxy(),
+                        ShootingCommands.shooterAimCommand(turret, shooter, hood)
+                                .withName("ShooterAimCommand")
+                                .asProxy(),
+                        () -> turretLockedMode)
+                .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0));
+
+        Command feedShooterCmd = FeedingCommands.feedCommand(turret, hood, spindexer);
+
         Command intakeCmd = intake.commandRunIntake(1.0)
                 .alongWith(leds.viewFull.commandShowPattern(LEDPattern.solid(Color.kPurple)))
                 .withName("IntakeCommand");
-        Command feedShooterCmd = spindexer.runCommand(() -> 1.0, () -> 1.0);
 
         driver.leftTrigger().toggleOnTrue(intakeCmd);
         driver.rightTrigger()
-                .toggleOnTrue(feedShooterCmd
-                        .alongWith(intake.jiggleCommand()
-                                .asProxy()
-                                .unless(intakeCmd::isScheduled)
-                                .repeatedly())
-                        .withName("FeedShooterCommand"));
+                .toggleOnTrue(aimCommand
+                        .alongWith(
+                                feedShooterCmd,
+                                intake.jiggleCommand()
+                                        .asProxy()
+                                        .unless(intakeCmd::isScheduled)
+                                        .repeatedly())
+                        .withName("ShootCommand"));
 
         // Climb controls
         driver.leftSideButton()
@@ -201,9 +191,19 @@ public class RobotContainer {
         copilot.y()
                 .toggleOnTrue(turret.run(turret::stop)
                         .andThen(() -> turretLockedMode = true)
-                        .finallyDo(() -> turretLockedMode = false)
-                        .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming));
-        copilot.rightTrigger().whileTrue(ShootingCommands.hubOneMeterShotCommand(turret, shooter, hood).withName("CloseShotCommand"));
+                        .finallyDo(() -> turretLockedMode = false));
+        copilot.rightTrigger()
+                .whileTrue(ShootingCommands.hubOneMeterShotCommand(turret, shooter, hood)
+                        .withName("CloseShotCommand"));
+
+        if (Constants.isTuningMode()) {
+            copilot.rightBumper()
+                    .toggleOnTrue(ShootingCommands.tuneShooterCommand(turret, shooter, hood)
+                            .withName("TuneShooterCommand"));
+            copilot.povUp()
+                    .whileTrue(
+                            FeedingCommands.feedCommand(turret, hood, spindexer).alongWith(intake.jiggleCommand()));
+        }
     }
 
     private void configureLEDBindings() {
@@ -228,7 +228,7 @@ public class RobotContainer {
                 .withTimeout(1.0)
                 .andThen(ShootingCommands.hubAimCommand(turret, shooter, hood)
                         .withDeadline(Commands.waitUntil(
-                                        () -> turret.atSetpoint() && shooter.atSetpoint() && hood.isAtSetpoint())
+                                        () -> turret.atSetpoint() && shooter.atSetpoint() && hood.atSetpoint())
                                 .withTimeout(1.0)
                                 .andThen(spindexer
                                         .runCommand(() -> 1.0, () -> 1.0)

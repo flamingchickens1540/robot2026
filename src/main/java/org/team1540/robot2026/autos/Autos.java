@@ -107,20 +107,19 @@ public class Autos {
                 .onTrue(firstSweep
                         .cmd()
                         .alongWith(
-                                intake.commandRunIntake(1.0),
+                                intake.zeroWhileRunningCommand().andThen(intake.commandRunIntake(1.0)),
                                 hood.zeroCommand().withTimeout(1.0).asProxy()));
         firstSweep
                 .done()
                 .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
                         .alongWith(spindexer.runCommand(() -> 1.0, () -> 1.0), intake.jiggleCommand())
-                        .withTimeout(3.0)
+                        .withTimeout(3.5)
                         .andThen(secondSweep.spawnCmd()));
         secondSweep.active().onTrue(intake.commandRunIntake(1.0));
         secondSweep
                 .done()
                 .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
-                        .alongWith(spindexer.runCommand(() -> 1.0, () -> 1.0), intake.jiggleCommand())
-                        .withTimeout(3.0));
+                        .alongWith(spindexer.runCommand(() -> 1.0, () -> 1.0), intake.jiggleCommand()));
         return routine;
     }
 }

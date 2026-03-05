@@ -167,8 +167,12 @@ public class Intake extends SubsystemBase {
         return runOnce(() -> setPivotVoltage(4))
                 .andThen(
                         Commands.waitUntil(new Trigger(() -> inputs.pivotStatorCurrentAmps >= 80).debounce(0.5)),
-                        runOnce(() -> resetPivotPosition(PIVOT_MAX_ANGLE.plus(Rotation2d.fromDegrees(1.0)))))
-                .finallyDo(this::stopAll);
+                        runOnce(() -> resetPivotPosition(PIVOT_MAX_ANGLE.plus(Rotation2d.fromDegrees(3.0)))))
+                .finallyDo(() -> setPivotVoltage(0.0));
+    }
+
+    public Command zeroWhileRunningCommand() {
+        return runOnce(() -> setRollerVoltage(12.0)).andThen(zeroCommand());
     }
 
     public static Intake createReal() {
