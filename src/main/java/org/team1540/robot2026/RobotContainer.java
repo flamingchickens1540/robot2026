@@ -203,6 +203,7 @@ public class RobotContainer {
                         .andThen(() -> turretLockedMode = true)
                         .finallyDo(() -> turretLockedMode = false)
                         .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming));
+        copilot.rightTrigger().whileTrue(ShootingCommands.hubOneMeterShotCommand(turret, shooter, hood).withName("CloseShotCommand"));
     }
 
     private void configureLEDBindings() {
