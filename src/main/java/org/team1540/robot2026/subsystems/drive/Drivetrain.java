@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.Arrays;
 import java.util.concurrent.locks.Lock;
@@ -32,9 +33,10 @@ import org.team1540.robot2026.RobotState;
 import org.team1540.robot2026.SimState;
 import org.team1540.robot2026.generated.TunerConstants;
 import org.team1540.robot2026.util.AllianceFlipUtil;
-import org.team1540.robot2026.util.JoystickUtil;
 import org.team1540.robot2026.util.LoggedTracer;
 import org.team1540.robot2026.util.LoggedTunableNumber;
+import org.team1540.robot2026.util.hid.EnvisionController;
+import org.team1540.robot2026.util.hid.JoystickUtil;
 import org.team1540.robot2026.util.swerve.TrajectoryController;
 
 public class Drivetrain extends SubsystemBase {
@@ -202,7 +204,7 @@ public class Drivetrain extends SubsystemBase {
         Command activeCmd = CommandScheduler.getInstance().requiring(this);
         Logger.recordOutput(
                 "Drivetrain/ActiveCommand",
-                activeCmd != null ? activeCmd.getName() + "_" + activeCmd.hashCode() : "None");
+                activeCmd != null ? activeCmd.getName() + "_" + Integer.toHexString(activeCmd.hashCode()) : "None");
 
         LoggedTracer.record("Drivetrain");
     }
@@ -311,6 +313,24 @@ public class Drivetrain extends SubsystemBase {
                 .withName("TeleopDriveCommand");
     }
 
+    public Command teleopDriveCommand(EnvisionController controller) {
+        return percentDriveCommand(
+                        () -> JoystickUtil.deadzonedJoystickTranslation(
+                                -controller.getLeftY(), -controller.getLeftX(), 0.1),
+                        () -> JoystickUtil.smartDeadzone(-controller.getRightX(), 0.1))
+                .withName("TeleopDriveCommand");
+    }
+
+    public Command teleopDriveWithHeadingCommand(EnvisionController controller, Supplier<Rotation2d> heading) {
+        return percentDriveCommand(() -> JoystickUtil.deadzonedJoystickTranslation(-controller.getLeftY(), -controller.getLeftX(), 0.1),() -> headingController.calculate(
+                RobotState.getInstance().getRobotHeading()
+                        .getRadians()))
+                .beforeStarting(() -> headingController.reset(
+                        RobotState.getInstance().getRobotHeading().getRadians(),
+                        RobotState.getInstance().getRobotVelocity().omegaRadiansPerSecond))
+                .alongWith(Commands.run(() -> Logger.recordOutput("Drivetrain/HeadingGoal", heading.get())))
+                .until(() -> Math.abs(controller.getRightX()) >= 0.1);
+    }
     public static Drivetrain createReal() {
         if (Constants.CURRENT_MODE != Constants.Mode.REAL)
             DriverStation.reportWarning("Using real drivetrain on simulated robot", false);

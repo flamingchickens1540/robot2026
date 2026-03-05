@@ -1,0 +1,21 @@
+Index: src/main/java/org/team1540/robot2026/subsystems/turret/TurretConstants.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package org.team1540.robot2026.subsystems.turret;\n\nimport edu.wpi.first.math.geometry.Rotation2d;\nimport edu.wpi.first.math.geometry.Rotation3d;\nimport edu.wpi.first.math.geometry.Transform2d;\nimport edu.wpi.first.math.geometry.Transform3d;\nimport edu.wpi.first.math.util.Units;\n\npublic class TurretConstants {\n    public static final int DRIVEN_GEAR_TOOTH_COUNT = 85;\n    public static final int SMALL_ENCODER_GEAR_TOOTH_COUNT = 13;\n    public static final int BIG_ENCODER_GEAR_TOOTH_COUNT = 14;\n    public static final int POSSIBLE_POS_ACC_DIGITS = 12;\n\n    public static final double GEAR_RATIO = 8.5 * 50 / 12;\n\n    public static final Rotation2d ANGLE_OFFSET = Rotation2d.fromDegrees(271.695772);\n    public static final Rotation2d MAX_ANGLE = Rotation2d.fromDegrees(615 - ANGLE_OFFSET.getDegrees());\n    public static final Rotation2d MIN_ANGLE = Rotation2d.fromDegrees(15 - ANGLE_OFFSET.getDegrees());\n\n    // Tuning\n    public static final double KS = 0.284;\n    public static final double KV = 4.434;\n    public static final double KA = 0.00;\n\n    public static final double KP = 118;\n    public static final double KI = 0;\n    public static final double KD = 0;\n\n    // IDS\n    public static final int DRIVE_ID = 15;\n    public static final int SMALL_ENCODER_CANCODER_ID = 21;\n    public static final int BIG_ENCODER_CANCODER_ID = 22;\n\n    public static final double POS_ERR_TOLERANCE_DEGREES = 10;\n\n    public static final double SMALL_ENCODER_MAGNET_SENSOR_OFFSET = -0.5021953125;\n    public static final double BIG_ENCODER_MAGNET_SENSOR_OFFSET = -0.1240234375;\n\n    public static final double CRUISE_VELOCITY_RPS = 0.5; // was 3\n    public static final double MAX_ACCEL_RPS2 = 2; // was 7\n\n    public static final Transform2d ROBOT_TO_TURRET_2D =\n            new Transform2d(Units.inchesToMeters(-7.5), 0.0, Rotation2d.kZero);\n    public static final Transform3d ROBOT_TO_TURRET_3D = new Transform3d(\n            ROBOT_TO_TURRET_2D.getX(), ROBOT_TO_TURRET_2D.getY(), Units.inchesToMeters(11.625), Rotation3d.kZero);\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/org/team1540/robot2026/subsystems/turret/TurretConstants.java b/src/main/java/org/team1540/robot2026/subsystems/turret/TurretConstants.java
+--- a/src/main/java/org/team1540/robot2026/subsystems/turret/TurretConstants.java	(revision 1720769b13cd9d7cab68ee21112249226f294e43)
++++ b/src/main/java/org/team1540/robot2026/subsystems/turret/TurretConstants.java	(date 1772325028124)
+@@ -34,8 +34,8 @@
+ 
+     public static final double POS_ERR_TOLERANCE_DEGREES = 10;
+ 
+-    public static final double SMALL_ENCODER_MAGNET_SENSOR_OFFSET = -0.5021953125;
+-    public static final double BIG_ENCODER_MAGNET_SENSOR_OFFSET = -0.1240234375;
++    public static final double SMALL_ENCODER_MAGNET_SENSOR_OFFSET = -0.91943359375;
++    public static final double BIG_ENCODER_MAGNET_SENSOR_OFFSET = -0.740966796875;
+ 
+     public static final double CRUISE_VELOCITY_RPS = 0.5; // was 3
+     public static final double MAX_ACCEL_RPS2 = 2; // was 7

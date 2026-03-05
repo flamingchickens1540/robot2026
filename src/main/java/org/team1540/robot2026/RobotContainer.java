@@ -1,49 +1,106 @@
 package org.team1540.robot2026;
 
+import static edu.wpi.first.units.Units.Hertz;
+import static edu.wpi.first.units.Units.Seconds;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.LEDPattern;
+import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
+import org.littletonrobotics.junction.AutoLogOutput;
 import org.team1540.robot2026.commands.CharacterizationCommands;
+import org.team1540.robot2026.commands.ShootingCommands;
+import org.team1540.robot2026.subsystems.climber.Climber;
+import org.team1540.robot2026.subsystems.climber.ClimberConstants;
 import org.team1540.robot2026.subsystems.drive.Drivetrain;
+import org.team1540.robot2026.subsystems.hood.Hood;
+import org.team1540.robot2026.subsystems.hood.HoodConstants;
+import org.team1540.robot2026.subsystems.intake.Intake;
+import org.team1540.robot2026.subsystems.leds.CustomLEDPatterns;
+import org.team1540.robot2026.subsystems.leds.LEDs;
+import org.team1540.robot2026.subsystems.shooter.Shooter;
+import org.team1540.robot2026.subsystems.spindexer.Spindexer;
+import org.team1540.robot2026.subsystems.turret.Turret;
+import org.team1540.robot2026.subsystems.vision.AprilTagVision;
+import org.team1540.robot2026.util.hid.CommandEnvisionController;
+import org.team1540.robot2026.util.hid.JoystickUtil;
+import org.team1540.robot2026.util.MatchTriggers;
 import org.team1540.robot2026.util.auto.LoggedAutoChooser;
 
+import java.util.function.Supplier;
+
 public class RobotContainer {
-    private final CommandXboxController driver = new CommandXboxController(0);
+    private final CommandEnvisionController driver = new CommandEnvisionController(0);
     private final CommandXboxController copilot = new CommandXboxController(1);
 
-    private final Drivetrain drivetrain;
+    final Drivetrain drivetrain;
+    final Intake intake;
+    final Spindexer spindexer;
+    final Shooter shooter;
+    final Turret turret;
+    final Hood hood;
+    final Climber climber;
+    final AprilTagVision vision;
+    final LEDs leds = new LEDs();
+    private boolean turretLockedMode = false;
 
     private final LoggedAutoChooser autoChooser = new LoggedAutoChooser("Auto Chooser");
 
     private final RobotState robotState = RobotState.getInstance();
 
-    /** The container for the robot. Contains subsystems, IO devices, and commands. */
+    @AutoLogOutput(key = "ClimbMode")
+    private boolean climbMode = false;
 
+    /** The container for the robot. Contains subsystems, IO devices, and commands. */
     public RobotContainer() {
         switch (Constants.CURRENT_MODE) {
             case REAL -> {
                 // Initialize physical hardware IOs
                 drivetrain = Drivetrain.createReal();
+                intake = Intake.createReal();
+                spindexer = Spindexer.createReal();
+                shooter = Shooter.createReal();
+                turret = Turret.createReal();
+                hood = Hood.createReal();
+                climber = Climber.createReal();
+                vision = AprilTagVision.createReal();
             }
             case SIM -> {
                 // Initialize simulated hardware IOs
                 drivetrain = Drivetrain.createSim();
+                intake = Intake.createSim();
+                spindexer = Spindexer.createSim();
+                shooter = Shooter.createSim();
+                turret = Turret.createSim();
+                hood = Hood.createSim();
+                climber = Climber.createSim();
+                vision = AprilTagVision.createDummy();
 
                 RobotState.getInstance().resetPose(new Pose2d(3.0, 3.0, Rotation2d.kZero));
             }
             default -> {
                 // Initialize no-op hardware IOs for replay
                 drivetrain = Drivetrain.createDummy();
+                intake = Intake.createDummy();
+                spindexer = Spindexer.createDummy();
+                shooter = Shooter.createDummy();
+                turret = Turret.createDummy();
+                hood = Hood.createDummy();
+                climber = Climber.createDummy();
+                vision = AprilTagVision.createDummy();
             }
         }
 
         configureButtonBindings();
+        configureLEDBindings();
         configureAutoRoutines();
         configureRobotModeTriggers();
         configurePeriodicCallbacks();
@@ -51,11 +108,116 @@ public class RobotContainer {
 
     private void configureButtonBindings() {
         drivetrain.setDefaultCommand(drivetrain.teleopDriveCommand(driver.getHID()));
-        driver.x().onTrue(drivetrain.runOnce(drivetrain::stopWithX));
-        driver.start().onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual));
+        turret.setDefaultCommand(turret.commandToSetpoint(
+                () -> robotState.getHubAimingParameters().turretAngle(),
+                () -> robotState.getHubAimingParameters().turretVelocityRadPerSec(),
+                true));
+        driver.start().onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual).withName("ManualDriveZero"));
+        driver.rightInnerPaddle().onTrue(drivetrain.runOnce(drivetrain::stop).withName("DriveXMode"));
+
+        // Targeting controls
+        driver.rightBumper().toggleOnTrue(
+                Commands.either(
+                        ShootingCommands.hubAimTurretLockedCommand(driver.getHID(), drivetrain, shooter, hood, turret).asProxy(),
+                        ShootingCommands.hubAimCommand(turret, shooter, hood).asProxy()
+                                .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0).withName("HubAimCommand"))
+                        ,()->turretLockedMode
+                )
+        );
+
+        driver.leftBumper().toggleOnTrue(
+                Commands.either(
+                        ShootingCommands.shuffleAimTurretLockedCommand(driver.getHID(), drivetrain, shooter, hood, turret).asProxy(),
+                        ShootingCommands.shuffleAimCommand(turret, shooter, hood).asProxy()
+                                .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0).withName("ShuffleAimCommand")),
+                        () -> turretLockedMode));
+
+        // Shoot/intake controls
+        Command intakeCmd = intake.commandRunIntake(1.0)
+                .alongWith(leds.viewFull.commandShowPattern(LEDPattern.solid(Color.kPurple)))
+                .withName("IntakeCommand");
+        Command feedShooterCmd = spindexer.runCommand(() -> 1.0, () -> 1.0);
+
+        driver.leftTrigger().toggleOnTrue(intakeCmd);
+        driver.rightTrigger()
+                .toggleOnTrue(feedShooterCmd
+                        .alongWith(intake.jiggleCommand()
+                                .asProxy()
+                                .unless(intakeCmd::isScheduled)
+                                .repeatedly())
+                        .withName("FeedShooterCommand"));
+
+        // Climb controls
+        driver.leftSideButton()
+                .whileTrue(climber.runEnd(() -> climber.setVoltage(-0.67 * 12.0), climber::stop)
+                        .withName("ClimbDownCommand"));
+        driver.rightSideButton()
+                .whileTrue(climber.runEnd(() -> climber.setVoltage(0.67 * 12.0), climber::stop)
+                        .withName("ClimbUpCommand"));
+
+        // Misc controls
+        driver.leftOuterPaddle().whileTrue(intake.commandRunIntake(-0.67).withName("OuttakeCommand"));
+        driver.leftInnerPaddle()
+                .onTrue(intake.commandToSetpoint(Intake.IntakeState.STOW).withName("StowIntakeCommand"));
+        driver.rightOuterPaddle()
+                .onTrue(hood.setpointCommand(() -> HoodConstants.MIN_ANGLE).withName("HoodDownCommand"));
+        driver.back()
+                .and(() -> !turretLockedMode)
+                .whileTrue(turret.zeroCommand()
+                        .andThen(leds.viewFull.commandShowPattern(
+                                CustomLEDPatterns.strobe(Color.kGreen, Seconds.of(0.5)))));
+
+        copilot.a().onTrue(hood.setpointCommand(() -> HoodConstants.MIN_ANGLE).withName("HoodDownCommand"));
+        copilot.b()
+                .and(() -> !turretLockedMode)
+                .toggleOnTrue(turret.run(
+                        () -> turret.setVoltage(-JoystickUtil.smartDeadzone(copilot.getLeftX(), 0.1) * 0.5 * 12.0)).withName("TurretManualControl"));
+        copilot.x().toggleOnTrue(intake.run(() -> intake.setPivotVoltage(JoystickUtil.smartDeadzone(copilot.getRightY(), 0.1) * 0.5 * 12.0)).withName("IntakeManualControl"));
+        copilot.start()
+                .whileTrue(hood.zeroCommand()
+                        .andThen(leds.viewFull
+                                .commandShowPattern(CustomLEDPatterns.strobe(Color.kGreen))
+                                .withTimeout(0.5))
+                        .withName("HoodZeroCommand"));
+        copilot.back()
+                .whileTrue(intake.zeroCommand()
+                        .andThen(leds.viewFull
+                                .commandShowPattern(CustomLEDPatterns.strobe(Color.kGreen))
+                                .withTimeout(0.5))
+                        .withName("IntakeZeroCommand"));
+        copilot.leftBumper()
+                .whileTrue(spindexer.runCommand(() -> -0.67, () -> -0.67).withName("SpindexerReverseCommand"));
+        copilot.y().toggleOnTrue(turret.run(() -> turret.stop()).andThen(() -> turretLockedMode = true));
+    }
+
+    private void configureLEDBindings() {
+        RobotModeTriggers.disabled()
+                .whileTrue(leds.viewFull.commandShowPattern(CustomLEDPatterns.movingRainbow(Hertz.of(0.5))));
+        RobotModeTriggers.teleop()
+                .or(RobotModeTriggers.autonomous())
+                .whileTrue(leds.viewFull.commandDefaultPattern(
+                        () -> LEDPattern.gradient(LEDPattern.GradientType.kContinuous, Color.kRed, Color.kOrange)
+                                .scrollAtRelativeSpeed(Hertz.of(0.67))));
+        MatchTriggers.timeRemaining(30)
+                .or(MatchTriggers.timeRemaining(15))
+                .or(MatchTriggers.timeRemaining(10))
+                .onTrue(leds.viewFull
+                        .commandShowPattern(CustomLEDPatterns.strobe(Color.kWhite))
+                        .withTimeout(1.5));
     }
 
     private void configureAutoRoutines() {
+        autoChooser.addCmd("Shoot Preload", () -> hood.zeroCommand()
+                .alongWith(intake.zeroCommand())
+                .withTimeout(1.0)
+                .andThen(ShootingCommands.hubAimCommand(turret, shooter, hood)
+                        .withDeadline(Commands.waitUntil(
+                                        () -> turret.atSetpoint() && shooter.atSetpoint() && hood.isAtSetpoint())
+                                .withTimeout(1.0)
+                                .andThen(spindexer
+                                        .runCommand(() -> 1.0, () -> 1.0)
+                                        .withTimeout(5.0)))));
+
         // Characterization routines
         if (Constants.isTuningMode()) {
             autoChooser.addCmd(
@@ -69,6 +231,20 @@ public class RobotContainer {
                             () -> RobotState.getInstance().getRobotHeading().getRadians(),
                             drivetrain::getWheelRadiusCharacterizationPositions,
                             drivetrain));
+            autoChooser.addCmd(
+                    "Intake FF Characterization",
+                    () -> CharacterizationCommands.feedforward(
+                            intake::setPivotVoltage, intake::getPivotVelocityRPS, intake));
+            autoChooser.addCmd(
+                    "Shooter FF Characterization",
+                    () -> CharacterizationCommands.feedforward(
+                            shooter::setVoltage, () -> shooter.getVelocityRPM() / 60, shooter));
+            autoChooser.addCmd(
+                    "Climber FF Characterization",
+                    () -> CharacterizationCommands.feedforward(
+                            climber::setVoltage,
+                            () -> climber.getVelocityMPS() / 2 * Math.PI * ClimberConstants.SPROCKET_RADIUS_M,
+                            climber));
         }
     }
 
@@ -80,6 +256,7 @@ public class RobotContainer {
 
     private void configurePeriodicCallbacks() {
         addPeriodicCallback(autoChooser::update, "AutoChooserUpdate");
+        addPeriodicCallback(robotState::periodic, "RobotStatePeriodic");
         if (Constants.CURRENT_MODE == Constants.Mode.SIM) {
             addPeriodicCallback(SimState.getInstance()::update, "SimulationUpdate");
         }
@@ -96,6 +273,6 @@ public class RobotContainer {
      * @return the command to run in autonomous
      */
     public Command getAutonomousCommand() {
-        return Commands.none();
+        return autoChooser.selectedCommand();
     }
 }
