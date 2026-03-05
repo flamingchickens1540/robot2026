@@ -10,6 +10,7 @@ import org.ironmaple.simulation.SimulatedArena;
 import org.team1540.robot2026.Constants;
 import org.team1540.robot2026.RobotState;
 import org.team1540.robot2026.commands.ShootingCommands;
+import org.team1540.robot2026.subsystems.climber.Climber;
 import org.team1540.robot2026.subsystems.drive.Drivetrain;
 import org.team1540.robot2026.subsystems.hood.Hood;
 import org.team1540.robot2026.subsystems.intake.Intake;
@@ -28,8 +29,9 @@ public class Autos {
     private final Turret turret;
     private final Hood hood;
     private final Shooter shooter;
+    private final Climber climber;
 
-    public Autos(Drivetrain drivetrain, Intake intake, Spindexer spindexer, Turret turret, Hood hood, Shooter shooter) {
+    public Autos(Drivetrain drivetrain, Intake intake, Spindexer spindexer, Turret turret, Hood hood, Shooter shooter, Climber climber) {
         this.drivetrain = drivetrain;
         this.intake = intake;
         this.spindexer = spindexer;
@@ -51,6 +53,7 @@ public class Autos {
                         RobotState.getInstance().clearActiveTrajectory();
                     }
                 });
+        this.climber = climber;
         autoFactory.bind("StartIntake", intake.commandRunIntake(1.0));
         autoFactory.bind("StopIntake", intake.commandRunIntake(0.0));
     }
@@ -75,6 +78,23 @@ public class Autos {
                                 () -> robotState.resetPose(traj.getInitialPose().orElse(Pose2d.kZero)))));
 
         return routine;
+    }
+
+    public AutoRoutine depotDPC(){
+        final String trajName = "DepotDPC";
+
+        AutoRoutine routine =  autoFactory.newRoutine("DepotDPC");
+        AutoTrajectory hub2Depot = routine.trajectory(trajName, 0);
+        AutoTrajectory rest = routine.trajectory(trajName, 1);
+
+        hub2Depot
+                .atTime("DeployIntake")
+                .onTrue(intake.commandRunIntake(0.5));
+        rest
+                .atTime("Climb")
+                .onTrue(climber.runEnd(() -> climber.setVoltage(-0.67 * 12.0), climber::stop).withTimeout(2).andThen(climber.runEnd(() -> climber.setVoltage(-0.67 * 12.0), climber::stop)));
+
+    return routine;
     }
 
     public AutoRoutine depotTNPH() {
