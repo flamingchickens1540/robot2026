@@ -178,7 +178,9 @@ public class RobotState {
     public boolean addVisionMeasurement(AprilTagVisionIO.PoseObservation visionPose) {
         if (shouldAcceptVision(visionPose) && poseResetTimer.hasElapsed(0.1)) {
             poseEstimator.addVisionMeasurement(
-                    visionPose.estimatedPoseMeters().toPose2d(), visionPose.timestampSecs(), getStdDevs(visionPose));
+                    visionPose.estimatedPoseMeters().toPose2d(),
+                    visionPose.timestampSecs(),
+                    getStdDevs(visionPose, XY_STD_DEV_COEFF, ROT_STD_DEV_COEFF));
             return true;
         }
         return false;
@@ -195,7 +197,10 @@ public class RobotState {
                                     new Rotation3d(0.0, 0.0, turretAngleAtMeasurement.getRadians()))
                             .inverse())
                     .toPose2d();
-            poseEstimator.addVisionMeasurement(robotPose, turretPose.timestampSecs(), getStdDevs(turretPose));
+            poseEstimator.addVisionMeasurement(
+                    robotPose,
+                    turretPose.timestampSecs(),
+                    getStdDevs(turretPose, TURRET_XY_STD_DEV_COEFF, TURRET_ROT_STD_DEV_COEFF));
             return true;
         }
         return false;
@@ -215,11 +220,10 @@ public class RobotState {
                 && Math.abs(estimatedPose.getZ()) <= MAX_ROBOT_Z_TOLERANCE;
     }
 
-    private Matrix<N3, N1> getStdDevs(AprilTagVisionIO.PoseObservation poseObservation) {
-        double xyStdDev =
-                XY_STD_DEV_COEFF * Math.pow(poseObservation.avgTagDistance(), 2.0) / poseObservation.numTagsSeen();
-        double rotStdDev =
-                ROT_STD_DEV_COEFF * Math.pow(poseObservation.avgTagDistance(), 2.0) / poseObservation.numTagsSeen();
+    private Matrix<N3, N1> getStdDevs(
+            AprilTagVisionIO.PoseObservation poseObservation, double xyCoeff, double rotCoeff) {
+        double xyStdDev = xyCoeff * Math.pow(poseObservation.avgTagDistance(), 2.0) / poseObservation.numTagsSeen();
+        double rotStdDev = rotCoeff * Math.pow(poseObservation.avgTagDistance(), 2.0) / poseObservation.numTagsSeen();
         return VecBuilder.fill(
                 xyStdDev,
                 xyStdDev,

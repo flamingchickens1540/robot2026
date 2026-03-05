@@ -154,8 +154,8 @@ public class Intake extends SubsystemBase {
     public Command jiggleCommand() {
         return Commands.runOnce(() -> setRollerVoltage(12.0))
                 .andThen(Commands.repeatingSequence(
-                                commandToSetpoint(IntakeState.JIGGLE).withTimeout(0.5),
-                                commandToSetpoint(IntakeState.INTAKE).withTimeout(0.5))
+                                commandToSetpoint(IntakeState.INTAKE).withTimeout(0.25),
+                                commandToSetpoint(IntakeState.JIGGLE).withTimeout(0.25))
                         .finallyDo(() -> {
                             this.setPivotSetpoint(IntakeState.INTAKE.pivotPosition());
                             this.setRollerVoltage(0.0);
@@ -164,10 +164,10 @@ public class Intake extends SubsystemBase {
     }
 
     public Command zeroCommand() {
-        return runOnce(() -> setPivotVoltage(-4))
+        return runOnce(() -> setPivotVoltage(4))
                 .andThen(
-                        Commands.waitUntil(new Trigger(() -> inputs.pivotStatorCurrentAmps >= 20).debounce(0.5)),
-                        runOnce(() -> resetPivotPosition(PIVOT_MIN_ANGLE)))
+                        Commands.waitUntil(new Trigger(() -> inputs.pivotStatorCurrentAmps >= 80).debounce(0.5)),
+                        runOnce(() -> resetPivotPosition(PIVOT_MAX_ANGLE.plus(Rotation2d.fromDegrees(1.0)))))
                 .finallyDo(this::stopAll);
     }
 

@@ -48,7 +48,7 @@ public class IntakeIOTalonFX implements IntakeIO {
         pivotTalonFXConfig.MotorOutput.Inverted =
                 InvertedValue.CounterClockwise_Positive; // TODO: is it inverted or not?
         pivotTalonFXConfig.Feedback.SensorToMechanismRatio = PIVOT_GEAR_RATIO;
-        pivotTalonFXConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+        pivotTalonFXConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
         TalonFXConfiguration intakeTalonFXConfig = new TalonFXConfiguration();
         intakeTalonFXConfig.CurrentLimits.StatorCurrentLimitEnable = true;
