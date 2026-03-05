@@ -88,25 +88,49 @@ public class Autos {
 
         AutoRoutine routine =  autoFactory.newRoutine("DepotDPC");
         AutoTrajectory hub2Depot = routine.trajectory(trajName, 0);
-        AutoTrajectory rest = routine.trajectory(trajName, 1);
 
         Command intakeCmd = intake.commandRunIntake(1.0)
                 .withName("IntakeCommand");
         Command feedShooterCmd = spindexer.runCommand(() -> 1.0, () -> 1.0);
-        hub2Depot
-                .atTime("DeployIntake")
-                .onTrue(intake.commandRunIntake(0.5).alongWith(feedShooterCmd
-                        .alongWith(intake.jiggleCommand()
-                                .asProxy()
-                                .unless(intakeCmd::isScheduled)
-                                .repeatedly()
-                        )));
-        rest
-                .atTime("Climb")
-                .onTrue(climber.runEnd(() -> climber.setVoltage(-0.67 * 12.0), climber::stop).withTimeout(2).andThen(climber.runEnd(() -> climber.setVoltage(-0.67 * 12.0), climber::stop)));
+
+        routine.active().onTrue(intake.zeroCommand().andThen(intake.commandRunIntake(0.67).alongWith(feedShooterCmd
+                .alongWith(intake.jiggleCommand()
+                        .asProxy()
+                        .unless(intakeCmd::isScheduled)
+                        .repeatedly()
+                ))));
+
+
+
+
 
     return routine;
     }
+
+    public AutoRoutine towerUPDH()  {
+        final String trajName = "TowerUPDH";
+
+        AutoRoutine routine = autoFactory.newRoutine(trajName);
+
+        AutoTrajectory beforeOutpost = routine.trajectory(trajName, 0);
+        AutoTrajectory afterOutpost = routine.trajectory(trajName, 1);
+        AutoTrajectory beforeIntake = routine.trajectory(trajName, 2);
+
+        routine.active().onTrue(intake.zeroCommand());
+
+        try {
+            beforeOutpost.wait(1500);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        beforeIntake.atTime("StartIntake")
+                .onTrue(intake.commandRunIntake(0.67));
+
+        return routine;
+    }
+
+
 
     public AutoRoutine depotTNPH() {
         final String trajName = "DepotTNPH";

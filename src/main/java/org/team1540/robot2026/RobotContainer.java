@@ -237,6 +237,7 @@ public class RobotContainer {
         autoChooser.addRoutine("DepotTNPH", autos::depotTNPH);
         autoChooser.addRoutine("DepotTNPHTNH", autos::depotTNPHTNH);
         autoChooser.addRoutine("DepotDPC", autos::depotDPC);
+        autoChooser.addRoutine("TowerUPDH", autos::towerUPDH);
 
         // Characterization routines
         if (Constants.isTuningMode()) {
