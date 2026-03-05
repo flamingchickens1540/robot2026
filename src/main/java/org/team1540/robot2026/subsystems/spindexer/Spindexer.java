@@ -48,7 +48,8 @@ public class Spindexer extends SubsystemBase {
     }
 
     public Command runCommand(DoubleSupplier spinPercent, DoubleSupplier feederPercent) {
-        return runEnd(() -> setMotorSpeeds(spinPercent.getAsDouble(), feederPercent.getAsDouble()), this::stop);
+        return runEnd(() -> setMotorSpeeds(spinPercent.getAsDouble(), feederPercent.getAsDouble()), this::stop)
+                .withName("SpindexerRunCommand");
     }
 
     public static Spindexer createReal() {

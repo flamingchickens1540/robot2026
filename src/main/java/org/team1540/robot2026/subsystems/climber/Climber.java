@@ -102,7 +102,8 @@ public class Climber extends SubsystemBase {
     }
 
     public Command setpointCommand(double positionMeters) {
-        return Commands.runEnd(() -> setPosition(positionMeters), this::stop, this);
+        return Commands.runEnd(() -> setPosition(positionMeters), this::stop, this)
+                .withName("ClimberSetpointCommand");
     }
 
     public static Climber createReal() {

@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.FieldConstants;
 import org.team1540.robot2026.RobotState;
+import org.team1540.robot2026.subsystems.drive.Drivetrain;
 import org.team1540.robot2026.subsystems.hood.Hood;
 import org.team1540.robot2026.subsystems.hood.HoodConstants;
 import org.team1540.robot2026.subsystems.shooter.Shooter;
@@ -14,9 +15,10 @@ import org.team1540.robot2026.subsystems.turret.Turret;
 import org.team1540.robot2026.subsystems.turret.TurretConstants;
 import org.team1540.robot2026.util.AllianceFlipUtil;
 import org.team1540.robot2026.util.LoggedTunableNumber;
+import org.team1540.robot2026.util.hid.EnvisionController;
 
 public class ShootingCommands {
-    private static final Translation2d SHUFFLE_TARGET = FieldConstants.Tower.centerPoint;
+    private static final double SHUFFLE_TARGET_X = FieldConstants.LinesVertical.starting - 2.0;
 
     private static final LoggedTunableNumber shooterRPM = new LoggedTunableNumber("ShooterTuning/ShooterRPM", 1000);
     private static final LoggedTunableNumber hoodDegrees = new LoggedTunableNumber("ShooterTuning/HoodDegrees", 15);
@@ -56,21 +58,65 @@ public class ShootingCommands {
                 .finallyDo(() -> hood.setSetpoint(HoodConstants.MIN_ANGLE));
     }
 
+    public static Command hubAimTurretLockedCommand(
+            EnvisionController controller, Drivetrain drivetrain, Shooter shooter, Hood hood, Turret turret) {
+        return Commands.parallel(
+                        drivetrain.teleopDriveWithHeadingCommand(controller, () -> RobotState.getInstance()
+                                .getHubAimingParameters()
+                                .turretAngle()
+                                .minus(turret.getPosition())),
+                        shooter.commandVelocity(() -> RobotState.getInstance()
+                                .getHubAimingParameters()
+                                .shooterRPM()),
+                        hood.setpointCommand(() -> RobotState.getInstance()
+                                .getHubAimingParameters()
+                                .hoodAngle()))
+                .finallyDo(() -> hood.setSetpoint(HoodConstants.MIN_ANGLE));
+    }
+
     public static Command shuffleAimCommand(Turret turret, Shooter shooter, Hood hood) {
+        Translation2d shuffleTarget;
+        if (AllianceFlipUtil.apply(RobotState.getInstance().getEstimatedPose()).getY() < FieldConstants.LinesHorizontal.center) {
+            shuffleTarget = new Translation2d(SHUFFLE_TARGET_X, FieldConstants.LinesHorizontal.rightBumpEnd);
+        } else {
+            shuffleTarget = new Translation2d(SHUFFLE_TARGET_X, FieldConstants.LinesHorizontal.leftBumpEnd);
+        }
         return Commands.parallel(
                         turret.commandToSetpoint(
                                 () -> RobotState.getInstance()
-                                        .getShuffleAimingParameters(AllianceFlipUtil.apply(SHUFFLE_TARGET))
+                                        .getShuffleAimingParameters(shuffleTarget)
                                         .turretAngle(),
                                 () -> RobotState.getInstance()
-                                        .getShuffleAimingParameters(AllianceFlipUtil.apply(SHUFFLE_TARGET))
+                                        .getShuffleAimingParameters(AllianceFlipUtil.apply(shuffleTarget))
                                         .turretVelocityRadPerSec(),
                                 true),
                         shooter.commandVelocity(() -> RobotState.getInstance()
-                                .getShuffleAimingParameters(AllianceFlipUtil.apply(SHUFFLE_TARGET))
+                                .getShuffleAimingParameters(AllianceFlipUtil.apply(shuffleTarget))
                                 .shooterRPM()),
                         hood.setpointCommand(() -> RobotState.getInstance()
-                                .getShuffleAimingParameters(AllianceFlipUtil.apply(SHUFFLE_TARGET))
+                                .getShuffleAimingParameters(AllianceFlipUtil.apply(shuffleTarget))
+                                .hoodAngle()))
+                .finallyDo(() -> hood.setSetpoint(HoodConstants.MIN_ANGLE));
+    }
+
+    public static Command shuffleAimTurretLockedCommand(
+            EnvisionController controller, Drivetrain drivetrain, Shooter shooter, Hood hood, Turret turret) {
+        Translation2d shuffleTarget;
+        if (AllianceFlipUtil.apply(RobotState.getInstance().getEstimatedPose()).getY() < FieldConstants.LinesHorizontal.center) {
+            shuffleTarget = new Translation2d(SHUFFLE_TARGET_X, FieldConstants.LinesHorizontal.rightBumpEnd);
+        } else {
+            shuffleTarget = new Translation2d(SHUFFLE_TARGET_X, FieldConstants.LinesHorizontal.leftBumpEnd);
+        }
+        return Commands.parallel(
+                        drivetrain.teleopDriveWithHeadingCommand(controller, () -> (RobotState.getInstance()
+                                .getShuffleAimingParameters(AllianceFlipUtil.apply(shuffleTarget))
+                                .turretAngle())
+                                .minus(turret.getPosition())),
+                        shooter.commandVelocity(() -> RobotState.getInstance()
+                                .getShuffleAimingParameters(AllianceFlipUtil.apply(shuffleTarget))
+                                .shooterRPM()),
+                        hood.setpointCommand(() -> RobotState.getInstance()
+                                .getShuffleAimingParameters(AllianceFlipUtil.apply(shuffleTarget))
                                 .hoodAngle()))
                 .finallyDo(() -> hood.setSetpoint(HoodConstants.MIN_ANGLE));
     }

@@ -15,9 +15,7 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.*;
 import java.util.Arrays;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -32,10 +30,10 @@ import org.team1540.robot2026.RobotState;
 import org.team1540.robot2026.SimState;
 import org.team1540.robot2026.generated.TunerConstants;
 import org.team1540.robot2026.util.AllianceFlipUtil;
-import org.team1540.robot2026.util.hid.EnvisionController;
-import org.team1540.robot2026.util.hid.JoystickUtil;
 import org.team1540.robot2026.util.LoggedTracer;
 import org.team1540.robot2026.util.LoggedTunableNumber;
+import org.team1540.robot2026.util.hid.EnvisionController;
+import org.team1540.robot2026.util.hid.JoystickUtil;
 import org.team1540.robot2026.util.swerve.TrajectoryController;
 
 public class Drivetrain extends SubsystemBase {
@@ -48,7 +46,7 @@ public class Drivetrain extends SubsystemBase {
 
     private static final LoggedTunableNumber rotationKP = new LoggedTunableNumber("Drivetrain/Rotation/kP", 3.3);
     private static final LoggedTunableNumber rotationKI = new LoggedTunableNumber("Drivetrain/Rotation/kI", 0.0);
-    private static final LoggedTunableNumber rotationKD = new LoggedTunableNumber("Drivetrain/Rotation/kD", 0.3);
+    private static final LoggedTunableNumber rotationKD = new LoggedTunableNumber("Drivetrain/Rotation/kD", 0.0);
 
     private static final LoggedTunableNumber sampleRejectionThreshold =
             new LoggedTunableNumber("Drivetrain/Odometry/SampleRejectionThreshold", 2.0);
@@ -314,10 +312,23 @@ public class Drivetrain extends SubsystemBase {
 
     public Command teleopDriveCommand(EnvisionController controller) {
         return percentDriveCommand(
-                () -> JoystickUtil.deadzonedJoystickTranslation(
-                        -controller.getLeftY(), -controller.getLeftX(), 0.1),
-                () -> JoystickUtil.smartDeadzone(-controller.getRightX(), 0.1))
+                        () -> JoystickUtil.deadzonedJoystickTranslation(
+                                -controller.getLeftY(), -controller.getLeftX(), 0.1),
+                        () -> JoystickUtil.smartDeadzone(-controller.getRightX(), 0.1))
                 .withName("TeleopDriveCommand");
+    }
+
+    public Command teleopDriveWithHeadingCommand(EnvisionController controller, Supplier<Rotation2d> heading) {
+        return percentDriveCommand(
+                        () -> JoystickUtil.deadzonedJoystickTranslation(
+                                -controller.getLeftY(), -controller.getLeftX(), 0.1),
+                        () -> headingController.calculate(
+                                RobotState.getInstance().getRobotHeading().getRadians()))
+                .beforeStarting(() -> headingController.reset(
+                        RobotState.getInstance().getRobotHeading().getRadians(),
+                        RobotState.getInstance().getRobotVelocity().omegaRadiansPerSecond))
+                .alongWith(Commands.run(() -> Logger.recordOutput("Drivetrain/HeadingGoal", heading.get())))
+                .until(() -> Math.abs(controller.getRightX()) >= 0.1);
     }
 
     public static Drivetrain createReal() {

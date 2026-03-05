@@ -20,11 +20,15 @@ public record ModuleHWConfigs(
                 : InvertedValue.CounterClockwise_Positive;
         driveConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         driveConfig.Feedback.SensorToMechanismRatio = constants.DriveMotorGearRatio;
+
         driveConfig.TorqueCurrent.PeakForwardTorqueCurrent = constants.SlipCurrent;
         driveConfig.TorqueCurrent.PeakReverseTorqueCurrent = constants.SlipCurrent;
         driveConfig.CurrentLimits.StatorCurrentLimit = constants.SlipCurrent;
         driveConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        driveConfig.CurrentLimits.SupplyCurrentLimit = 40;
+
+        driveConfig.CurrentLimits.SupplyCurrentLimit = 70;
+        driveConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
+        driveConfig.CurrentLimits.SupplyCurrentLowerTime = 1.0;
         driveConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         driveConfig.Slot0 = constants.DriveMotorGains;
 
