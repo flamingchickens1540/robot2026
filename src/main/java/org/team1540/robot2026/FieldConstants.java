@@ -2,9 +2,7 @@ package org.team1540.robot2026;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Filesystem;
 import java.io.IOException;
@@ -290,6 +288,14 @@ public class FieldConstants {
         public static final Translation2d centerPoint = new Translation2d(
                 0, AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(29).get().getY());
     }
+
+    public static class Regions {
+        // Alliance
+        public static final Rectangle2d underAllianceTower = new Rectangle2d(new Pose2d(Tower.centerPoint, Rotation2d.kZero), Tower.depth, Tower.width);
+        // Opposing
+        public static final Rectangle2d behindOpposingHub = new Rectangle2d(Hub.oppFarLeftCorner, new Translation2d(fieldLength, LinesHorizontal.rightBumpStart));
+    }
+
 
     public enum FieldType {
         ANDYMARK("andymark"),
