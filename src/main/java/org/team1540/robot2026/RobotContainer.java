@@ -96,7 +96,7 @@ public class RobotContainer {
             }
         }
 
-        autos = new Autos(drivetrain, intake, spindexer, turret, hood, shooter);
+        autos = new Autos(drivetrain, intake, spindexer, turret, hood, shooter, climber);
 
         configureButtonBindings();
         configureLEDBindings();
@@ -236,6 +236,8 @@ public class RobotContainer {
         autoChooser.addRoutine("Test", autos::testPath);
         autoChooser.addRoutine("DepotTNPH", autos::depotTNPH);
         autoChooser.addRoutine("DepotTNPHTNH", autos::depotTNPHTNH);
+        autoChooser.addRoutine("DepotDPC", autos::depotDPC);
+        autoChooser.addRoutine("TowerUPDH", autos::towerUPDH);
 
         // Characterization routines
         if (Constants.isTuningMode()) {

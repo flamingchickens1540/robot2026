@@ -5,11 +5,15 @@ import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.LEDPattern;
+import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import org.ironmaple.simulation.SimulatedArena;
 import org.team1540.robot2026.Constants;
 import org.team1540.robot2026.RobotState;
 import org.team1540.robot2026.commands.ShootingCommands;
+import org.team1540.robot2026.subsystems.climber.Climber;
 import org.team1540.robot2026.subsystems.drive.Drivetrain;
 import org.team1540.robot2026.subsystems.hood.Hood;
 import org.team1540.robot2026.subsystems.intake.Intake;
@@ -28,8 +32,9 @@ public class Autos {
     private final Turret turret;
     private final Hood hood;
     private final Shooter shooter;
+    private final Climber climber;
 
-    public Autos(Drivetrain drivetrain, Intake intake, Spindexer spindexer, Turret turret, Hood hood, Shooter shooter) {
+    public Autos(Drivetrain drivetrain, Intake intake, Spindexer spindexer, Turret turret, Hood hood, Shooter shooter, Climber climber) {
         this.drivetrain = drivetrain;
         this.intake = intake;
         this.spindexer = spindexer;
@@ -51,6 +56,7 @@ public class Autos {
                         RobotState.getInstance().clearActiveTrajectory();
                     }
                 });
+        this.climber = climber;
         autoFactory.bind("StartIntake", intake.commandRunIntake(1.0));
         autoFactory.bind("StopIntake", intake.commandRunIntake(0.0));
     }
@@ -76,6 +82,55 @@ public class Autos {
 
         return routine;
     }
+
+    public AutoRoutine depotDPC(){
+        final String trajName = "DepotDPC";
+
+        AutoRoutine routine =  autoFactory.newRoutine("DepotDPC");
+        AutoTrajectory hub2Depot = routine.trajectory(trajName, 0);
+
+        Command intakeCmd = intake.commandRunIntake(1.0)
+                .withName("IntakeCommand");
+        Command feedShooterCmd = spindexer.runCommand(() -> 1.0, () -> 1.0);
+
+        routine.active().onTrue(intake.zeroCommand().andThen(intake.commandRunIntake(0.67).alongWith(feedShooterCmd
+                .alongWith(intake.jiggleCommand()
+                        .asProxy()
+                        .unless(intakeCmd::isScheduled)
+                        .repeatedly()
+                ))));
+
+
+
+
+
+    return routine;
+    }
+
+    public AutoRoutine towerUPDH()  {
+        final String trajName = "TowerUPDH";
+
+        AutoRoutine routine = autoFactory.newRoutine(trajName);
+
+        AutoTrajectory beforeOutpost = routine.trajectory(trajName, 0);
+        AutoTrajectory afterOutpost = routine.trajectory(trajName, 1);
+        AutoTrajectory beforeIntake = routine.trajectory(trajName, 2);
+
+        routine.active().onTrue(intake.zeroCommand());
+
+        try {
+            beforeOutpost.wait(1500);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        beforeIntake.atTime("StartIntake")
+                .onTrue(intake.commandRunIntake(0.67));
+
+        return routine;
+    }
+
+
 
     public AutoRoutine depotTNPH() {
         final String trajName = "DepotTNPH";
@@ -120,6 +175,36 @@ public class Autos {
                 .done()
                 .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
                         .alongWith(spindexer.runCommand(() -> 1.0, () -> 1.0), intake.jiggleCommand()));
+        return routine;
+    }
+
+    public AutoRoutine depotTNPHTNHDH() {
+        final String trajName = "DepotTNPHTNHDH";
+
+        AutoRoutine routine = autoFactory.newRoutine("DepotTNPHTNH");
+        AutoTrajectory firstSweep = routine.trajectory(trajName, 0);
+        AutoTrajectory secondSweep = routine.trajectory(trajName, 1);
+
+        resetPoseInSim(routine, firstSweep);
+
+        routine.active()
+                .onTrue(firstSweep
+                        .cmd()
+                        .alongWith(
+                                intake.commandRunIntake(1.0),
+                                hood.zeroCommand().withTimeout(1.0).asProxy()));
+        firstSweep
+                .done()
+                .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
+                        .alongWith(spindexer.runCommand(() -> 1.0, () -> 1.0), intake.jiggleCommand())
+                        .withTimeout(3.0)
+                        .andThen(secondSweep.spawnCmd()));
+        secondSweep.active().onTrue(intake.commandRunIntake(1.0));
+        secondSweep
+                .done()
+                .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
+                        .alongWith(spindexer.runCommand(() -> 1.0, () -> 1.0), intake.jiggleCommand())
+                        .withTimeout(3.0));
         return routine;
     }
 }
