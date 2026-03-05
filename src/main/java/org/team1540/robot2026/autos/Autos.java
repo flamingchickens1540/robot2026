@@ -5,6 +5,9 @@ import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.LEDPattern;
+import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import org.ironmaple.simulation.SimulatedArena;
 import org.team1540.robot2026.Constants;
@@ -87,9 +90,17 @@ public class Autos {
         AutoTrajectory hub2Depot = routine.trajectory(trajName, 0);
         AutoTrajectory rest = routine.trajectory(trajName, 1);
 
+        Command intakeCmd = intake.commandRunIntake(1.0)
+                .withName("IntakeCommand");
+        Command feedShooterCmd = spindexer.runCommand(() -> 1.0, () -> 1.0);
         hub2Depot
                 .atTime("DeployIntake")
-                .onTrue(intake.commandRunIntake(0.5));
+                .onTrue(intake.commandRunIntake(0.5).alongWith(feedShooterCmd
+                        .alongWith(intake.jiggleCommand()
+                                .asProxy()
+                                .unless(intakeCmd::isScheduled)
+                                .repeatedly()
+                        )));
         rest
                 .atTime("Climb")
                 .onTrue(climber.runEnd(() -> climber.setVoltage(-0.67 * 12.0), climber::stop).withTimeout(2).andThen(climber.runEnd(() -> climber.setVoltage(-0.67 * 12.0), climber::stop)));
