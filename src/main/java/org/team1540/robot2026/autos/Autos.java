@@ -123,4 +123,34 @@ public class Autos {
                         .withTimeout(3.0));
         return routine;
     }
+
+    public AutoRoutine depotTNPHTNHDH() {
+        final String trajName = "DepotTNPHTNHDH";
+
+        AutoRoutine routine = autoFactory.newRoutine("DepotTNPHTNH");
+        AutoTrajectory firstSweep = routine.trajectory(trajName, 0);
+        AutoTrajectory secondSweep = routine.trajectory(trajName, 1);
+
+        resetPoseInSim(routine, firstSweep);
+
+        routine.active()
+                .onTrue(firstSweep
+                        .cmd()
+                        .alongWith(
+                                intake.commandRunIntake(1.0),
+                                hood.zeroCommand().withTimeout(1.0).asProxy()));
+        firstSweep
+                .done()
+                .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
+                        .alongWith(spindexer.runCommand(() -> 1.0, () -> 1.0), intake.jiggleCommand())
+                        .withTimeout(3.0)
+                        .andThen(secondSweep.spawnCmd()));
+        secondSweep.active().onTrue(intake.commandRunIntake(1.0));
+        secondSweep
+                .done()
+                .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
+                        .alongWith(spindexer.runCommand(() -> 1.0, () -> 1.0), intake.jiggleCommand())
+                        .withTimeout(3.0));
+        return routine;
+    }
 }
