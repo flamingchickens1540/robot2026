@@ -234,10 +234,8 @@ public class RobotContainer {
                                         .runCommand(() -> 1.0, () -> 1.0)
                                         .withTimeout(5.0)))));
         autoChooser.addRoutine("Test", autos::testPath);
-        autoChooser.addRoutine("DepotTNPH", autos::depotTNPH);
-        autoChooser.addRoutine("DepotTNPHTNH", autos::depotTNPHTNH);
-        autoChooser.addRoutine("DepotDPC", autos::depotDPC);
-        autoChooser.addRoutine("TowerUPDH", autos::towerUPDH);
+        autoChooser.addRoutine("Left Trench 1 Sweep", autos::leftTrench1Sweep);
+        autoChooser.addRoutine("Left Trench 2 Sweep", autos::leftTrench2Sweep);
 
         // Characterization routines
         if (Constants.isTuningMode()) {
