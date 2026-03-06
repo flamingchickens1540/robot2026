@@ -236,6 +236,8 @@ public class RobotContainer {
         autoChooser.addRoutine("Test", autos::testPath);
         autoChooser.addRoutine("Left Trench 1 Sweep", autos::leftTrench1Sweep);
         autoChooser.addRoutine("Left Trench 2 Sweep", autos::leftTrench2Sweep);
+        autoChooser.addRoutine("Right Trench 1 Sweep", autos::rightTrench1Sweep);
+        autoChooser.addRoutine("Right Trench 2 Sweep", autos::rightTrench2Sweep);
 
         // Characterization routines
         if (Constants.isTuningMode()) {

@@ -1,5 +1,6 @@
 package org.team1540.robot2026;
 
+import static org.team1540.robot2026.subsystems.turret.TurretConstants.*;
 import static org.team1540.robot2026.subsystems.vision.AprilTagVisionConstants.*;
 
 import edu.wpi.first.math.Matrix;
@@ -26,7 +27,6 @@ import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.AutoLogOutputManager;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.subsystems.drive.DrivetrainConstants;
-import org.team1540.robot2026.subsystems.turret.TurretConstants;
 import org.team1540.robot2026.subsystems.vision.AprilTagVisionIO;
 import org.team1540.robot2026.util.AimingParameters;
 import org.team1540.robot2026.util.AllianceFlipUtil;
@@ -57,6 +57,7 @@ public class RobotState {
     private final Timer poseResetTimer = new Timer();
 
     private Rotation2d lastTurretAngle = Rotation2d.kZero;
+    private double lastTurretVelocityRadPerSec = 0.0;
 
     private final TimeInterpolatableBuffer<Pose2d> poseBuffer = TimeInterpolatableBuffer.createBuffer(0.5);
     private final TimeInterpolatableBuffer<Rotation2d> turretAngleBuffer = TimeInterpolatableBuffer.createBuffer(0.5);
@@ -147,11 +148,24 @@ public class RobotState {
         return poseEstimator.getEstimatedPosition();
     }
 
+    @AutoLogOutput(key = "Odometry/TurretPose")
+    public Pose2d getTurretPose() {
+        return getEstimatedPose().transformBy(new Transform2d(ROBOT_TO_TURRET_2D.getTranslation(), lastTurretAngle));
+    }
+
     public Rotation2d getRobotHeading() {
         return getEstimatedPose().getRotation();
     }
 
-    public void setRobotVelocity(ChassisSpeeds velocity) {
+    public Rotation2d getTurretAngle() {
+        return lastTurretAngle;
+    }
+
+    public Rotation2d getFieldRelativeTurretAngle() {
+        return getTurretAngle().plus(getRobotHeading());
+    }
+
+    public void addVelocityObservation(ChassisSpeeds velocity) {
         lastVelocity = velocity;
     }
 
@@ -160,6 +174,7 @@ public class RobotState {
         return lastVelocity;
     }
 
+    @AutoLogOutput(key = "Odometry/FieldRelativeVelocity")
     public ChassisSpeeds getFieldRelativeVelocity() {
         return ChassisSpeeds.fromRobotRelativeSpeeds(lastVelocity, getRobotHeading());
     }
@@ -185,8 +200,9 @@ public class RobotState {
         Logger.recordOutput("Odometry/Trajectory/TargetPose", target);
     }
 
-    public void addTurretObservation(Rotation2d turretAngle, double timestamp) {
+    public void addTurretObservation(Rotation2d turretAngle, double turretVelocityRadPerSec, double timestamp) {
         lastTurretAngle = turretAngle;
+        lastTurretVelocityRadPerSec = turretVelocityRadPerSec;
         turretAngleBuffer.addSample(timestamp, turretAngle);
     }
 
@@ -208,7 +224,7 @@ public class RobotState {
             Pose2d robotPose = turretPose
                     .estimatedPoseMeters()
                     .transformBy(new Transform3d(
-                                    TurretConstants.ROBOT_TO_TURRET_3D.getTranslation(),
+                                    ROBOT_TO_TURRET_3D.getTranslation(),
                                     new Rotation3d(0.0, 0.0, turretAngleAtMeasurement.getRadians()))
                             .inverse())
                     .toPose2d();
@@ -269,7 +285,9 @@ public class RobotState {
                 velocity.vyMetersPerSecond * phaseDelay,
                 velocity.omegaRadiansPerSecond * phaseDelay));
 
-        Pose2d turretPose = estimatedPose.transformBy(TurretConstants.ROBOT_TO_TURRET_2D);
+        Pose2d turretPose = estimatedPose.transformBy(new Transform2d(
+                ROBOT_TO_TURRET_2D.getTranslation(),
+                lastTurretAngle.plus(Rotation2d.fromRadians(lastTurretVelocityRadPerSec * phaseDelay))));
         double targetDistance = target.getDistance(turretPose.getTranslation());
 
         Logger.recordOutput("Aiming/" + loggingKey + "/ActualTarget", target);
@@ -293,10 +311,10 @@ public class RobotState {
 
         Logger.recordOutput(
                 "Aiming/" + loggingKey + "/CompensatedTurretPose",
-                lookaheadPose.rotateAround(lookaheadPose.getTranslation(), lastTurretAngle));
+                lookaheadPose.rotateAround(lookaheadPose.getTranslation(), getFieldRelativeTurretAngle()));
         Logger.recordOutput(
                 "Aiming/" + loggingKey + "/CompensatedRobotPose",
-                lookaheadPose.transformBy(TurretConstants.ROBOT_TO_TURRET_2D.inverse()));
+                lookaheadPose.transformBy(ROBOT_TO_TURRET_2D.inverse()));
         Logger.recordOutput(
                 "Aiming/" + loggingKey + "/CompensatedTarget",
                 target.plus(turretPose.getTranslation().minus(lookaheadPose.getTranslation())));

@@ -4,6 +4,7 @@ import static org.team1540.robot2026.subsystems.turret.TurretConstants.*;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -64,7 +65,9 @@ public class Turret extends SubsystemBase {
             Logger.recordOutput("Turret/CRT/CalculatedPosition", calculateTurretAngle());
         }
 
-        RobotState.getInstance().addTurretObservation(getPosition(), inputs.positionTimestamp);
+        RobotState.getInstance()
+                .addTurretObservation(
+                        getPosition(), Units.rotationsToRadians(getVelocityRPS()), inputs.positionTimestamp);
 
         LoggedTunableNumber.ifChanged(hashCode(), () -> io.configPID(kP.get(), kI.get(), kD.get()), kP, kI, kD);
         LoggedTunableNumber.ifChanged(hashCode(), () -> io.configFF(kS.get(), kV.get()), kS, kV);
@@ -169,7 +172,7 @@ public class Turret extends SubsystemBase {
         return getPosition().plus(RobotState.getInstance().getRobotHeading());
     }
 
-    public double getVelocity() {
+    public double getVelocityRPS() {
         return inputs.velocityRPS;
     }
 

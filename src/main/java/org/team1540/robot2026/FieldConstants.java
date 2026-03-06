@@ -233,7 +233,7 @@ public class FieldConstants {
 
         // Relevant reference points on alliance side
         public static final Translation2d centerPoint = new Translation2d(
-                frontFaceX,
+                frontFaceX - depth / 2.0,
                 AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(31).get().getY());
         public static final Translation2d leftUpright = new Translation2d(
                 frontFaceX,
@@ -291,11 +291,12 @@ public class FieldConstants {
 
     public static class Regions {
         // Alliance
-        public static final Rectangle2d underAllianceTower = new Rectangle2d(new Pose2d(Tower.centerPoint, Rotation2d.kZero), Tower.depth, Tower.width);
+        public static final Rectangle2d underAllianceTower =
+                new Rectangle2d(new Pose2d(Tower.centerPoint, Rotation2d.kZero), Tower.depth, Tower.width);
         // Opposing
-        public static final Rectangle2d behindOpposingHub = new Rectangle2d(Hub.oppFarLeftCorner, new Translation2d(fieldLength, LinesHorizontal.rightBumpStart));
+        public static final Rectangle2d behindOpposingHub =
+                new Rectangle2d(Hub.oppFarLeftCorner, new Translation2d(fieldLength, LinesHorizontal.rightBumpStart));
     }
-
 
     public enum FieldType {
         ANDYMARK("andymark"),

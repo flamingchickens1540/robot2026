@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import org.ironmaple.simulation.SimulatedArena;
 import org.team1540.robot2026.Constants;
 import org.team1540.robot2026.RobotState;
+import org.team1540.robot2026.commands.FeedingCommands;
 import org.team1540.robot2026.commands.ShootingCommands;
 import org.team1540.robot2026.subsystems.climber.Climber;
 import org.team1540.robot2026.subsystems.drive.Drivetrain;
@@ -18,6 +19,7 @@ import org.team1540.robot2026.subsystems.shooter.Shooter;
 import org.team1540.robot2026.subsystems.spindexer.Spindexer;
 import org.team1540.robot2026.subsystems.turret.Turret;
 import org.team1540.robot2026.util.AllianceFlipUtil;
+import org.team1540.robot2026.util.auto.TrajectoryMirror;
 
 public class Autos {
     private final RobotState robotState = RobotState.getInstance();
@@ -96,11 +98,13 @@ public class Autos {
         resetPoseInSim(routine, traj);
 
         routine.active()
-                .onTrue(traj.cmd().alongWith(hood.zeroCommand().withTimeout(1.0).asProxy()));
+                .onTrue(traj.cmd()
+                        .alongWith(
+                                intake.zeroWhileRunningCommand().andThen(intake.commandRunIntake(1.0)),
+                                hood.zeroCommand().withTimeout(1.0).asProxy()));
         traj.done()
                 .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
-                        .alongWith(spindexer.runCommand(() -> 1.0, () -> 1.0), intake.jiggleCommand())
-                        .withTimeout(5.0));
+                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand()));
         return routine;
     }
 
@@ -110,6 +114,55 @@ public class Autos {
         AutoRoutine routine = autoFactory.newRoutine("LeftTrench2Sweep");
         AutoTrajectory firstSweep = routine.trajectory(trajName, 0);
         AutoTrajectory secondSweep = routine.trajectory(trajName, 1);
+
+        resetPoseInSim(routine, firstSweep);
+
+        routine.active()
+                .onTrue(firstSweep
+                        .cmd()
+                        .alongWith(
+                                intake.zeroWhileRunningCommand().andThen(intake.commandRunIntake(1.0)),
+                                hood.zeroCommand().withTimeout(1.0).asProxy()));
+        firstSweep
+                .done()
+                .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
+                        .alongWith(spindexer.runCommand(() -> 1.0, () -> 1.0), intake.jiggleCommand())
+                        .withTimeout(3.5)
+                        .andThen(secondSweep.spawnCmd()));
+        secondSweep.active().onTrue(intake.commandRunIntake(1.0));
+        secondSweep
+                .done()
+                .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
+                        .alongWith(spindexer.runCommand(() -> 1.0, () -> 1.0), intake.jiggleCommand()));
+        return routine;
+    }
+
+    public AutoRoutine rightTrench1Sweep() {
+        final String trajName = "LeftTrench1Sweep";
+
+        AutoRoutine routine = autoFactory.newRoutine("RightTrench1Sweep");
+        AutoTrajectory traj = TrajectoryMirror.apply(routine.trajectory(trajName), routine);
+
+        resetPoseInSim(routine, traj);
+
+        routine.active()
+                .onTrue(traj.cmd()
+                        .alongWith(
+                                intake.zeroWhileRunningCommand().andThen(intake.commandRunIntake(1.0)),
+                                hood.zeroCommand().withTimeout(1.0).asProxy()));
+        traj.done()
+                .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
+                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand()));
+
+        return routine;
+    }
+
+    public AutoRoutine rightTrench2Sweep() {
+        final String trajName = "LeftTrench2Sweep";
+
+        AutoRoutine routine = autoFactory.newRoutine("RightTrench2Sweep");
+        AutoTrajectory firstSweep = TrajectoryMirror.apply(routine.trajectory(trajName, 0), routine);
+        AutoTrajectory secondSweep = TrajectoryMirror.apply(routine.trajectory(trajName, 1), routine);
 
         resetPoseInSim(routine, firstSweep);
 

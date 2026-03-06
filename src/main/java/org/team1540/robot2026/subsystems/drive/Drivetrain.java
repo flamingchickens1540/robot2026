@@ -161,7 +161,7 @@ public class Drivetrain extends SubsystemBase {
         ChassisSpeeds speeds = kinematics.toChassisSpeeds(getModuleStates());
         speeds.omegaRadiansPerSecond =
                 gyroInputs.connected ? gyroInputs.yawVelocityRadPerSec : speeds.omegaRadiansPerSecond;
-        RobotState.getInstance().setRobotVelocity(speeds);
+        RobotState.getInstance().addVelocityObservation(speeds);
 
         // Stop modules when disabled
         if (DriverStation.isDisabled()) {
