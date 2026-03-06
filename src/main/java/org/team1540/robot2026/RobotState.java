@@ -27,6 +27,7 @@ import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.AutoLogOutputManager;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.subsystems.drive.DrivetrainConstants;
+import org.team1540.robot2026.subsystems.hood.HoodConstants;
 import org.team1540.robot2026.subsystems.vision.AprilTagVisionIO;
 import org.team1540.robot2026.util.AimingParameters;
 import org.team1540.robot2026.util.AllianceFlipUtil;
@@ -43,6 +44,8 @@ public class RobotState {
     private static final LoggedTunableNumber aimingPhaseDelay = new LoggedTunableNumber("Aiming/PhaseDelay", 0.03);
     private static final LoggedTunableNumber shuffleTargetX =
             new LoggedTunableNumber("Aiming/ShuffleX", FieldConstants.LinesVertical.starting - 2.0);
+    private static final LoggedTunableNumber trenchAvoidanceRetractionTime = new LoggedTunableNumber(
+            "TrenchAvoidance/RetractionTime", 0.25);
 
     private Rotation2d lastGyroRotation = Rotation2d.kZero;
     private SwerveModulePosition[] lastModulePositions = new SwerveModulePosition[] {
@@ -331,7 +334,7 @@ public class RobotState {
         if (lastHubAimingParameters != null) return lastHubAimingParameters;
         lastHubAimingParameters = getCompensatedAimingParameters(
                 AllianceFlipUtil.apply(FieldConstants.Hub.topCenterPoint.toTranslation2d()),
-                hubHoodAngleMap::get,
+                distance -> shouldLowerHood() ? HoodConstants.MIN_ANGLE : hubHoodAngleMap.get(distance),
                 hubShooterSpeedMap::get,
                 hubTOFMap::get,
                 "Hub");
@@ -342,7 +345,11 @@ public class RobotState {
         if (lastShuffleAimingParameters != null) return lastShuffleAimingParameters;
         Translation2d shuffleTarget = getShuffleTarget();
         lastShuffleAimingParameters = getCompensatedAimingParameters(
-                shuffleTarget, shuffleHoodAngleMap::get, shuffleShooterSpeedMap::get, shuffleTOFMap::get, "Shuffle");
+                shuffleTarget,
+                distance -> shouldLowerHood() ? HoodConstants.MIN_ANGLE : shuffleHoodAngleMap.get(distance),
+                shuffleShooterSpeedMap::get,
+                shuffleTOFMap::get,
+                "Shuffle");
         return lastShuffleAimingParameters;
     }
 
@@ -356,5 +363,33 @@ public class RobotState {
     public void clearAimingParameters() {
         lastHubAimingParameters = null;
         lastShuffleAimingParameters = null;
+    }
+
+    @AutoLogOutput(key = "TrenchAvoidance/Active")
+    public boolean shouldLowerHood() {
+        Pose2d robotPose = getEstimatedPose();
+        if (robotPose.getY() >= FieldConstants.LinesHorizontal.rightTrenchOpenStart
+                && robotPose.getY() < FieldConstants.LinesHorizontal.leftTrenchOpenEnd) return false; // Don't lower hood if not in trench strips
+
+        Pose2d turretPose = getTurretPose();
+        ChassisSpeeds robotVelocity = getFieldRelativeVelocity();
+
+        Rectangle2d[] trenches = FieldConstants.Regions.trenches;
+        for (Rectangle2d trench : trenches) {
+            if (trench.contains(turretPose.getTranslation())) return true; // Lower hood if directly under trench
+
+            Translation2d closestPoint = trench.nearest(turretPose.getTranslation());
+            Translation2d turretToTrench = closestPoint.minus(turretPose.getTranslation());
+
+            Translation2d velocityVector = new Translation2d(robotVelocity.vxMetersPerSecond, robotVelocity.vyMetersPerSecond);
+            double closingSpeed = velocityVector.dot(turretToTrench.div(turretToTrench.getNorm())); // Direction of robot velocity moving towards the trench
+            Logger.recordOutput("TrenchAvoidance/ClosingSpeed", closingSpeed);
+            if (closingSpeed <= 0.0) continue; // Moving away from trench, no risk of entering
+
+            double regionWidth = trench.getXWidth() + 2 * trenchAvoidanceRetractionTime.get() * closingSpeed;
+            Rectangle2d avoidanceRegion = new Rectangle2d(trench.getCenter(), regionWidth, trench.getYWidth());
+            if (avoidanceRegion.contains(turretPose.getTranslation())) return true; // Lower hood if in avoidance region around trench
+        }
+        return false;
     }
 }

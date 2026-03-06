@@ -13,11 +13,11 @@ import org.team1540.robot2026.util.AllianceFlipUtil;
 
 public class FeedingCommands {
     public static boolean shouldFeed(Turret turret, Hood hood) {
-        // TODO better logic
         return !FieldConstants.Regions.behindOpposingHub.contains(AllianceFlipUtil.apply(
                         RobotState.getInstance().getTurretPose().getTranslation()))
                 && !FieldConstants.Regions.underAllianceTower.contains(AllianceFlipUtil.apply(
                         RobotState.getInstance().getTurretPose().getTranslation()))
+                && !RobotState.getInstance().shouldLowerHood()
                 && turret.atSetpoint(Rotation2d.fromDegrees(30.0))
                 && hood.atSetpoint();
     }

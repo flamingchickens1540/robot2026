@@ -179,6 +179,7 @@ public class FieldConstants {
         public static final double height = Units.inchesToMeters(40.25);
         public static final double openingWidth = Units.inchesToMeters(50.34);
         public static final double openingHeight = Units.inchesToMeters(22.25);
+        public static final double barWidth = Units.inchesToMeters(12.0);
 
         // Relevant reference points on alliance side
         public static final Translation3d openingTopLeft =
@@ -201,6 +202,7 @@ public class FieldConstants {
         public static final double height = Units.inchesToMeters(40.25);
         public static final double openingWidth = Units.inchesToMeters(50.34);
         public static final double openingHeight = Units.inchesToMeters(22.25);
+        public static final double barWidth = Units.inchesToMeters(12.0);
 
         // Relevant reference points on alliance side
         public static final Translation3d openingTopLeft =
@@ -296,6 +298,31 @@ public class FieldConstants {
         // Opposing
         public static final Rectangle2d behindOpposingHub =
                 new Rectangle2d(Hub.oppFarLeftCorner, new Translation2d(fieldLength, LinesHorizontal.rightBumpStart));
+
+        // Trenches
+        public static final Rectangle2d leftTrench =
+                new Rectangle2d(
+                        new Translation2d(LinesVertical.hubCenter - LeftTrench.barWidth / 2, fieldWidth),
+                        new Translation2d(LinesVertical.hubCenter + LeftTrench.barWidth / 2, LinesHorizontal.leftTrenchOpenEnd));
+        public static final Rectangle2d rightTrench =
+                new Rectangle2d(
+                        new Translation2d(LinesVertical.hubCenter - RightTrench.barWidth / 2, 0),
+                        new Translation2d(LinesVertical.hubCenter + RightTrench.barWidth / 2, LinesHorizontal.rightTrenchOpenStart));
+        public static final Rectangle2d oppLeftTrench =
+                new Rectangle2d(
+                        new Translation2d(LinesVertical.oppHubCenter - LeftTrench.barWidth / 2, fieldWidth),
+                        new Translation2d(LinesVertical.oppHubCenter + LeftTrench.barWidth / 2, LinesHorizontal.leftTrenchOpenEnd));
+        public static final Rectangle2d oppRightTrench =
+                new Rectangle2d(
+                        new Translation2d(LinesVertical.oppHubCenter - RightTrench.barWidth / 2, 0),
+                        new Translation2d(LinesVertical.oppHubCenter + RightTrench.barWidth / 2, LinesHorizontal.rightTrenchOpenStart));
+
+        public static final Rectangle2d[] trenches = new Rectangle2d[]{
+                leftTrench,
+                rightTrench,
+                oppLeftTrench,
+                oppRightTrench
+        };
     }
 
     public enum FieldType {

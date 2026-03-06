@@ -164,6 +164,7 @@ public class RobotContainer {
                         .andThen(leds.viewFull.commandShowPattern(
                                 CustomLEDPatterns.strobe(Color.kGreen, Seconds.of(0.5)))));
 
+        // Copilot controls
         copilot.a().onTrue(hood.setpointCommand(() -> HoodConstants.MIN_ANGLE).withName("HoodDownCommand"));
         copilot.b()
                 .and(() -> !turretLockedMode)
