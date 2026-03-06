@@ -43,7 +43,7 @@ public class RobotState {
 
     private static final LoggedTunableNumber aimingPhaseDelay = new LoggedTunableNumber("Aiming/PhaseDelay", 0.03);
     private static final LoggedTunableNumber shuffleTargetX =
-            new LoggedTunableNumber("Aiming/ShuffleX", FieldConstants.LinesVertical.starting - 2.0);
+            new LoggedTunableNumber("Aiming/ShuffleX", FieldConstants.LinesVertical.starting - 1.0);
     private static final LoggedTunableNumber trenchAvoidanceRetractionTime =
             new LoggedTunableNumber("TrenchAvoidance/RetractionTime", 0.25);
 
@@ -95,11 +95,11 @@ public class RobotState {
         hubHoodAngleMap.put(4.888, Rotation2d.fromDegrees(29));
         hubHoodAngleMap.put(3.700, Rotation2d.fromDegrees(25));
 
-        hubShooterSpeedMap.put(2.713, 1375.0);
-        hubShooterSpeedMap.put(1.724, 1225.0);
-        hubShooterSpeedMap.put(1.414, 1125.0);
-        hubShooterSpeedMap.put(4.888, 1625.0);
-        hubShooterSpeedMap.put(3.700, 1475.0);
+        hubShooterSpeedMap.put(2.713, 1400.0);
+        hubShooterSpeedMap.put(1.724, 1250.0);
+        hubShooterSpeedMap.put(1.414, 1150.0);
+        hubShooterSpeedMap.put(4.888, 1650.0);
+        hubShooterSpeedMap.put(3.700, 1500.0);
 
         hubTOFMap.put(2.713, 1.040466598);
         hubTOFMap.put(1.724, 0.9290552488);
@@ -288,9 +288,7 @@ public class RobotState {
                 velocity.vyMetersPerSecond * phaseDelay,
                 velocity.omegaRadiansPerSecond * phaseDelay));
 
-        Pose2d turretPose = estimatedPose.transformBy(new Transform2d(
-                ROBOT_TO_TURRET_2D.getTranslation(),
-                lastTurretAngle.plus(Rotation2d.fromRadians(lastTurretVelocityRadPerSec * phaseDelay))));
+        Pose2d turretPose = estimatedPose.transformBy(ROBOT_TO_TURRET_2D);
         double targetDistance = target.getDistance(turretPose.getTranslation());
 
         Logger.recordOutput("Aiming/" + loggingKey + "/ActualTarget", target);

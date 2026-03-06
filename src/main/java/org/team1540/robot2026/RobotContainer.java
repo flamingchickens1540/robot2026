@@ -236,7 +236,7 @@ public class RobotContainer {
                 .whileTrue(leds.viewFull.commandDefaultPattern(() -> CustomLEDPatterns.movingRainbow(Hertz.of(0.5))));
         RobotModeTriggers.teleop().whileTrue(leds.viewFull.commandDefaultPattern(() -> {
             if (intakeCmd.isScheduled()) {
-                if (aimCommand.isScheduled()) return LEDPattern.solid(Color.kPurple);
+                if (!aimCommand.isScheduled()) return LEDPattern.solid(Color.kPurple);
                 else return LEDPattern.solid(Color.kPurple).blink(Seconds.of(0.5));
             } else if (aimCommand.isScheduled()) {
                 return LEDPattern.solid(Color.kYellow).blink(Seconds.of(0.5));
