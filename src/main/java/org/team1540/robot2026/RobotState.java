@@ -95,11 +95,11 @@ public class RobotState {
         hubHoodAngleMap.put(4.888, Rotation2d.fromDegrees(29));
         hubHoodAngleMap.put(3.700, Rotation2d.fromDegrees(25));
 
-        hubShooterSpeedMap.put(2.713, 1400.0);
-        hubShooterSpeedMap.put(1.724, 1250.0);
-        hubShooterSpeedMap.put(1.414, 1150.0);
-        hubShooterSpeedMap.put(4.888, 1650.0);
-        hubShooterSpeedMap.put(3.700, 1500.0);
+        hubShooterSpeedMap.put(2.713, 1425.0);
+        hubShooterSpeedMap.put(1.724, 1275.0);
+        hubShooterSpeedMap.put(1.414, 1175.0);
+        hubShooterSpeedMap.put(4.888, 1675.0);
+        hubShooterSpeedMap.put(3.700, 1525.0);
 
         hubTOFMap.put(2.713, 1.040466598);
         hubTOFMap.put(1.724, 0.9290552488);
