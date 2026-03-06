@@ -121,7 +121,7 @@ public class RobotContainer {
                 true));
         driver.start()
                 .onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual).withName("ManualDriveZero"));
-        driver.rightInnerPaddle().onTrue(drivetrain.runOnce(drivetrain::stop).withName("DriveXMode"));
+        driver.x().onTrue(drivetrain.runOnce(drivetrain::stop).withName("DriveXMode"));
 
         // Shoot/intake controls
         Command aimCommand = Commands.either(

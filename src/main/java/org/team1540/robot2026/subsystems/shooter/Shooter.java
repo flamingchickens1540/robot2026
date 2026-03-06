@@ -27,6 +27,7 @@ public class Shooter extends SubsystemBase {
     private final ShooterIOInputsAutoLogged inputs = new ShooterIOInputsAutoLogged();
 
     private final LinearFilter speedFilter = LinearFilter.movingAverage(5);
+
     @AutoLogOutput(key = "Shooter/FilteredRPM")
     private double filteredRPM = 0.0;
 
@@ -95,8 +96,7 @@ public class Shooter extends SubsystemBase {
 
     @AutoLogOutput(key = "Shooter/AtSetpoint")
     public boolean atSetpoint() {
-        return MathUtil.isNear(
-                setpointRPM, filteredRPM, ShooterConstants.ERROR_TOLERANCE_RPM);
+        return MathUtil.isNear(setpointRPM, filteredRPM, ShooterConstants.ERROR_TOLERANCE_RPM);
     }
 
     public Command commandVelocity(DoubleSupplier setpoint) {

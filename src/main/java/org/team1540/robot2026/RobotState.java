@@ -95,7 +95,7 @@ public class RobotState {
         hubHoodAngleMap.put(4.888, Rotation2d.fromDegrees(29));
         hubHoodAngleMap.put(3.700, Rotation2d.fromDegrees(25));
 
-        hubShooterSpeedMap.put(2.713, 1425.0);
+        hubShooterSpeedMap.put(2.713, 1415.0);
         hubShooterSpeedMap.put(1.724, 1275.0);
         hubShooterSpeedMap.put(1.414, 1175.0);
         hubShooterSpeedMap.put(4.888, 1675.0);
@@ -294,16 +294,20 @@ public class RobotState {
         Logger.recordOutput("Aiming/" + loggingKey + "/ActualTarget", target);
         Logger.recordOutput("Aiming/" + loggingKey + "/ActualTargetDistanceMeters", targetDistance);
 
-        double turretVelocityX = getFieldRelativeVelocity().vxMetersPerSecond;
-        double turretVelocityY = getFieldRelativeVelocity().vyMetersPerSecond;
+        Translation2d turretVelocity = new Translation2d(
+                        getFieldRelativeVelocity().vxMetersPerSecond, getFieldRelativeVelocity().vyMetersPerSecond)
+                .plus(new Translation2d(
+                        velocity.omegaRadiansPerSecond
+                                * ROBOT_TO_TURRET_2D.getTranslation().getNorm(),
+                        estimatedPose.getRotation().rotateBy(Rotation2d.kCW_90deg)));
 
         double timeOfFlight = tofMap.applyAsDouble(targetDistance);
         Pose2d lookaheadPose = turretPose;
         double lookaheadDistance = targetDistance;
 
         for (int i = 0; i < 20; i++) {
-            double offsetX = turretVelocityX * timeOfFlight;
-            double offsetY = turretVelocityY * timeOfFlight;
+            double offsetX = turretVelocity.getX() * timeOfFlight;
+            double offsetY = turretVelocity.getY() * timeOfFlight;
             lookaheadPose = new Pose2d(
                     turretPose.getTranslation().plus(new Translation2d(offsetX, offsetY)), turretPose.getRotation());
             lookaheadDistance = target.getDistance(lookaheadPose.getTranslation());
