@@ -78,7 +78,6 @@ public class Shooter extends SubsystemBase {
 
     public void runVelocity(double rpm) {
         setpointRPM = rpm;
-        speedFilter.reset();
         shooterIO.setSpeed(rpm);
     }
 
