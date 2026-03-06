@@ -103,9 +103,14 @@ public class RobotContainer {
         configureAutoRoutines();
         configureRobotModeTriggers();
         configurePeriodicCallbacks();
+        Command commandRunLimelightTakeSnapshot = Commands.repeatingSequence(Commands.waitSeconds(1).andThen(Commands.runOnce(()->{
+            LimelightHelpers.triggerSnapshot("limelight-bill");
+        })));
+        CommandScheduler.getInstance().schedule(commandRunLimelightTakeSnapshot);
     }
 
     private void configureButtonBindings() {
+
         drivetrain.setDefaultCommand(drivetrain.teleopDriveCommand(driver.getHID()));
         turret.setDefaultCommand(turret.commandToSetpoint(
                 () -> robotState.getAimingParameters().turretAngle(),
