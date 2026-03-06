@@ -44,8 +44,8 @@ public class RobotState {
     private static final LoggedTunableNumber aimingPhaseDelay = new LoggedTunableNumber("Aiming/PhaseDelay", 0.03);
     private static final LoggedTunableNumber shuffleTargetX =
             new LoggedTunableNumber("Aiming/ShuffleX", FieldConstants.LinesVertical.starting - 2.0);
-    private static final LoggedTunableNumber trenchAvoidanceRetractionTime = new LoggedTunableNumber(
-            "TrenchAvoidance/RetractionTime", 0.25);
+    private static final LoggedTunableNumber trenchAvoidanceRetractionTime =
+            new LoggedTunableNumber("TrenchAvoidance/RetractionTime", 0.25);
 
     private Rotation2d lastGyroRotation = Rotation2d.kZero;
     private SwerveModulePosition[] lastModulePositions = new SwerveModulePosition[] {
@@ -369,7 +369,8 @@ public class RobotState {
     public boolean shouldLowerHood() {
         Pose2d robotPose = getEstimatedPose();
         if (robotPose.getY() >= FieldConstants.LinesHorizontal.rightTrenchOpenStart
-                && robotPose.getY() < FieldConstants.LinesHorizontal.leftTrenchOpenEnd) return false; // Don't lower hood if not in trench strips
+                && robotPose.getY() < FieldConstants.LinesHorizontal.leftTrenchOpenEnd)
+            return false; // Don't lower hood if not in trench strips
 
         Pose2d turretPose = getTurretPose();
         ChassisSpeeds robotVelocity = getFieldRelativeVelocity();
@@ -381,14 +382,17 @@ public class RobotState {
             Translation2d closestPoint = trench.nearest(turretPose.getTranslation());
             Translation2d turretToTrench = closestPoint.minus(turretPose.getTranslation());
 
-            Translation2d velocityVector = new Translation2d(robotVelocity.vxMetersPerSecond, robotVelocity.vyMetersPerSecond);
-            double closingSpeed = velocityVector.dot(turretToTrench.div(turretToTrench.getNorm())); // Direction of robot velocity moving towards the trench
+            Translation2d velocityVector =
+                    new Translation2d(robotVelocity.vxMetersPerSecond, robotVelocity.vyMetersPerSecond);
+            double closingSpeed = velocityVector.dot(turretToTrench.div(
+                    turretToTrench.getNorm())); // Direction of robot velocity moving towards the trench
             Logger.recordOutput("TrenchAvoidance/ClosingSpeed", closingSpeed);
             if (closingSpeed <= 0.0) continue; // Moving away from trench, no risk of entering
 
             double regionWidth = trench.getXWidth() + 2 * trenchAvoidanceRetractionTime.get() * closingSpeed;
             Rectangle2d avoidanceRegion = new Rectangle2d(trench.getCenter(), regionWidth, trench.getYWidth());
-            if (avoidanceRegion.contains(turretPose.getTranslation())) return true; // Lower hood if in avoidance region around trench
+            if (avoidanceRegion.contains(turretPose.getTranslation()))
+                return true; // Lower hood if in avoidance region around trench
         }
         return false;
     }
