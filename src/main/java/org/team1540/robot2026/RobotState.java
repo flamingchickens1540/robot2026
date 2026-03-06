@@ -110,7 +110,7 @@ public class RobotState {
         shuffleHoodAngleMap.put(10.02, Rotation2d.fromDegrees(45));
         shuffleHoodAngleMap.put(1.81, Rotation2d.fromDegrees(45));
 
-        shuffleShooterSpeedMap.put(10.03, 4414.0);
+        shuffleShooterSpeedMap.put(10.03, 4414.0 - 250.0);
         shuffleShooterSpeedMap.put(6.364, 1778.0);
         shuffleShooterSpeedMap.put(4.491, 1540.0);
         shuffleShooterSpeedMap.put(1.81, 1023.0);
