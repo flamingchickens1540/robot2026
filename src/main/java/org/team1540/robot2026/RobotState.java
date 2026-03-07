@@ -3,6 +3,7 @@ package org.team1540.robot2026;
 import static org.team1540.robot2026.subsystems.turret.TurretConstants.*;
 import static org.team1540.robot2026.subsystems.vision.AprilTagVisionConstants.*;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
@@ -267,10 +268,18 @@ public class RobotState {
     private Translation2d getShuffleTarget() {
         if (AllianceFlipUtil.apply(getEstimatedPose()).getY() < FieldConstants.LinesHorizontal.center) {
             return AllianceFlipUtil.apply(
-                    new Translation2d(shuffleTargetX.get(), FieldConstants.LinesHorizontal.rightBumpEnd));
+                    new Translation2d(shuffleTargetX.get(), MathUtil.clamp(
+                            AllianceFlipUtil.apply(getEstimatedPose()).getY(),
+                            FieldConstants.LinesHorizontal.rightTrenchOpenEnd + FieldConstants.RightTrench.width / 2,
+                            FieldConstants.LinesHorizontal.rightBumpMiddle
+                            )));
         } else {
             return AllianceFlipUtil.apply(
-                    new Translation2d(shuffleTargetX.get(), FieldConstants.LinesHorizontal.leftBumpStart));
+                    new Translation2d(shuffleTargetX.get(), MathUtil.clamp(
+                            AllianceFlipUtil.apply(getEstimatedPose()).getY(),
+                            FieldConstants.LinesHorizontal.leftBumpMiddle,
+                            FieldConstants.LinesHorizontal.leftTrenchOpenStart - FieldConstants.LeftTrench.width / 2
+                            )));
         }
     }
 
