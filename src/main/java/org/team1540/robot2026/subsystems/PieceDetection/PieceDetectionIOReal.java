@@ -1,7 +1,6 @@
 package org.team1540.robot2026.subsystems.PieceDetection;
 
 import edu.wpi.first.math.geometry.*;
-import org.team1540.robot2026.subsystems.vision.AprilTagVisionIO;
 
 public class PieceDetectionIOReal implements PieceDetectionIO {
     private static final String limelightName = "limelight-bill"; // don't ask me why it's called that I didn't name it
@@ -26,16 +25,18 @@ public class PieceDetectionIOReal implements PieceDetectionIO {
             double z = distanceCm * Math.sin(pitchRad);
 
             poses[index] = new Translation3d(x, y, z).plus(PieceDetectionConstants.CAMERA_POS); // add to arrayList
-            index ++;
+            index++;
         }
         return poses;
     }
-    public LimelightHelpers.RawDetection[] getBoundingBoxes(){
+
+    public LimelightHelpers.RawDetection[] getBoundingBoxes() {
         return LimelightHelpers.getRawDetections(limelightName);
     }
-    private double get_distance_cm(LimelightHelpers.RawDetection rawDetection){
+
+    private double get_distance_cm(LimelightHelpers.RawDetection rawDetection) {
         double ballDiameterPixels = (Math.abs(rawDetection.corner1_X - rawDetection.corner0_X)
-                + Math.abs(rawDetection.corner2_Y - rawDetection.corner0_Y))
+                        + Math.abs(rawDetection.corner2_Y - rawDetection.corner0_Y))
                 / 2;
         return (PieceDetectionConstants.FUEL_DIAMETER_CM * PieceDetectionConstants.FOCAL_LENGTH_CM)
                 / ballDiameterPixels;

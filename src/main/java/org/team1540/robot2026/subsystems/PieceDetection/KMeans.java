@@ -27,9 +27,7 @@ public class KMeans {
         run();
     }
 
-
     // Main algorithm
-
 
     private void run() {
         for (int i = 0; i < maxIterations; i++) {
@@ -43,9 +41,7 @@ public class KMeans {
         }
     }
 
-
     // Initialize centroids randomly
-
 
     private void initializeCentroids() {
         Random random = new Random();
@@ -57,9 +53,7 @@ public class KMeans {
         }
     }
 
-
     // Assignment Step
-
 
     private void assignmentStep() {
         for (Piece piece : pieces) {
@@ -80,9 +74,7 @@ public class KMeans {
         }
     }
 
-
     // Update Step
-
 
     private boolean updateStep() {
         boolean moved = false;
@@ -102,8 +94,7 @@ public class KMeans {
             double newX = sumX / centroid.getPieces().size();
             double newY = sumY / centroid.getPieces().size();
 
-            if (Math.abs(newX - centroid.getX()) > epsilon ||
-                    Math.abs(newY - centroid.getY()) > epsilon) {
+            if (Math.abs(newX - centroid.getX()) > epsilon || Math.abs(newY - centroid.getY()) > epsilon) {
 
                 centroid.setPosition(newX, newY);
                 moved = true;
@@ -119,9 +110,7 @@ public class KMeans {
         }
     }
 
-
     // Distance
-
 
     private double distance(Piece p, Centroid c) {
         double dx = p.getX() - c.getX();
@@ -129,14 +118,11 @@ public class KMeans {
         return dx * dx + dy * dy; // squared Euclidean (faster, no sqrt)
     }
 
-
     // Getters
-
 
     public List<Centroid> getCentroids() {
         return centroids;
     }
-
 
     public Centroid getLargestCluster() {
         Centroid largest = centroids.get(0);
@@ -149,6 +135,7 @@ public class KMeans {
 
         return largest;
     }
+
     public double getWCSS() {
         double wcss = 0.0;
 

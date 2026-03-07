@@ -1,7 +1,6 @@
 package org.team1540.robot2026.subsystems.PieceDetection;
 
 import edu.wpi.first.math.geometry.Translation2d;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,8 +15,13 @@ public class Centroid {
         this.y = y;
     }
 
-    public double getX() { return x; }
-    public double getY() { return y; }
+    public double getX() {
+        return x;
+    }
+
+    public double getY() {
+        return y;
+    }
 
     public void setPosition(double x, double y) {
         this.x = x;
@@ -35,13 +39,16 @@ public class Centroid {
     public List<Piece> getPieces() {
         return pieces;
     }
-    public Translation2d getAsTranslation2d(){
-        return new Translation2d(x,y);
+
+    public Translation2d getAsTranslation2d() {
+        return new Translation2d(x, y);
     }
-    public double getDistance(){
-        return Math.sqrt(x*x+y*y);
+
+    public double getDistance() {
+        return Math.sqrt(x * x + y * y);
     }
-    public int getNumPieces(){
+
+    public int getNumPieces() {
         return pieces.size();
     }
 }
