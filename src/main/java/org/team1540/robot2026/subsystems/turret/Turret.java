@@ -47,6 +47,9 @@ public class Turret extends SubsystemBase {
     private final Alert zeroingErrorAlert = new Alert(
             "Large encoder error of " + zeroingCRTError.getDegrees() + " degrees during zeroing",
             Alert.AlertType.kWarning);
+    private final Alert unzeroedAlert = new Alert(
+            "Large error between CRT position and motor position, press driver back button to rezero",
+            Alert.AlertType.kError);
 
     public Turret(TurretIO turretIO) {
         if (hasInstance) throw new IllegalStateException("Instance of turret already exists");
@@ -63,7 +66,14 @@ public class Turret extends SubsystemBase {
 
         if (DriverStation.isDisabled()) {
             stop();
-            Logger.recordOutput("Turret/CRT/CalculatedPosition", calculateTurretAngle());
+            Rotation2d crtAngle = calculateTurretAngle();
+            Logger.recordOutput("Turret/CRT/CalculatedPosition", crtAngle);
+
+            double crtToMotorError =
+                    Math.abs(calculateTurretAngle().minus(inputs.position).getDegrees());
+            unzeroedAlert.setText("Large error between CRT position and motor position of " + crtToMotorError
+                    + " deg, press driver back button to rezero");
+            unzeroedAlert.set(crtToMotorError > 1.0 && DriverStation.isDisabled());
         }
 
         RobotState.getInstance()

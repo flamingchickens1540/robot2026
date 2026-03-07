@@ -105,12 +105,7 @@ public class ShootingCommands {
 
     public static Command hubOneMeterShotCommand(Turret turret, Shooter shooter, Hood hood) {
         return Commands.parallel(
-                        turret.commandToSetpoint(
-                                () -> Rotation2d.kZero,
-                                () -> RobotState.getInstance()
-                                        .getHubAimingParameters()
-                                        .turretVelocityRadPerSec(),
-                                false),
+                        turret.run(turret::stop),
                         shooter.commandVelocity(() -> 1150.0),
                         hood.setpointCommand(() -> Rotation2d.fromDegrees(15.0)))
                 .finallyDo(() -> hood.setSetpoint(HoodConstants.MIN_ANGLE));

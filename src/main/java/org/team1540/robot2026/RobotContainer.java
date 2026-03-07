@@ -165,10 +165,11 @@ public class RobotContainer {
         driver.rightOuterPaddle()
                 .onTrue(hood.setpointCommand(() -> HoodConstants.MIN_ANGLE).withName("HoodDownCommand"));
         driver.back()
-                .and(() -> !turretLockedMode)
                 .whileTrue(turret.zeroCommand()
-                        .andThen(leds.viewFull.commandShowPattern(
-                                CustomLEDPatterns.strobe(Color.kGreen, Seconds.of(0.5)))));
+                        .andThen(leds.viewFull
+                                .commandShowPattern(CustomLEDPatterns.strobe(Color.kGreen))
+                                .withTimeout(0.5))
+                        .ignoringDisable(true));
 
         // Copilot controls
         copilot.a().onTrue(hood.setpointCommand(() -> HoodConstants.MIN_ANGLE).withName("HoodDownCommand"));
@@ -219,6 +220,7 @@ public class RobotContainer {
                         }));
         copilot.rightTrigger()
                 .whileTrue(ShootingCommands.hubOneMeterShotCommand(turret, shooter, hood)
+                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand())
                         .withName("CloseShotCommand"));
 
         // Shooter tuning bindings

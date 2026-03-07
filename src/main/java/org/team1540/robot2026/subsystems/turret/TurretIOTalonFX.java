@@ -18,6 +18,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.Timer;
+import org.team1540.robot2026.util.PhoenixUtil;
 
 public class TurretIOTalonFX implements TurretIO {
     // Motion Magic
@@ -129,7 +130,7 @@ public class TurretIOTalonFX implements TurretIO {
 
     @Override
     public void setMotorPosition(Rotation2d position) {
-        motor.setPosition(position.getRotations());
+        PhoenixUtil.tryUntilOk(5, () -> motor.setPosition(position.getRotations()));
     }
 
     @Override
