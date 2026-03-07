@@ -267,10 +267,10 @@ public class RobotState {
     private Translation2d getShuffleTarget() {
         if (AllianceFlipUtil.apply(getEstimatedPose()).getY() < FieldConstants.LinesHorizontal.center) {
             return AllianceFlipUtil.apply(
-                    new Translation2d(shuffleTargetX.get(), FieldConstants.LinesHorizontal.rightBumpMiddle));
+                    new Translation2d(shuffleTargetX.get(), FieldConstants.LinesHorizontal.rightBumpEnd));
         } else {
             return AllianceFlipUtil.apply(
-                    new Translation2d(shuffleTargetX.get(), FieldConstants.LinesHorizontal.leftBumpMiddle));
+                    new Translation2d(shuffleTargetX.get(), FieldConstants.LinesHorizontal.leftBumpStart));
         }
     }
 

@@ -76,7 +76,7 @@ public class RobotContainer {
                 shooter = Shooter.createReal();
                 turret = Turret.createReal();
                 hood = Hood.createReal();
-                climber = Climber.createReal();
+                climber = Climber.createDummy();
                 vision = AprilTagVision.createReal();
             }
             case SIM -> {
