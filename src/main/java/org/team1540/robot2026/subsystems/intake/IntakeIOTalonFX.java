@@ -74,7 +74,7 @@ public class IntakeIOTalonFX implements IntakeIO {
         motionMagicConfig.MotionMagicAcceleration = PIVOT_ACCELERATION_RPS2;
 
         pivotMotor.getConfigurator().apply(pivotTalonFXConfig);
-        spinMotor.getConfigurator().apply(pivotTalonFXConfig);
+        spinMotor.getConfigurator().apply(intakeTalonFXConfig);
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 50.0,
