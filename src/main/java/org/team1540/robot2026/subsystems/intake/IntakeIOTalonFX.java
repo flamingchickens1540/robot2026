@@ -52,7 +52,7 @@ public class IntakeIOTalonFX implements IntakeIO {
 
         TalonFXConfiguration intakeTalonFXConfig = new TalonFXConfiguration();
         intakeTalonFXConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        intakeTalonFXConfig.CurrentLimits.StatorCurrentLimit = 120;
+        intakeTalonFXConfig.CurrentLimits.StatorCurrentLimit = 160;
         intakeTalonFXConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         intakeTalonFXConfig.CurrentLimits.SupplyCurrentLimit = 70;
         intakeTalonFXConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
