@@ -1,0 +1,99 @@
+{
+ "name":"AutoPaths2026",
+ "version":2,
+ "type":"Swerve",
+ "variables":{
+  "expressions":{},
+  "poses":{
+   "DepotStart":{
+    "x":{
+     "exp":"3.5 m",
+     "val":3.5
+    },
+    "y":{
+     "exp":"7.67 m",
+     "val":7.67
+    },
+    "heading":{
+     "exp":"0 rad",
+     "val":0.0
+    }
+   }
+  }
+ },
+ "config":{
+  "frontLeft":{
+   "x":{
+    "exp":"12.375 in",
+    "val":0.31432499999999997
+   },
+   "y":{
+    "exp":"9.375 in",
+    "val":0.238125
+   }
+  },
+  "backLeft":{
+   "x":{
+    "exp":"-12.375 in",
+    "val":-0.31432499999999997
+   },
+   "y":{
+    "exp":"9.375 in",
+    "val":0.238125
+   }
+  },
+  "mass":{
+   "exp":"140 lbs",
+   "val":63.502931800000006
+  },
+  "inertia":{
+   "exp":"7 kg m ^ 2",
+   "val":7.0
+  },
+  "gearing":{
+   "exp":"7.125",
+   "val":7.125
+  },
+  "radius":{
+   "exp":"2 in",
+   "val":0.0508
+  },
+  "vmax":{
+   "exp":"5785 RPM",
+   "val":605.8037833672317
+  },
+  "tmax":{
+   "exp":"0.94 N * m",
+   "val":0.94
+  },
+  "cof":{
+   "exp":"1.2",
+   "val":1.2
+  },
+  "bumper":{
+   "front":{
+    "exp":"19 in",
+    "val":0.4826
+   },
+   "side":{
+    "exp":"16 in",
+    "val":0.4064
+   },
+   "back":{
+    "exp":"19 in",
+    "val":0.4826
+   }
+  },
+  "differentialTrackWidth":{
+   "exp":"22 in",
+   "val":0.5588
+  }
+ },
+ "generationFeatures":[],
+ "codegen":{
+  "root":"..",
+  "genVars":true,
+  "genTrajData":true,
+  "useChoreoLib":true
+ }
+}

@@ -136,7 +136,11 @@ public class Turret extends SubsystemBase {
 
     @AutoLogOutput(key = "Turret/AtSetpoint")
     public boolean atSetpoint() {
-        return MathUtil.isNear(setpointRotation.getDegrees(), inputs.position.getDegrees(), POS_ERR_TOLERANCE_DEGREES);
+        return atSetpoint(Rotation2d.fromDegrees(POS_ERR_TOLERANCE_DEGREES));
+    }
+
+    public boolean atSetpoint(Rotation2d tolerance) {
+        return MathUtil.isNear(setpointRotation.getDegrees(), inputs.position.getDegrees(), tolerance.getDegrees());
     }
 
     @AutoLogOutput(key = "Turret/Setpoint")

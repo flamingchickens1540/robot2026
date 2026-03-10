@@ -1,7 +1,6 @@
 package org.team1540.robot2026.commands;
 
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import org.littletonrobotics.junction.Logger;
@@ -18,7 +17,6 @@ import org.team1540.robot2026.util.LoggedTunableNumber;
 import org.team1540.robot2026.util.hid.EnvisionController;
 
 public class ShootingCommands {
-    private static final Translation2d SHUFFLE_TARGET = FieldConstants.Tower.centerPoint;
 
     private static final LoggedTunableNumber shooterRPM = new LoggedTunableNumber("ShooterTuning/ShooterRPM", 1000);
     private static final LoggedTunableNumber hoodDegrees = new LoggedTunableNumber("ShooterTuning/HoodDegrees", 15);
@@ -26,17 +24,48 @@ public class ShootingCommands {
     public static Command tuneShooterCommand(Turret turret, Shooter shooter, Hood hood) {
         return Commands.parallel(
                 turret.commandToSetpoint(
-                        () -> RobotState.getInstance().getHubAimingParameters().turretAngle(), () -> 0.0, true),
+                        () -> RobotState.getInstance().getAimingParameters().turretAngle(), () -> 0.0, true),
                 shooter.commandVelocity(shooterRPM),
                 hood.setpointCommand(() -> Rotation2d.fromDegrees(hoodDegrees.get())),
                 Commands.run(() -> Logger.recordOutput(
-                        "ShooterTuning/HubDistanceMeters",
+                        "ShooterTuning/TargetDistanceMeters",
                         AllianceFlipUtil.apply(FieldConstants.Hub.topCenterPoint.toTranslation2d())
                                 .minus(RobotState.getInstance()
                                         .getEstimatedPose()
                                         .transformBy(TurretConstants.ROBOT_TO_TURRET_2D)
                                         .getTranslation())
                                 .getNorm())));
+    }
+
+    public static Command shooterAimCommand(Turret turret, Shooter shooter, Hood hood) {
+        return Commands.parallel(
+                        turret.commandToSetpoint(
+                                () -> RobotState.getInstance()
+                                        .getAimingParameters()
+                                        .turretAngle(),
+                                () -> RobotState.getInstance()
+                                        .getAimingParameters()
+                                        .turretVelocityRadPerSec(),
+                                true),
+                        shooter.commandVelocity(() ->
+                                RobotState.getInstance().getAimingParameters().shooterRPM()),
+                        hood.setpointCommand(() ->
+                                RobotState.getInstance().getAimingParameters().hoodAngle()))
+                .finallyDo(() -> hood.setSetpoint(HoodConstants.MIN_ANGLE));
+    }
+
+    public static Command shooterAimTurretLockedCommand(
+            EnvisionController controller, Drivetrain drivetrain, Shooter shooter, Hood hood, Turret turret) {
+        return Commands.parallel(
+                        drivetrain.teleopDriveWithHeadingCommand(controller, () -> RobotState.getInstance()
+                                .getAimingParameters()
+                                .turretAngle()
+                                .minus(turret.getPosition())),
+                        shooter.commandVelocity(() ->
+                                RobotState.getInstance().getAimingParameters().shooterRPM()),
+                        hood.setpointCommand(() ->
+                                RobotState.getInstance().getAimingParameters().hoodAngle()))
+                .finallyDo(() -> hood.setSetpoint(HoodConstants.MIN_ANGLE));
     }
 
     public static Command hubAimCommand(Turret turret, Shooter shooter, Hood hood) {
@@ -58,17 +87,32 @@ public class ShootingCommands {
                 .finallyDo(() -> hood.setSetpoint(HoodConstants.MIN_ANGLE));
     }
 
-    public static Command hubAimTurretLockedCommand(EnvisionController controller, Drivetrain drivetrain, Shooter shooter, Hood hood, Turret turret){
+    public static Command hubAimTurretLockedCommand(
+            EnvisionController controller, Drivetrain drivetrain, Shooter shooter, Hood hood, Turret turret) {
         return Commands.parallel(
                         drivetrain.teleopDriveWithHeadingCommand(controller, () -> RobotState.getInstance()
                                 .getHubAimingParameters()
-                                .turretAngle().minus(turret.getPosition())),
+                                .turretAngle()
+                                .minus(turret.getPosition())),
                         shooter.commandVelocity(() -> RobotState.getInstance()
                                 .getHubAimingParameters()
                                 .shooterRPM()),
                         hood.setpointCommand(() -> RobotState.getInstance()
                                 .getHubAimingParameters()
                                 .hoodAngle()))
+                .finallyDo(() -> hood.setSetpoint(HoodConstants.MIN_ANGLE));
+    }
+
+    public static Command hubOneMeterShotCommand(Turret turret, Shooter shooter, Hood hood) {
+        return Commands.parallel(
+                        turret.commandToSetpoint(
+                                () -> Rotation2d.kZero,
+                                () -> RobotState.getInstance()
+                                        .getHubAimingParameters()
+                                        .turretVelocityRadPerSec(),
+                                false),
+                        shooter.commandVelocity(() -> 1150.0),
+                        hood.setpointCommand(() -> Rotation2d.fromDegrees(15.0)))
                 .finallyDo(() -> hood.setSetpoint(HoodConstants.MIN_ANGLE));
     }
 
@@ -76,31 +120,33 @@ public class ShootingCommands {
         return Commands.parallel(
                         turret.commandToSetpoint(
                                 () -> RobotState.getInstance()
-                                        .getShuffleAimingParameters(AllianceFlipUtil.apply(SHUFFLE_TARGET))
+                                        .getShuffleAimingParameters()
                                         .turretAngle(),
                                 () -> RobotState.getInstance()
-                                        .getShuffleAimingParameters(AllianceFlipUtil.apply(SHUFFLE_TARGET))
+                                        .getShuffleAimingParameters()
                                         .turretVelocityRadPerSec(),
                                 true),
                         shooter.commandVelocity(() -> RobotState.getInstance()
-                                .getShuffleAimingParameters(AllianceFlipUtil.apply(SHUFFLE_TARGET))
+                                .getShuffleAimingParameters()
                                 .shooterRPM()),
                         hood.setpointCommand(() -> RobotState.getInstance()
-                                .getShuffleAimingParameters(AllianceFlipUtil.apply(SHUFFLE_TARGET))
+                                .getShuffleAimingParameters()
                                 .hoodAngle()))
                 .finallyDo(() -> hood.setSetpoint(HoodConstants.MIN_ANGLE));
     }
 
-    public static Command shuffleAimTurretLockedCommand(EnvisionController controller, Drivetrain drivetrain, Shooter shooter, Hood hood, Turret turret) {
+    public static Command shuffleAimTurretLockedCommand(
+            EnvisionController controller, Drivetrain drivetrain, Shooter shooter, Hood hood, Turret turret) {
         return Commands.parallel(
                         drivetrain.teleopDriveWithHeadingCommand(controller, () -> (RobotState.getInstance()
-                                .getShuffleAimingParameters(AllianceFlipUtil.apply(SHUFFLE_TARGET))
-                                .turretAngle()).minus(turret.getPosition())),
+                                        .getShuffleAimingParameters()
+                                        .turretAngle())
+                                .minus(turret.getPosition())),
                         shooter.commandVelocity(() -> RobotState.getInstance()
-                                .getShuffleAimingParameters(AllianceFlipUtil.apply(SHUFFLE_TARGET))
+                                .getShuffleAimingParameters()
                                 .shooterRPM()),
                         hood.setpointCommand(() -> RobotState.getInstance()
-                                .getShuffleAimingParameters(AllianceFlipUtil.apply(SHUFFLE_TARGET))
+                                .getShuffleAimingParameters()
                                 .hoodAngle()))
                 .finallyDo(() -> hood.setSetpoint(HoodConstants.MIN_ANGLE));
     }

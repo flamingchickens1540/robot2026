@@ -16,8 +16,8 @@ public class TurretConstants {
 
     public static final Rotation2d ANGLE_OFFSET = Rotation2d.fromRadians(5.021413921812452);
     public static final Rotation2d MAX_ANGLE = Rotation2d.fromDegrees(615 - ANGLE_OFFSET.getDegrees());
-    //TODO: changed this!
-    public static final Rotation2d MIN_ANGLE = Rotation2d.fromDegrees(27 - ANGLE_OFFSET.getDegrees());
+    // TODO: changed this!
+    public static final Rotation2d MIN_ANGLE = Rotation2d.fromDegrees(37 - ANGLE_OFFSET.getDegrees());
 
     // Tuning
     public static final double KS = 0.284;
@@ -39,7 +39,7 @@ public class TurretConstants {
     public static final double BIG_ENCODER_MAGNET_SENSOR_OFFSET = -0.91943359375;
 
     public static final double CRUISE_VELOCITY_RPS = 1; // was 3
-    public static final double MAX_ACCEL_RPS2 = 4; // was 7
+    public static final double MAX_ACCEL_RPS2 = 5.5; // was 7
 
     public static final Transform2d ROBOT_TO_TURRET_2D =
             new Transform2d(Units.inchesToMeters(-7.5), 0.0, Rotation2d.kZero);

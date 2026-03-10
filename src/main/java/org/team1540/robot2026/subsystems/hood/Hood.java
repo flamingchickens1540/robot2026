@@ -98,7 +98,7 @@ public class Hood extends SubsystemBase {
     }
 
     @AutoLogOutput(key = "Hood/AtSetpoint")
-    public boolean isAtSetpoint() {
+    public boolean atSetpoint() {
         return MathUtil.isNear(
                 getPosition().getDegrees(), getSetpoint().getDegrees(), POSITION_ERR_TOLERANCE.getDegrees());
     }
