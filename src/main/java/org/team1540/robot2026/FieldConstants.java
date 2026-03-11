@@ -179,7 +179,7 @@ public class FieldConstants {
         public static final double height = Units.inchesToMeters(40.25);
         public static final double openingWidth = Units.inchesToMeters(50.34);
         public static final double openingHeight = Units.inchesToMeters(22.25);
-        public static final double barWidth = Units.inchesToMeters(12.0);
+        public static final double barWidth = Units.inchesToMeters(24.0);
 
         // Relevant reference points on alliance side
         public static final Translation3d openingTopLeft =
