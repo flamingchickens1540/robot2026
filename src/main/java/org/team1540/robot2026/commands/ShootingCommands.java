@@ -64,7 +64,8 @@ public class ShootingCommands {
                         shooter.commandVelocity(() ->
                                 RobotState.getInstance().getAimingParameters().shooterRPM()),
                         hood.setpointCommand(() ->
-                                RobotState.getInstance().getAimingParameters().hoodAngle()))
+                                RobotState.getInstance().getAimingParameters().hoodAngle()),
+                        Commands.run(turret::stop, turret))
                 .finallyDo(() -> hood.setSetpoint(HoodConstants.MIN_ANGLE));
     }
 
