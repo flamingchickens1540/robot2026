@@ -9,8 +9,8 @@ public class ShooterConstants {
     public static final double KP = 0.3;
     public static final double KI = 0.0;
     public static final double KD = 0.0;
-    public static final double KS = 0.30946782333852655;
-    public static final double KV = 0.12089376471841834;
+    public static final double KS = 0.30890533875168136;
+    public static final double KV = 0.12009058138607204;
 
     public static final double ERROR_TOLERANCE_RPM = 100;
 }
