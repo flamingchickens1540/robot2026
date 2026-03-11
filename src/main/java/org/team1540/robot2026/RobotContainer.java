@@ -119,8 +119,6 @@ public class RobotContainer {
                 () -> robotState.getAimingParameters().turretAngle(),
                 () -> robotState.getAimingParameters().turretVelocityRadPerSec(),
                 true));
-        driver.start()
-                .onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual).withName("ManualDriveZero"));
         driver.x().onTrue(drivetrain.runOnce(drivetrain::stop).withName("DriveXMode"));
 
         // Shoot/intake controls
@@ -194,6 +192,8 @@ public class RobotContainer {
                             intakeManualAlert.set(false);
                         })
                         .withName("IntakeManualControl"));
+        copilot.y()
+                .onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual).withName("ManualDriveZero"));
         copilot.start()
                 .whileTrue(hood.zeroCommand()
                         .andThen(leds.viewFull
