@@ -6,6 +6,7 @@ import static edu.wpi.first.units.Units.Seconds;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.LEDPattern;
 import edu.wpi.first.wpilibj.util.Color;
@@ -16,7 +17,9 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import org.littletonrobotics.junction.AutoLogOutput;
+import org.team1540.robot2026.autos.Autos;
 import org.team1540.robot2026.commands.CharacterizationCommands;
+import org.team1540.robot2026.commands.FeedingCommands;
 import org.team1540.robot2026.commands.ShootingCommands;
 import org.team1540.robot2026.subsystems.climber.Climber;
 import org.team1540.robot2026.subsystems.climber.ClimberConstants;
@@ -30,12 +33,10 @@ import org.team1540.robot2026.subsystems.shooter.Shooter;
 import org.team1540.robot2026.subsystems.spindexer.Spindexer;
 import org.team1540.robot2026.subsystems.turret.Turret;
 import org.team1540.robot2026.subsystems.vision.AprilTagVision;
-import org.team1540.robot2026.util.hid.CommandEnvisionController;
-import org.team1540.robot2026.util.hid.JoystickUtil;
 import org.team1540.robot2026.util.MatchTriggers;
 import org.team1540.robot2026.util.auto.LoggedAutoChooser;
-
-import java.util.function.Supplier;
+import org.team1540.robot2026.util.hid.CommandEnvisionController;
+import org.team1540.robot2026.util.hid.JoystickUtil;
 
 public class RobotContainer {
     private final CommandEnvisionController driver = new CommandEnvisionController(0);
@@ -50,14 +51,19 @@ public class RobotContainer {
     final Climber climber;
     final AprilTagVision vision;
     final LEDs leds = new LEDs();
-    private boolean turretLockedMode = false;
 
     private final LoggedAutoChooser autoChooser = new LoggedAutoChooser("Auto Chooser");
 
     private final RobotState robotState = RobotState.getInstance();
 
-    @AutoLogOutput(key = "ClimbMode")
-    private boolean climbMode = false;
+    private final Autos autos;
+
+    @AutoLogOutput(key = "Turret/LockedMode")
+    private boolean turretLockedMode = false;
+
+    private final Alert turretLockedAlert = new Alert("Turret is in locked mode!", Alert.AlertType.kError);
+    private final Alert turretManualAlert = new Alert("Turret is under manual control", Alert.AlertType.kWarning);
+    private final Alert intakeManualAlert = new Alert("Intake is under manual control", Alert.AlertType.kWarning);
 
     /** The container for the robot. Contains subsystems, IO devices, and commands. */
     public RobotContainer() {
@@ -70,7 +76,7 @@ public class RobotContainer {
                 shooter = Shooter.createReal();
                 turret = Turret.createReal();
                 hood = Hood.createReal();
-                climber = Climber.createReal();
+                climber = Climber.createDummy();
                 vision = AprilTagVision.createReal();
             }
             case SIM -> {
@@ -99,8 +105,9 @@ public class RobotContainer {
             }
         }
 
+        autos = new Autos(drivetrain, intake, spindexer, turret, hood, shooter, climber);
+
         configureButtonBindings();
-        configureLEDBindings();
         configureAutoRoutines();
         configureRobotModeTriggers();
         configurePeriodicCallbacks();
@@ -109,43 +116,39 @@ public class RobotContainer {
     private void configureButtonBindings() {
         drivetrain.setDefaultCommand(drivetrain.teleopDriveCommand(driver.getHID()));
         turret.setDefaultCommand(turret.commandToSetpoint(
-                () -> robotState.getHubAimingParameters().turretAngle(),
-                () -> robotState.getHubAimingParameters().turretVelocityRadPerSec(),
+                () -> robotState.getAimingParameters().turretAngle(),
+                () -> robotState.getAimingParameters().turretVelocityRadPerSec(),
                 true));
-        driver.start().onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual).withName("ManualDriveZero"));
-        driver.rightInnerPaddle().onTrue(drivetrain.runOnce(drivetrain::stop).withName("DriveXMode"));
-
-        // Targeting controls
-        driver.rightBumper().toggleOnTrue(
-                Commands.either(
-                        ShootingCommands.hubAimTurretLockedCommand(driver.getHID(), drivetrain, shooter, hood, turret).asProxy(),
-                        ShootingCommands.hubAimCommand(turret, shooter, hood).asProxy()
-                                .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0).withName("HubAimCommand"))
-                        ,()->turretLockedMode
-                )
-        );
-
-        driver.leftBumper().toggleOnTrue(
-                Commands.either(
-                        ShootingCommands.shuffleAimTurretLockedCommand(driver.getHID(), drivetrain, shooter, hood, turret).asProxy(),
-                        ShootingCommands.shuffleAimCommand(turret, shooter, hood).asProxy()
-                                .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0).withName("ShuffleAimCommand")),
-                        () -> turretLockedMode));
+        driver.start()
+                .onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual).withName("ManualDriveZero"));
+        driver.x().onTrue(drivetrain.runOnce(drivetrain::stop).withName("DriveXMode"));
 
         // Shoot/intake controls
-        Command intakeCmd = intake.commandRunIntake(1.0)
-                .alongWith(leds.viewFull.commandShowPattern(LEDPattern.solid(Color.kPurple)))
-                .withName("IntakeCommand");
-        Command feedShooterCmd = spindexer.runCommand(() -> 1.0, () -> 1.0);
+        Command aimCommand = Commands.either(
+                        ShootingCommands.shooterAimTurretLockedCommand(
+                                        driver.getHID(), drivetrain, shooter, hood, turret)
+                                .withName("ShooterAimTurretLockedCommand")
+                                .asProxy(),
+                        ShootingCommands.shooterAimCommand(turret, shooter, hood)
+                                .withName("ShooterAimCommand")
+                                .asProxy(),
+                        () -> turretLockedMode)
+                .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0));
+
+        Command feedShooterCmd = FeedingCommands.feedCommand(turret, hood, spindexer);
+
+        Command intakeCmd = intake.commandRunIntake(1.0).withName("IntakeCommand");
 
         driver.leftTrigger().toggleOnTrue(intakeCmd);
         driver.rightTrigger()
-                .toggleOnTrue(feedShooterCmd
-                        .alongWith(intake.jiggleCommand()
-                                .asProxy()
-                                .unless(intakeCmd::isScheduled)
-                                .repeatedly())
-                        .withName("FeedShooterCommand"));
+                .toggleOnTrue(aimCommand
+                        .alongWith(
+                                feedShooterCmd,
+                                intake.jiggleCommand()
+                                        .asProxy()
+                                        .unless(intakeCmd::isScheduled)
+                                        .repeatedly())
+                        .withName("ShootCommand"));
 
         // Climb controls
         driver.leftSideButton()
@@ -162,17 +165,35 @@ public class RobotContainer {
         driver.rightOuterPaddle()
                 .onTrue(hood.setpointCommand(() -> HoodConstants.MIN_ANGLE).withName("HoodDownCommand"));
         driver.back()
-                .and(() -> !turretLockedMode)
                 .whileTrue(turret.zeroCommand()
-                        .andThen(leds.viewFull.commandShowPattern(
-                                CustomLEDPatterns.strobe(Color.kGreen, Seconds.of(0.5)))));
+                        .andThen(leds.viewFull
+                                .commandShowPattern(CustomLEDPatterns.strobe(Color.kGreen))
+                                .withTimeout(0.5))
+                        .ignoringDisable(true));
 
+        // Copilot controls
         copilot.a().onTrue(hood.setpointCommand(() -> HoodConstants.MIN_ANGLE).withName("HoodDownCommand"));
         copilot.b()
                 .and(() -> !turretLockedMode)
-                .toggleOnTrue(turret.run(
-                        () -> turret.setVoltage(-JoystickUtil.smartDeadzone(copilot.getLeftX(), 0.1) * 0.5 * 12.0)).withName("TurretManualControl"));
-        copilot.x().toggleOnTrue(intake.run(() -> intake.setPivotVoltage(JoystickUtil.smartDeadzone(copilot.getRightY(), 0.1) * 0.5 * 12.0)).withName("IntakeManualControl"));
+                .toggleOnTrue(turret.run(() -> {
+                            turret.setVoltage(-JoystickUtil.smartDeadzone(copilot.getLeftX(), 0.1) * 0.5 * 12.0);
+                            turretManualAlert.set(true);
+                        })
+                        .finallyDo(() -> {
+                            turret.setVoltage(0.0);
+                            turretManualAlert.set(false);
+                        })
+                        .withName("TurretManualControl"));
+        copilot.x()
+                .toggleOnTrue(intake.run(() -> {
+                            intake.setPivotVoltage(JoystickUtil.smartDeadzone(copilot.getRightY(), 0.1) * 0.5 * 12.0);
+                            intakeManualAlert.set(true);
+                        })
+                        .finallyDo(() -> {
+                            intake.setPivotVoltage(0.0);
+                            intakeManualAlert.set(false);
+                        })
+                        .withName("IntakeManualControl"));
         copilot.start()
                 .whileTrue(hood.zeroCommand()
                         .andThen(leds.viewFull
@@ -187,23 +208,53 @@ public class RobotContainer {
                         .withName("IntakeZeroCommand"));
         copilot.leftBumper()
                 .whileTrue(spindexer.runCommand(() -> -0.67, () -> -0.67).withName("SpindexerReverseCommand"));
-        copilot.y().toggleOnTrue(turret.run(() -> turret.stop()).andThen(() -> turretLockedMode = true));
-    }
+        copilot.y()
+                .toggleOnTrue(turret.run(turret::stop)
+                        .andThen(() -> {
+                            turretLockedMode = true;
+                            turretLockedAlert.set(true);
+                        })
+                        .finallyDo(() -> {
+                            turretLockedMode = false;
+                            turretLockedAlert.set(false);
+                        }));
+        copilot.rightTrigger()
+                .whileTrue(ShootingCommands.hubOneMeterShotCommand(turret, shooter, hood)
+                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand())
+                        .withName("CloseShotCommand"));
 
-    private void configureLEDBindings() {
+        // Shooter tuning bindings
+        if (Constants.isTuningMode()) {
+            copilot.rightBumper()
+                    .toggleOnTrue(ShootingCommands.tuneShooterCommand(turret, shooter, hood)
+                            .withName("TuneShooterCommand"));
+            copilot.povUp()
+                    .whileTrue(
+                            FeedingCommands.feedCommand(turret, hood, spindexer).alongWith(intake.jiggleCommand()));
+        }
+
+        // LED bindings
         RobotModeTriggers.disabled()
-                .whileTrue(leds.viewFull.commandShowPattern(CustomLEDPatterns.movingRainbow(Hertz.of(0.5))));
-        RobotModeTriggers.teleop()
-                .or(RobotModeTriggers.autonomous())
+                .whileTrue(leds.viewFull.commandDefaultPattern(() -> CustomLEDPatterns.movingRainbow(Hertz.of(0.5))));
+        RobotModeTriggers.teleop().whileTrue(leds.viewFull.commandDefaultPattern(() -> {
+            if (intakeCmd.isScheduled()) {
+                if (!aimCommand.isScheduled()) return LEDPattern.solid(Color.kPurple);
+                else return LEDPattern.solid(Color.kPurple).blink(Seconds.of(0.5));
+            } else if (aimCommand.isScheduled()) {
+                return LEDPattern.solid(Color.kYellow).blink(Seconds.of(0.5));
+            } else return LEDPattern.solid(LEDs.getAllianceColor());
+        }));
+        RobotModeTriggers.autonomous()
                 .whileTrue(leds.viewFull.commandDefaultPattern(
-                        () -> LEDPattern.gradient(LEDPattern.GradientType.kContinuous, Color.kRed, Color.kOrange)
-                                .scrollAtRelativeSpeed(Hertz.of(0.67))));
+                        () -> LEDPattern.solid(LEDs.getAllianceColor()).blink(Seconds.of(0.5))));
+        new Trigger(() -> !FeedingCommands.shouldFeed(turret, hood) && feedShooterCmd.isScheduled())
+                .whileTrue(leds.viewFull.commandShowPattern(CustomLEDPatterns.strobe(Color.kOrange)));
         MatchTriggers.timeRemaining(30)
                 .or(MatchTriggers.timeRemaining(15))
                 .or(MatchTriggers.timeRemaining(10))
                 .onTrue(leds.viewFull
                         .commandShowPattern(CustomLEDPatterns.strobe(Color.kWhite))
-                        .withTimeout(1.5));
+                        .withTimeout(1.0));
     }
 
     private void configureAutoRoutines() {
@@ -212,11 +263,16 @@ public class RobotContainer {
                 .withTimeout(1.0)
                 .andThen(ShootingCommands.hubAimCommand(turret, shooter, hood)
                         .withDeadline(Commands.waitUntil(
-                                        () -> turret.atSetpoint() && shooter.atSetpoint() && hood.isAtSetpoint())
+                                        () -> turret.atSetpoint() && shooter.atSetpoint() && hood.atSetpoint())
                                 .withTimeout(1.0)
                                 .andThen(spindexer
                                         .runCommand(() -> 1.0, () -> 1.0)
                                         .withTimeout(5.0)))));
+        autoChooser.addRoutine("Test", autos::testPath);
+        autoChooser.addRoutine("Left Trench 1 Sweep", autos::leftTrench1Sweep);
+        autoChooser.addRoutine("Left Trench 2 Sweep", autos::leftTrench2Sweep);
+        autoChooser.addRoutine("Right Trench 1 Sweep", autos::rightTrench1Sweep);
+        autoChooser.addRoutine("Right Trench 2 Sweep", autos::rightTrench2Sweep);
 
         // Characterization routines
         if (Constants.isTuningMode()) {

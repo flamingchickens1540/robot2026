@@ -3,6 +3,7 @@ package org.team1540.robot2026.subsystems.spindexer;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.Logger;
@@ -35,6 +36,11 @@ public class Spindexer extends SubsystemBase {
 
         spinMotorDisconnectedAlert.set(!inputs.spinMotorConnected);
         feederMotorDisconnectedAlert.set(!inputs.feederMotorConnected);
+
+        Command activeCmd = CommandScheduler.getInstance().requiring(this);
+        Logger.recordOutput(
+                "Spindexer/ActiveCommand",
+                activeCmd != null ? activeCmd.getName() + "_" + Integer.toHexString(activeCmd.hashCode()) : "None");
 
         LoggedTracer.record("Spindexer");
     }

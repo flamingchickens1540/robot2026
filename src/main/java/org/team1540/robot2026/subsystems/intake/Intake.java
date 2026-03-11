@@ -7,6 +7,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -56,6 +57,7 @@ public class Intake extends SubsystemBase {
         if (hasInstance) throw new IllegalStateException("Instance of intake already exists");
         hasInstance = true;
         this.io = io;
+        io.resetPivotPosition(PIVOT_MIN_ANGLE);
     }
 
     public void periodic() {
@@ -83,6 +85,11 @@ public class Intake extends SubsystemBase {
 
         pivotDisconnectedAlert.set(!inputs.pivotConnected);
         rollerDisconnectedAlert.set(!inputs.spinConnected);
+
+        Command activeCmd = CommandScheduler.getInstance().requiring(this);
+        Logger.recordOutput(
+                "Intake/ActiveCommand",
+                activeCmd != null ? activeCmd.getName() + "_" + Integer.toHexString(activeCmd.hashCode()) : "None");
 
         LoggedTracer.record("Intake");
     }
@@ -153,21 +160,25 @@ public class Intake extends SubsystemBase {
     public Command jiggleCommand() {
         return Commands.runOnce(() -> setRollerVoltage(12.0))
                 .andThen(Commands.repeatingSequence(
-                                commandToSetpoint(IntakeState.JIGGLE).withTimeout(0.5),
-                                commandToSetpoint(IntakeState.INTAKE).withTimeout(0.5))
+                                commandToSetpoint(IntakeState.INTAKE).withTimeout(0.25),
+                                commandToSetpoint(IntakeState.JIGGLE).withTimeout(0.25))
                         .finallyDo(() -> {
-                            this.holdPivot();
+                            this.setPivotSetpoint(IntakeState.INTAKE.pivotPosition());
                             this.setRollerVoltage(0.0);
                         }))
                 .withName("IntakeJiggleCommand");
     }
 
     public Command zeroCommand() {
-        return runOnce(() -> setPivotVoltage(-4))
+        return runOnce(() -> setPivotVoltage(4))
                 .andThen(
-                        Commands.waitUntil(new Trigger(() -> inputs.pivotStatorCurrentAmps >= 20).debounce(0.5)),
-                        runOnce(() -> resetPivotPosition(PIVOT_MIN_ANGLE)))
-                .finallyDo(this::stopAll);
+                        Commands.waitUntil(new Trigger(() -> inputs.pivotStatorCurrentAmps >= 80).debounce(0.5)),
+                        runOnce(() -> resetPivotPosition(PIVOT_MAX_ANGLE.plus(Rotation2d.fromDegrees(3.0)))))
+                .finallyDo(() -> setPivotVoltage(0.0));
+    }
+
+    public Command zeroWhileRunningCommand() {
+        return runOnce(() -> setRollerVoltage(12.0)).andThen(zeroCommand());
     }
 
     public static Intake createReal() {

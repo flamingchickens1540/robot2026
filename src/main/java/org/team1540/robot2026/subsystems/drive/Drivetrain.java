@@ -15,10 +15,7 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.*;
 import java.util.Arrays;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -49,7 +46,7 @@ public class Drivetrain extends SubsystemBase {
 
     private static final LoggedTunableNumber rotationKP = new LoggedTunableNumber("Drivetrain/Rotation/kP", 3.3);
     private static final LoggedTunableNumber rotationKI = new LoggedTunableNumber("Drivetrain/Rotation/kI", 0.0);
-    private static final LoggedTunableNumber rotationKD = new LoggedTunableNumber("Drivetrain/Rotation/kD", 0.3);
+    private static final LoggedTunableNumber rotationKD = new LoggedTunableNumber("Drivetrain/Rotation/kD", 0.0);
 
     private static final LoggedTunableNumber sampleRejectionThreshold =
             new LoggedTunableNumber("Drivetrain/Odometry/SampleRejectionThreshold", 2.0);
@@ -164,7 +161,7 @@ public class Drivetrain extends SubsystemBase {
         ChassisSpeeds speeds = kinematics.toChassisSpeeds(getModuleStates());
         speeds.omegaRadiansPerSecond =
                 gyroInputs.connected ? gyroInputs.yawVelocityRadPerSec : speeds.omegaRadiansPerSecond;
-        RobotState.getInstance().setRobotVelocity(speeds);
+        RobotState.getInstance().addVelocityObservation(speeds);
 
         // Stop modules when disabled
         if (DriverStation.isDisabled()) {
@@ -322,15 +319,18 @@ public class Drivetrain extends SubsystemBase {
     }
 
     public Command teleopDriveWithHeadingCommand(EnvisionController controller, Supplier<Rotation2d> heading) {
-        return percentDriveCommand(() -> JoystickUtil.deadzonedJoystickTranslation(-controller.getLeftY(), -controller.getLeftX(), 0.1),() -> headingController.calculate(
-                RobotState.getInstance().getRobotHeading()
-                        .getRadians()))
+        return percentDriveCommand(
+                        () -> JoystickUtil.deadzonedJoystickTranslation(
+                                -controller.getLeftY(), -controller.getLeftX(), 0.1),
+                        () -> headingController.calculate(
+                                RobotState.getInstance().getRobotHeading().getRadians()))
                 .beforeStarting(() -> headingController.reset(
                         RobotState.getInstance().getRobotHeading().getRadians(),
                         RobotState.getInstance().getRobotVelocity().omegaRadiansPerSecond))
                 .alongWith(Commands.run(() -> Logger.recordOutput("Drivetrain/HeadingGoal", heading.get())))
                 .until(() -> Math.abs(controller.getRightX()) >= 0.1);
     }
+
     public static Drivetrain createReal() {
         if (Constants.CURRENT_MODE != Constants.Mode.REAL)
             DriverStation.reportWarning("Using real drivetrain on simulated robot", false);

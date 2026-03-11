@@ -4,9 +4,11 @@ import static org.team1540.robot2026.subsystems.turret.TurretConstants.*;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -45,6 +47,9 @@ public class Turret extends SubsystemBase {
     private final Alert zeroingErrorAlert = new Alert(
             "Large encoder error of " + zeroingCRTError.getDegrees() + " degrees during zeroing",
             Alert.AlertType.kWarning);
+    private final Alert unzeroedAlert = new Alert(
+            "Large error between CRT position and motor position, press driver back button to rezero",
+            Alert.AlertType.kError);
 
     public Turret(TurretIO turretIO) {
         if (hasInstance) throw new IllegalStateException("Instance of turret already exists");
@@ -61,10 +66,19 @@ public class Turret extends SubsystemBase {
 
         if (DriverStation.isDisabled()) {
             stop();
-            Logger.recordOutput("Turret/CRT/CalculatedPosition", calculateTurretAngle());
+            Rotation2d crtAngle = calculateTurretAngle();
+            Logger.recordOutput("Turret/CRT/CalculatedPosition", crtAngle);
+
+            double crtToMotorError =
+                    Math.abs(calculateTurretAngle().minus(inputs.position).getDegrees());
+            unzeroedAlert.setText("Large error between CRT position and motor position of " + crtToMotorError
+                    + " deg, press driver back button to rezero");
+            unzeroedAlert.set(crtToMotorError > 1.0 && DriverStation.isDisabled());
         }
 
-        RobotState.getInstance().addTurretObservation(getPosition(), inputs.positionTimestamp);
+        RobotState.getInstance()
+                .addTurretObservation(
+                        getPosition(), Units.rotationsToRadians(getVelocityRPS()), inputs.positionTimestamp);
 
         LoggedTunableNumber.ifChanged(hashCode(), () -> io.configPID(kP.get(), kI.get(), kD.get()), kP, kI, kD);
         LoggedTunableNumber.ifChanged(hashCode(), () -> io.configFF(kS.get(), kV.get()), kS, kV);
@@ -74,6 +88,11 @@ public class Turret extends SubsystemBase {
         bigEncoderDisconnectedAlert.set(!inputs.bigEncoderConnected);
         zeroingErrorAlert.setText("Large encoder error of " + zeroingCRTError.getDegrees() + " degrees during zeroing");
         zeroingErrorAlert.set(zeroingCRTError.getDegrees() > 5.0);
+
+        Command activeCmd = CommandScheduler.getInstance().requiring(this);
+        Logger.recordOutput(
+                "Turret/ActiveCommand",
+                activeCmd != null ? activeCmd.getName() + "_" + Integer.toHexString(activeCmd.hashCode()) : "None");
 
         LoggedTracer.record("Turret");
     }
@@ -136,7 +155,11 @@ public class Turret extends SubsystemBase {
 
     @AutoLogOutput(key = "Turret/AtSetpoint")
     public boolean atSetpoint() {
-        return MathUtil.isNear(setpointRotation.getDegrees(), inputs.position.getDegrees(), POS_ERR_TOLERANCE_DEGREES);
+        return atSetpoint(Rotation2d.fromDegrees(POS_ERR_TOLERANCE_DEGREES));
+    }
+
+    public boolean atSetpoint(Rotation2d tolerance) {
+        return MathUtil.isNear(setpointRotation.getDegrees(), inputs.position.getDegrees(), tolerance.getDegrees());
     }
 
     @AutoLogOutput(key = "Turret/Setpoint")
@@ -165,7 +188,7 @@ public class Turret extends SubsystemBase {
         return getPosition().plus(RobotState.getInstance().getRobotHeading());
     }
 
-    public double getVelocity() {
+    public double getVelocityRPS() {
         return inputs.velocityRPS;
     }
 
