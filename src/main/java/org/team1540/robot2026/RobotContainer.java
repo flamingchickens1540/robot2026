@@ -122,7 +122,8 @@ public class RobotContainer {
         driver.x().onTrue(drivetrain.runOnce(drivetrain::stop).withName("DriveXMode"));
 
         // Shoot/intake controls
-        Command aimCommand = Commands.either(
+        Command intakeCmd = intake.commandRunIntake(1.0).withName("IntakeCommand");
+        Command shootCmd = Commands.either(
                         ShootingCommands.shooterAimTurretLockedCommand(
                                         driver.getHID(), drivetrain, shooter, hood, turret)
                                 .withName("ShooterAimTurretLockedCommand")
@@ -131,22 +132,17 @@ public class RobotContainer {
                                 .withName("ShooterAimCommand")
                                 .asProxy(),
                         () -> turretLockedMode)
-                .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0));
-
-        Command feedShooterCmd = FeedingCommands.feedCommand(turret, hood, spindexer);
-
-        Command intakeCmd = intake.commandRunIntake(1.0).withName("IntakeCommand");
+                .alongWith(
+                        FeedingCommands.feedCommand(turret, hood, spindexer),
+                        intake.jiggleCommand()
+                                .asProxy()
+                                .unless(intakeCmd::isScheduled)
+                                .repeatedly(),
+                        JoystickUtil.rumbleCommand(driver.getHID(), 1.0))
+                .withName("ShootCommand");
 
         driver.leftTrigger().toggleOnTrue(intakeCmd);
-        driver.rightTrigger()
-                .toggleOnTrue(aimCommand
-                        .alongWith(
-                                feedShooterCmd,
-                                intake.jiggleCommand()
-                                        .asProxy()
-                                        .unless(intakeCmd::isScheduled)
-                                        .repeatedly())
-                        .withName("ShootCommand"));
+        driver.rightTrigger().toggleOnTrue(shootCmd);
 
         // Climb controls
         driver.leftSideButton()
@@ -238,16 +234,16 @@ public class RobotContainer {
                 .whileTrue(leds.viewFull.commandDefaultPattern(() -> CustomLEDPatterns.movingRainbow(Hertz.of(0.5))));
         RobotModeTriggers.teleop().whileTrue(leds.viewFull.commandDefaultPattern(() -> {
             if (intakeCmd.isScheduled()) {
-                if (!aimCommand.isScheduled()) return LEDPattern.solid(Color.kPurple);
+                if (!shootCmd.isScheduled()) return LEDPattern.solid(Color.kPurple);
                 else return LEDPattern.solid(Color.kPurple).blink(Seconds.of(0.5));
-            } else if (aimCommand.isScheduled()) {
+            } else if (shootCmd.isScheduled()) {
                 return LEDPattern.solid(Color.kYellow).blink(Seconds.of(0.5));
             } else return LEDPattern.solid(LEDs.getAllianceColor());
         }));
         RobotModeTriggers.autonomous()
                 .whileTrue(leds.viewFull.commandDefaultPattern(
                         () -> LEDPattern.solid(LEDs.getAllianceColor()).blink(Seconds.of(0.5))));
-        new Trigger(() -> !FeedingCommands.shouldFeed(turret, hood) && feedShooterCmd.isScheduled())
+        new Trigger(() -> !FeedingCommands.shouldFeed(turret, hood) && shootCmd.isScheduled())
                 .whileTrue(leds.viewFull.commandShowPattern(CustomLEDPatterns.strobe(Color.kOrange)));
         MatchTriggers.timeRemaining(30)
                 .or(MatchTriggers.timeRemaining(15))
@@ -268,7 +264,6 @@ public class RobotContainer {
                                 .andThen(spindexer
                                         .runCommand(() -> 1.0, () -> 1.0)
                                         .withTimeout(5.0)))));
-        autoChooser.addRoutine("Test", autos::testPath);
         autoChooser.addRoutine("Left Trench 1 Sweep", autos::leftTrench1Sweep);
         autoChooser.addRoutine("Left Trench 2 Sweep", autos::leftTrench2Sweep);
         autoChooser.addRoutine("Right Trench 1 Sweep", autos::rightTrench1Sweep);
@@ -276,6 +271,7 @@ public class RobotContainer {
 
         // Characterization routines
         if (Constants.isTuningMode()) {
+            autoChooser.addRoutine("Test", autos::testPath);
             autoChooser.addCmd(
                     "Drive FF Characterization",
                     () -> CharacterizationCommands.feedforward(

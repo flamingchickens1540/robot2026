@@ -63,8 +63,6 @@ public class Autos {
                     }
                 });
         this.climber = climber;
-        autoFactory.bind("StartIntake", intake.commandRunIntake(1.0));
-        autoFactory.bind("StopIntake", intake.commandRunIntake(0.0));
     }
 
     private void resetPoseInSim(AutoRoutine routine, AutoTrajectory startingTrajectory) {
@@ -126,14 +124,14 @@ public class Autos {
         firstSweep
                 .done()
                 .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
-                        .alongWith(spindexer.runCommand(() -> 1.0, () -> 1.0), intake.jiggleCommand())
+                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand())
                         .withTimeout(3.5)
                         .andThen(secondSweep.spawnCmd()));
         secondSweep.active().onTrue(intake.commandRunIntake(1.0));
         secondSweep
                 .done()
                 .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
-                        .alongWith(spindexer.runCommand(() -> 1.0, () -> 1.0), intake.jiggleCommand()));
+                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand()));
         return routine;
     }
 
@@ -156,15 +154,20 @@ public class Autos {
         firstSweep
                 .done()
                 .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
-                        .alongWith(spindexer.runCommand(() -> 1.0, () -> 1.0), intake.jiggleCommand())
+                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand())
                         .withTimeout(3.5)
                         .andThen(secondSweep.spawnCmd()));
         secondSweep.active().onTrue(intake.commandRunIntake(1.0));
         secondSweep
                 .done()
-                .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
-                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer)));
-        moveToDepot.done().onTrue(intake.jiggleCommand());
+                .onTrue(moveToDepot
+                        .spawnCmd()
+                        .andThen(ShootingCommands.hubAimCommand(turret, shooter, hood)
+                                .alongWith(
+                                        FeedingCommands.feedCommand(turret, hood, spindexer),
+                                        intake.jiggleCommand().asProxy())));
+        moveToDepot.atTime("StartIntake").onTrue(intake.commandRunIntake(1.0));
+        moveToDepot.atTime("StopIntake").onTrue(intake.jiggleCommand());
         return routine;
     }
 
@@ -206,45 +209,14 @@ public class Autos {
         firstSweep
                 .done()
                 .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
-                        .alongWith(spindexer.runCommand(() -> 1.0, () -> 1.0), intake.jiggleCommand())
+                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand())
                         .withTimeout(3.5)
                         .andThen(secondSweep.spawnCmd()));
         secondSweep.active().onTrue(intake.commandRunIntake(1.0));
         secondSweep
                 .done()
                 .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
-                        .alongWith(spindexer.runCommand(() -> 1.0, () -> 1.0), intake.jiggleCommand()));
-        return routine;
-    }
-
-    public AutoRoutine rightTrench2SweepDepot() {
-        final String trajName = "LeftTrench2SweepDepot";
-
-        AutoRoutine routine = autoFactory.newRoutine("LeftTrench2SweepDepot");
-        AutoTrajectory firstSweep = TrajectoryMirror.apply(routine.trajectory(trajName, 0), routine);
-        AutoTrajectory secondSweep = TrajectoryMirror.apply(routine.trajectory(trajName, 1), routine);
-        AutoTrajectory moveToDepot = TrajectoryMirror.apply(routine.trajectory(trajName, 2), routine);
-
-        resetPoseInSim(routine, firstSweep);
-
-        routine.active()
-                .onTrue(firstSweep
-                        .cmd()
-                        .alongWith(
-                                intake.zeroWhileRunningCommand().andThen(intake.commandRunIntake(1.0)),
-                                hood.zeroCommand().withTimeout(1.0).asProxy()));
-        firstSweep
-                .done()
-                .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
-                        .alongWith(spindexer.runCommand(() -> 1.0, () -> 1.0), intake.jiggleCommand())
-                        .withTimeout(3.5)
-                        .andThen(secondSweep.spawnCmd()));
-        secondSweep.active().onTrue(intake.commandRunIntake(1.0));
-        secondSweep
-                .done()
-                .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
-                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer)));
-        moveToDepot.done().onTrue(intake.jiggleCommand());
+                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand()));
         return routine;
     }
 }
