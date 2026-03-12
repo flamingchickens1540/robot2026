@@ -119,7 +119,7 @@ public class RobotContainer {
                 () -> robotState.getAimingParameters().turretAngle(),
                 () -> robotState.getAimingParameters().turretVelocityRadPerSec(),
                 true));
-        driver.x().onTrue(drivetrain.runOnce(drivetrain::stop).withName("DriveXMode"));
+        driver.x().onTrue(drivetrain.runOnce(drivetrain::stopWithX).withName("DriveXMode"));
         driver.start()
                 .onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual).withName("ManualDriveZero"));
 
