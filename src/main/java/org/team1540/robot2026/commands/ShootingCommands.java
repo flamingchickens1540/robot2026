@@ -55,17 +55,16 @@ public class ShootingCommands {
     }
 
     public static Command shooterAimTurretLockedCommand(
-            EnvisionController controller, Drivetrain drivetrain, Shooter shooter, Hood hood, Turret turret) {
+            EnvisionController controller, Drivetrain drivetrain, Shooter shooter, Hood hood) {
         return Commands.parallel(
                         drivetrain.teleopDriveWithHeadingCommand(controller, () -> RobotState.getInstance()
                                 .getAimingParameters()
                                 .turretAngle()
-                                .minus(turret.getPosition())),
+                                .minus(RobotState.getInstance().getTurretAngle())),
                         shooter.commandVelocity(() ->
                                 RobotState.getInstance().getAimingParameters().shooterRPM()),
                         hood.setpointCommand(() ->
-                                RobotState.getInstance().getAimingParameters().hoodAngle()),
-                        Commands.run(turret::stop, turret))
+                                RobotState.getInstance().getAimingParameters().hoodAngle()))
                 .finallyDo(() -> hood.setSetpoint(HoodConstants.MIN_ANGLE));
     }
 
@@ -104,11 +103,9 @@ public class ShootingCommands {
                 .finallyDo(() -> hood.setSetpoint(HoodConstants.MIN_ANGLE));
     }
 
-    public static Command hubOneMeterShotCommand(Turret turret, Shooter shooter, Hood hood) {
+    public static Command hubOneMeterShotCommand(Shooter shooter, Hood hood) {
         return Commands.parallel(
-                        turret.run(turret::stop),
-                        shooter.commandVelocity(() -> 1150.0),
-                        hood.setpointCommand(() -> Rotation2d.fromDegrees(15.0)))
+                        shooter.commandVelocity(() -> 1678.0), hood.setpointCommand(() -> Rotation2d.fromDegrees(15.0)))
                 .finallyDo(() -> hood.setSetpoint(HoodConstants.MIN_ANGLE));
     }
 

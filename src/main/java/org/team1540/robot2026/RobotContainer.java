@@ -120,12 +120,13 @@ public class RobotContainer {
                 () -> robotState.getAimingParameters().turretVelocityRadPerSec(),
                 true));
         driver.x().onTrue(drivetrain.runOnce(drivetrain::stop).withName("DriveXMode"));
+        driver.start()
+                .onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual).withName("ManualDriveZero"));
 
         // Shoot/intake controls
         Command intakeCmd = intake.commandRunIntake(1.0).withName("IntakeCommand");
         Command shootCmd = Commands.either(
-                        ShootingCommands.shooterAimTurretLockedCommand(
-                                        driver.getHID(), drivetrain, shooter, hood, turret)
+                        ShootingCommands.shooterAimTurretLockedCommand(driver.getHID(), drivetrain, shooter, hood)
                                 .withName("ShooterAimTurretLockedCommand")
                                 .asProxy(),
                         ShootingCommands.shooterAimCommand(turret, shooter, hood)
@@ -188,8 +189,6 @@ public class RobotContainer {
                             intakeManualAlert.set(false);
                         })
                         .withName("IntakeManualControl"));
-        copilot.y()
-                .onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual).withName("ManualDriveZero"));
         copilot.start()
                 .whileTrue(hood.zeroCommand()
                         .andThen(leds.viewFull
@@ -206,16 +205,16 @@ public class RobotContainer {
                 .whileTrue(spindexer.runCommand(() -> -0.67, () -> -0.67).withName("SpindexerReverseCommand"));
         copilot.y()
                 .toggleOnTrue(turret.run(turret::stop)
-                        .andThen(() -> {
+                        .alongWith(Commands.runOnce(() -> {
                             turretLockedMode = true;
                             turretLockedAlert.set(true);
-                        })
+                        }))
                         .finallyDo(() -> {
                             turretLockedMode = false;
                             turretLockedAlert.set(false);
                         }));
         copilot.rightTrigger()
-                .whileTrue(ShootingCommands.hubOneMeterShotCommand(turret, shooter, hood)
+                .whileTrue(ShootingCommands.hubOneMeterShotCommand(shooter, hood)
                         .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand())
                         .withName("CloseShotCommand"));
 
@@ -235,14 +234,14 @@ public class RobotContainer {
         RobotModeTriggers.teleop().whileTrue(leds.viewFull.commandDefaultPattern(() -> {
             if (intakeCmd.isScheduled()) {
                 if (!shootCmd.isScheduled()) return LEDPattern.solid(Color.kPurple);
-                else return LEDPattern.solid(Color.kPurple).blink(Seconds.of(0.5));
+                else return LEDPattern.solid(Color.kPurple).blink(Seconds.of(0.25));
             } else if (shootCmd.isScheduled()) {
-                return LEDPattern.solid(Color.kYellow).blink(Seconds.of(0.5));
+                return LEDPattern.solid(LEDs.getAllianceColor()).blink(Seconds.of(0.25));
             } else return LEDPattern.solid(LEDs.getAllianceColor());
         }));
         RobotModeTriggers.autonomous()
                 .whileTrue(leds.viewFull.commandDefaultPattern(
-                        () -> LEDPattern.solid(LEDs.getAllianceColor()).blink(Seconds.of(0.5))));
+                        () -> LEDPattern.solid(LEDs.getAllianceColor()).blink(Seconds.of(0.25))));
         new Trigger(() -> !FeedingCommands.shouldFeed(turret, hood) && shootCmd.isScheduled())
                 .whileTrue(leds.viewFull.commandShowPattern(CustomLEDPatterns.strobe(Color.kOrange)));
         MatchTriggers.timeRemaining(30)
@@ -266,6 +265,7 @@ public class RobotContainer {
                                         .withTimeout(5.0)))));
         autoChooser.addRoutine("Left Trench 1 Sweep", autos::leftTrench1Sweep);
         autoChooser.addRoutine("Left Trench 2 Sweep", autos::leftTrench2Sweep);
+        autoChooser.addRoutine("Left Trench 2 Sweep Depot", autos::leftTrench2SweepDepot);
         autoChooser.addRoutine("Right Trench 1 Sweep", autos::rightTrench1Sweep);
         autoChooser.addRoutine("Right Trench 2 Sweep", autos::rightTrench2Sweep);
 

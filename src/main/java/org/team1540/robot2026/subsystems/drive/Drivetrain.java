@@ -323,7 +323,11 @@ public class Drivetrain extends SubsystemBase {
                         () -> JoystickUtil.deadzonedJoystickTranslation(
                                 -controller.getLeftY(), -controller.getLeftX(), 0.1),
                         () -> headingController.calculate(
-                                RobotState.getInstance().getRobotHeading().getRadians()))
+                                        RobotState.getInstance()
+                                                .getRobotHeading()
+                                                .getRadians(),
+                                        heading.get().getRadians())
+                                / MAX_ANGULAR_SPEED_RAD_PER_SEC)
                 .beforeStarting(() -> headingController.reset(
                         RobotState.getInstance().getRobotHeading().getRadians(),
                         RobotState.getInstance().getRobotVelocity().omegaRadiansPerSecond))
