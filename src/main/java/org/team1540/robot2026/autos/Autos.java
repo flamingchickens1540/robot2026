@@ -171,6 +171,41 @@ public class Autos {
         return routine;
     }
 
+    public AutoRoutine leftTrench2SweepDepotPause() {
+        final String trajName = "LeftTrench2SweepDepotPause";
+
+        AutoRoutine routine = autoFactory.newRoutine("LeftTrench2SweepDepotPause");
+        AutoTrajectory firstSweep = routine.trajectory(trajName, 0);
+        AutoTrajectory secondSweep = routine.trajectory(trajName, 1);
+        AutoTrajectory moveToDepot = routine.trajectory(trajName, 2);
+
+        resetPoseInSim(routine, firstSweep);
+
+        routine.active()
+                .onTrue(firstSweep
+                        .cmd()
+                        .alongWith(
+                                intake.zeroWhileRunningCommand().andThen(intake.commandRunIntake(1.0)),
+                                hood.zeroCommand().withTimeout(1.0).asProxy()));
+        firstSweep
+                .done()
+                .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
+                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand())
+                        .withTimeout(3.5)
+                        .andThen(secondSweep.spawnCmd()));
+        secondSweep.active().onTrue(intake.commandRunIntake(1.0));
+        secondSweep
+                .done()
+                .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
+                                .alongWith(
+                                        FeedingCommands.feedCommand(turret, hood, spindexer),
+                                        intake.jiggleCommand().asProxy(),
+                                        Commands.waitSeconds(1.0).andThen(moveToDepot.spawnCmd())));
+        moveToDepot.atTime("StartIntake").onTrue(intake.commandRunIntake(1.0));
+        moveToDepot.atTime("StopIntake").onTrue(intake.jiggleCommand());
+        return routine;
+    }
+
     public AutoRoutine rightTrench1Sweep() {
         final String trajName = "LeftTrench1Sweep";
 
