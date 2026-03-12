@@ -266,6 +266,7 @@ public class RobotContainer {
         autoChooser.addRoutine("Left Trench 1 Sweep", autos::leftTrench1Sweep);
         autoChooser.addRoutine("Left Trench 2 Sweep", autos::leftTrench2Sweep);
         autoChooser.addRoutine("Left Trench 2 Sweep Depot", autos::leftTrench2SweepDepot);
+        autoChooser.addRoutine("Left Trench 2 Sweep Depot Pause", autos::leftTrench2SweepDepotPause);
         autoChooser.addRoutine("Right Trench 1 Sweep", autos::rightTrench1Sweep);
         autoChooser.addRoutine("Right Trench 2 Sweep", autos::rightTrench2Sweep);
 
