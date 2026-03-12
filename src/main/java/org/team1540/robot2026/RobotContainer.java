@@ -154,8 +154,8 @@ public class RobotContainer {
                         .withName("ClimbUpCommand"));
 
         // Misc controls
-        driver.leftOuterPaddle().whileTrue(intake.commandRunIntake(-0.67).withName("OuttakeCommand"));
-        driver.leftInnerPaddle()
+        driver.leftInnerPaddle().whileTrue(intake.commandRunIntake(-0.67).withName("OuttakeCommand"));
+        driver.leftOuterPaddle()
                 .onTrue(intake.commandToSetpoint(Intake.IntakeState.STOW).withName("StowIntakeCommand"));
         driver.rightOuterPaddle()
                 .onTrue(hood.setpointCommand(() -> HoodConstants.MIN_ANGLE).withName("HoodDownCommand"));
