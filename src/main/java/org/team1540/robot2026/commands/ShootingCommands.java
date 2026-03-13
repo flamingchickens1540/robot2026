@@ -103,17 +103,16 @@ public class ShootingCommands {
                 .finallyDo(() -> hood.setSetpoint(HoodConstants.MIN_ANGLE));
     }
 
-    public static Command hubOneMeterShotCommand(Shooter shooter, Hood hood) {
+    public static Command closeShotCommand(Shooter shooter, Hood hood) {
         return Commands.parallel(
                         shooter.commandVelocity(() -> 1678.0), hood.setpointCommand(() -> Rotation2d.fromDegrees(15.0)))
                 .finallyDo(() -> hood.setSetpoint(HoodConstants.MIN_ANGLE));
     }
 
-    public static Command trenchMeterShotCommand(Shooter shooter, Hood hood){
+    public static Command trenchShotCommand(Shooter shooter, Hood hood) {
         return Commands.parallel(
                         shooter.commandVelocity(() -> 2056.0), hood.setpointCommand(() -> Rotation2d.fromDegrees(23.4)))
                 .finallyDo(() -> hood.setSetpoint(HoodConstants.MIN_ANGLE));
-
     }
 
     public static Command shuffleAimCommand(Turret turret, Shooter shooter, Hood hood) {

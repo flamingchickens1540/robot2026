@@ -22,6 +22,11 @@ import org.team1540.robot2026.util.AllianceFlipUtil;
 import org.team1540.robot2026.util.auto.TrajectoryMirror;
 
 public class Autos {
+    public enum AutoSide {
+        LEFT,
+        RIGHT
+    }
+
     private final RobotState robotState = RobotState.getInstance();
     private final AutoFactory autoFactory;
 
@@ -99,7 +104,7 @@ public class Autos {
                 .onTrue(traj.cmd()
                         .alongWith(
                                 intake.zeroWhileRunningCommand().andThen(intake.commandRunIntake(1.0)),
-                                hood.zeroCommand().withTimeout(1.0).asProxy()));
+                                hood.zeroCommand().withTimeout(1.0)));
         traj.done()
                 .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
                         .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand()));
@@ -112,6 +117,7 @@ public class Autos {
         AutoRoutine routine = autoFactory.newRoutine("LeftTrench2Sweep");
         AutoTrajectory firstSweep = routine.trajectory(trajName, 0);
         AutoTrajectory secondSweep = routine.trajectory(trajName, 1);
+        AutoTrajectory sprint = routine.trajectory(trajName, 2);
 
         resetPoseInSim(routine, firstSweep);
 
@@ -120,7 +126,7 @@ public class Autos {
                         .cmd()
                         .alongWith(
                                 intake.zeroWhileRunningCommand().andThen(intake.commandRunIntake(1.0)),
-                                hood.zeroCommand().withTimeout(1.0).asProxy()));
+                                hood.zeroCommand().withTimeout(1.0)));
         firstSweep
                 .done()
                 .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
@@ -131,7 +137,9 @@ public class Autos {
         secondSweep
                 .done()
                 .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
-                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand()));
+                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand())
+                        .withTimeout(5.5)
+                        .andThen(sprint.spawnCmd()));
         return routine;
     }
 
@@ -150,7 +158,7 @@ public class Autos {
                         .cmd()
                         .alongWith(
                                 intake.zeroWhileRunningCommand().andThen(intake.commandRunIntake(1.0)),
-                                hood.zeroCommand().withTimeout(1.0).asProxy()));
+                                hood.zeroCommand().withTimeout(1.0)));
         firstSweep
                 .done()
                 .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
@@ -186,7 +194,7 @@ public class Autos {
                         .cmd()
                         .alongWith(
                                 intake.zeroWhileRunningCommand().andThen(intake.commandRunIntake(1.0)),
-                                hood.zeroCommand().withTimeout(1.0).asProxy()));
+                                hood.zeroCommand().withTimeout(1.0)));
         firstSweep
                 .done()
                 .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
@@ -197,10 +205,10 @@ public class Autos {
         secondSweep
                 .done()
                 .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
-                                .alongWith(
-                                        FeedingCommands.feedCommand(turret, hood, spindexer),
-                                        intake.jiggleCommand().asProxy(),
-                                        Commands.waitSeconds(1.0).andThen(moveToDepot.spawnCmd())));
+                        .alongWith(
+                                FeedingCommands.feedCommand(turret, hood, spindexer),
+                                intake.jiggleCommand().asProxy(),
+                                moveToDepot.spawnCmd()));
         moveToDepot.atTime("StartIntake").onTrue(intake.commandRunIntake(1.0));
         moveToDepot.atTime("StopIntake").onTrue(intake.jiggleCommand());
         return routine;
@@ -218,7 +226,7 @@ public class Autos {
                 .onTrue(traj.cmd()
                         .alongWith(
                                 intake.zeroWhileRunningCommand().andThen(intake.commandRunIntake(1.0)),
-                                hood.zeroCommand().withTimeout(1.0).asProxy()));
+                                hood.zeroCommand().withTimeout(1.0)));
         traj.done()
                 .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
                         .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand()));
@@ -232,6 +240,7 @@ public class Autos {
         AutoRoutine routine = autoFactory.newRoutine("RightTrench2Sweep");
         AutoTrajectory firstSweep = TrajectoryMirror.apply(routine.trajectory(trajName, 0), routine);
         AutoTrajectory secondSweep = TrajectoryMirror.apply(routine.trajectory(trajName, 1), routine);
+        AutoTrajectory sprint = TrajectoryMirror.apply(routine.trajectory(trajName, 2), routine);
 
         resetPoseInSim(routine, firstSweep);
 
@@ -240,7 +249,7 @@ public class Autos {
                         .cmd()
                         .alongWith(
                                 intake.zeroWhileRunningCommand().andThen(intake.commandRunIntake(1.0)),
-                                hood.zeroCommand().withTimeout(1.0).asProxy()));
+                                hood.zeroCommand().withTimeout(1.0)));
         firstSweep
                 .done()
                 .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
@@ -251,7 +260,9 @@ public class Autos {
         secondSweep
                 .done()
                 .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
-                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand()));
+                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand())
+                        .withTimeout(5.5)
+                        .andThen());
         return routine;
     }
 }

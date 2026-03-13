@@ -79,6 +79,9 @@ public class RobotState {
     private final InterpolatingDoubleTreeMap shuffleShooterSpeedMap = new InterpolatingDoubleTreeMap();
     private final InterpolatingDoubleTreeMap shuffleTOFMap = new InterpolatingDoubleTreeMap();
 
+    @AutoLogOutput(key = "Aiming/ShooterRPMOffset")
+    private double shooterRPMOffset = 0.0;
+
     @AutoLogOutput(key = "Aiming/Hub/LastParameters")
     private AimingParameters lastHubAimingParameters;
 
@@ -340,7 +343,7 @@ public class RobotState {
                 target.minus(lookaheadPose.getTranslation()).getAngle(),
                 -getRobotVelocity().omegaRadiansPerSecond,
                 hoodAngleMap.apply(lookaheadDistance),
-                shooterSpeedMap.applyAsDouble(lookaheadDistance));
+                shooterSpeedMap.applyAsDouble(lookaheadDistance) + shooterRPMOffset);
     }
 
     public AimingParameters getHubAimingParameters() {
@@ -376,6 +379,10 @@ public class RobotState {
     public void clearAimingParameters() {
         lastHubAimingParameters = null;
         lastShuffleAimingParameters = null;
+    }
+
+    public void incrementShooterRPMOffset(double rpm) {
+        shooterRPMOffset += rpm;
     }
 
     @AutoLogOutput(key = "TrenchAvoidance/Active")

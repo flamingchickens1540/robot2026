@@ -167,6 +167,9 @@ public class RobotContainer {
                         .ignoringDisable(true));
 
         // Copilot controls
+        copilot.povUp().onTrue(Commands.runOnce(() -> RobotState.getInstance().incrementShooterRPMOffset(20)));
+        copilot.povDown().onTrue(Commands.runOnce(() -> RobotState.getInstance().incrementShooterRPMOffset(-20)));
+
         copilot.back()
                 .whileTrue(turret.zeroCommand()
                         .andThen(leds.viewFull
@@ -221,22 +224,23 @@ public class RobotContainer {
                             turretLockedAlert.set(false);
                         }));
         copilot.rightTrigger()
-                .whileTrue(ShootingCommands.hubOneMeterShotCommand(shooter, hood)
+                .whileTrue(ShootingCommands.closeShotCommand(shooter, hood)
                         .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand())
                         .withName("CloseShotCommand"));
         copilot.rightBumper()
-                .whileTrue(ShootingCommands.trenchMeterShotCommand(shooter, hood)
+                .whileTrue(ShootingCommands.trenchShotCommand(shooter, hood)
                         .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand())
                         .withName("trenchSHotCommand"));
 
         // Shooter tuning bindings
         if (Constants.isTuningMode()) {
-//            copilot.rightBumper()
-//                    .toggleOnTrue(ShootingCommands.tuneShooterCommand(turret, shooter, hood)
-//                            .withName("TuneShooterCommand"));
-            copilot.povUp()
-                    .whileTrue(
-                            FeedingCommands.feedCommand(turret, hood, spindexer).alongWith(intake.jiggleCommand()));
+            //            copilot.rightBumper()
+            //                    .toggleOnTrue(ShootingCommands.tuneShooterCommand(turret, shooter, hood)
+            //                            .withName("TuneShooterCommand"));
+            //            copilot.povUp()
+            //                    .whileTrue(
+            //                            FeedingCommands.feedCommand(turret, hood,
+            // spindexer).alongWith(intake.jiggleCommand()));
         }
 
         // LED bindings
