@@ -46,7 +46,7 @@ public class RobotState {
     private static final LoggedTunableNumber shuffleTargetX =
             new LoggedTunableNumber("Aiming/ShuffleX", FieldConstants.LinesVertical.starting - 1.0);
     private static final LoggedTunableNumber trenchAvoidanceRetractionTime =
-            new LoggedTunableNumber("TrenchAvoidance/RetractionTime", 0.25);
+            new LoggedTunableNumber("TrenchAvoidance/RetractionTime", 0.3);
 
     private Rotation2d lastGyroRotation = Rotation2d.kZero;
     private SwerveModulePosition[] lastModulePositions = new SwerveModulePosition[] {
@@ -376,7 +376,7 @@ public class RobotState {
                 : getShuffleAimingParameters();
     }
 
-    public void clearAimingParameters() {
+    private void clearAimingParameters() {
         lastHubAimingParameters = null;
         lastShuffleAimingParameters = null;
     }
