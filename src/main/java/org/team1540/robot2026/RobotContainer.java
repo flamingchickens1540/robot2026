@@ -224,12 +224,16 @@ public class RobotContainer {
                 .whileTrue(ShootingCommands.hubOneMeterShotCommand(shooter, hood)
                         .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand())
                         .withName("CloseShotCommand"));
+        copilot.rightBumper()
+                .whileTrue(ShootingCommands.trenchMeterShotCommand(shooter, hood)
+                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand())
+                        .withName("trenchSHotCommand"));
 
         // Shooter tuning bindings
         if (Constants.isTuningMode()) {
-            copilot.rightBumper()
-                    .toggleOnTrue(ShootingCommands.tuneShooterCommand(turret, shooter, hood)
-                            .withName("TuneShooterCommand"));
+//            copilot.rightBumper()
+//                    .toggleOnTrue(ShootingCommands.tuneShooterCommand(turret, shooter, hood)
+//                            .withName("TuneShooterCommand"));
             copilot.povUp()
                     .whileTrue(
                             FeedingCommands.feedCommand(turret, hood, spindexer).alongWith(intake.jiggleCommand()));
