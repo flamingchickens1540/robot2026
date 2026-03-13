@@ -17,7 +17,14 @@ public class PieceDetection extends SubsystemBase {
     private final LoggedTunableNumber ki = new LoggedTunableNumber("PieceDetection/ki", 30.0);
     private final LoggedTunableNumber kd = new LoggedTunableNumber("PieceDetection/kd", 30.0);
     private final LoggedTunableNumber mode = new LoggedTunableNumber(
-            "PieceDetection/useRobotRelative(0:center biggest cluster 1:center closest cluster, 2: biggest cluster, 3: closest cluster, 4: use weights as heuristics, 5: brute force best path (do not use in match is very unstable may cause robot to freeze for several minutes), else: disable)",
+            "PieceDetection/useRobotRelative(" +
+                    "0:center biggest cluster," +
+                    " 1:center closest cluster," +
+                    " 2: biggest cluster," +
+                    " 3: closest cluster," +
+                    " 4: use weights as heuristics," +
+                    " 5: brute force best path (do not use in match is very unstable may cause robot to freeze for several minutes)," + //not implemented
+                    " else: disable)",
             1);
     private final LoggedTunableNumber eachBallPoint = new LoggedTunableNumber("# ball wight");
     private final LoggedTunableNumber farthestBallDistancePointsM =
@@ -266,6 +273,14 @@ public class PieceDetection extends SubsystemBase {
                     targetAngle = 0;
                 }
                 break;
+            case 5: {
+                //brute force best practice
+                
+
+
+
+                targetAngle = 0;
+            }
         }
 
         return pid.calculate(0, targetAngle);
