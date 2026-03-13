@@ -167,6 +167,12 @@ public class RobotContainer {
                         .ignoringDisable(true));
 
         // Copilot controls
+        copilot.back()
+                .whileTrue(turret.zeroCommand()
+                        .andThen(leds.viewFull
+                                .commandShowPattern(CustomLEDPatterns.strobe(Color.kGreen))
+                                .withTimeout(0.5))
+                        .ignoringDisable(true));
         copilot.a().onTrue(hood.setpointCommand(() -> HoodConstants.MIN_ANGLE).withName("HoodDownCommand"));
         copilot.b()
                 .and(() -> !turretLockedMode)
@@ -195,7 +201,8 @@ public class RobotContainer {
                                 .commandShowPattern(CustomLEDPatterns.strobe(Color.kGreen))
                                 .withTimeout(0.5))
                         .withName("HoodZeroCommand"));
-        copilot.back()
+
+        copilot.leftTrigger()
                 .whileTrue(intake.zeroCommand()
                         .andThen(leds.viewFull
                                 .commandShowPattern(CustomLEDPatterns.strobe(Color.kGreen))
