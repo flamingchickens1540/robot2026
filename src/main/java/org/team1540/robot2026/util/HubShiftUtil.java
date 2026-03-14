@@ -51,6 +51,7 @@ public class HubShiftUtil {
 
     private static final Alert invalidFMSDataAlert =
             new Alert("Auto winner not set by FMS! Use manual overrides.", Alert.AlertType.kError);
+    private static final Alert autoWinOverrideAlert = new Alert("Auto win override active.", Alert.AlertType.kInfo);
 
     public static void initialize() {
         shiftTimerOffset = 0;
@@ -61,7 +62,13 @@ public class HubShiftUtil {
         ShiftInfo shiftInfo = getShiftInfo();
         boolean validFMSData = hasValidFMSData();
 
-        invalidFMSDataAlert.set(!validFMSData && DriverStation.isFMSAttached() && DriverStation.isTeleopEnabled());
+        invalidFMSDataAlert.set(!validFMSData
+                && getAllianceWinOverride().isEmpty()
+                && DriverStation.isFMSAttached()
+                && DriverStation.isTeleopEnabled());
+        autoWinOverrideAlert.setText(
+                "Auto win override active: " + (getAllianceWinOverride().orElse(false) ? "Won" : "Lost"));
+        autoWinOverrideAlert.set(getAllianceWinOverride().isPresent());
 
         Logger.recordOutput("HubShift/ShiftInfo", shiftInfo);
         Logger.recordOutput("HubShift/ValidFMSData", validFMSData);
