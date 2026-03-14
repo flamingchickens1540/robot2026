@@ -46,6 +46,6 @@ public class PieceDetectionIOReal implements PieceDetectionIO {
     public void updateInputs(PieceDetectionIOInputs inputs) {
         inputs.fuelCount = LimelightHelpers.getTargetCount(limelightName);
         inputs.lattencyMills = LimelightHelpers.getLatency_Capture(limelightName);
-        inputs.fuelsPoses = getPoses();
+        inputs.fuelsPosesRobotRelative = getPoses();
     }
 }

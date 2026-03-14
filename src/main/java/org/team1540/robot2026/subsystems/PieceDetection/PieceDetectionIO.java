@@ -8,7 +8,7 @@ public interface PieceDetectionIO {
     class PieceDetectionIOInputs {
         public double lattencyMills = 0;
         public int fuelCount = 0;
-        public Translation3d[] fuelsPoses;
+        public Translation3d[] fuelsPosesRobotRelative;
         public double getTargetAngle = 0;
     }
 

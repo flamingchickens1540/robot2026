@@ -9,22 +9,25 @@ import java.util.List;
 import org.dyn4j.geometry.Transform;
 import org.dyn4j.geometry.Triangle;
 import org.dyn4j.geometry.Vector2;
+import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.util.LoggedTunableNumber;
 
 public class PieceDetection extends SubsystemBase {
     public PieceDetectionIO detectionIO;
 
+    public PieceDetectionIOInputsAutoLogged inputs;
+
     private final LoggedTunableNumber kp = new LoggedTunableNumber("PieceDetection/kp", 30.0);
     private final LoggedTunableNumber ki = new LoggedTunableNumber("PieceDetection/ki", 30.0);
     private final LoggedTunableNumber kd = new LoggedTunableNumber("PieceDetection/kd", 30.0);
     private final LoggedTunableNumber mode = new LoggedTunableNumber(
-            "PieceDetection/useRobotRelative(" +
-                    "0:center biggest cluster," +
-                    " 1:center closest cluster," +
-                    " 2: biggest cluster," +
-                    " 3: closest cluster," +
-                    " 4: use weights as heuristics," +
-                    " 5: brute force best path (do not use in match is very unstable may cause robot to freeze for several minutes)," + //not implemented
+            "PieceDetection/useRobotRelative(" + "0:center biggest cluster,"
+                    + " 1:center closest cluster,"
+                    + " 2: biggest cluster,"
+                    + " 3: closest cluster,"
+                    + " 4: use weights as heuristics,"
+                    + " 5: brute force best path (do not use in match is very unstable may cause robot to freeze for several minutes),"
+                    + // not implemented
                     " else: disable)",
             1);
     private final LoggedTunableNumber eachBallPoint = new LoggedTunableNumber("# ball wight");
@@ -57,10 +60,8 @@ public class PieceDetection extends SubsystemBase {
                         pieces.add(new Piece(translation3d.toTranslation2d()));
                     }
                     // remove detections not in the triangle
-                    for (Piece piece : pieces) {
-                        if (!triangle.contains(new Vector2(piece.getX(), piece.getY()), new Transform()))
-                            pieces.remove(piece);
-                    }
+                    pieces.removeIf(
+                            piece -> !triangle.contains(new Vector2(piece.getX(), piece.getY()), new Transform()));
                     // make sure there are balls
 
                     if (detections.length > 1) {
@@ -95,10 +96,7 @@ public class PieceDetection extends SubsystemBase {
                     pieces.add(new Piece(translation3d.toTranslation2d()));
                 }
                 // remove detections not in the triangle
-                for (Piece piece : pieces) {
-                    if (!triangle.contains(new Vector2(piece.getX(), piece.getY()), new Transform()))
-                        pieces.remove(piece);
-                }
+                pieces.removeIf(piece -> !triangle.contains(new Vector2(piece.getX(), piece.getY()), new Transform()));
                 // make sure there are balls
 
                 if (detections.length > 1) {
@@ -220,10 +218,7 @@ public class PieceDetection extends SubsystemBase {
                 }
                 break;
             case 5: {
-                //brute force best practice
-                
-
-
+                // brute force best practice
 
                 targetAngle = 0;
             }
@@ -232,21 +227,26 @@ public class PieceDetection extends SubsystemBase {
         return pid.calculate(0, targetAngle);
     }
 
-    private static KMeans getBestKmeans(List<Piece> pieces){
+    private static KMeans getBestKmeans(List<Piece> pieces) {
         double bestWCSS = Double.POSITIVE_INFINITY;
         KMeans bestKMeans = null;
 
         for (int i = 1; i < pieces.size() - 1; i++) {
             KMeans kMean = new KMeans(i, pieces, 5, 0.1);
 
-            if (kMean.getWCSS()
-                    < bestWCSS) { // smaller WCSS is better WCSS describes how close balls are t o
+            if (kMean.getWCSS() < bestWCSS) { // smaller WCSS is better WCSS describes how close balls are t o
                 // each-other
                 bestWCSS = kMean.getWCSS();
                 bestKMeans = kMean;
             }
         }
         return bestKMeans;
+    }
 
+    @Override
+    public void periodic() {
+        detectionIO.updateInputs(inputs);
+        Logger.processInputs("piecedetection", inputs);
+        LoggedTunableNumber.ifChanged(hashCode(), ()->pid.setPID(kp.get(), ki.get(), kd.get()));
     }
 }
