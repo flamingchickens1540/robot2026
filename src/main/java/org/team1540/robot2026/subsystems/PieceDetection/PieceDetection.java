@@ -5,6 +5,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.ArrayList;
+import java.util.List;
 import org.dyn4j.geometry.Transform;
 import org.dyn4j.geometry.Triangle;
 import org.dyn4j.geometry.Vector2;
@@ -63,18 +64,8 @@ public class PieceDetection extends SubsystemBase {
                     // make sure there are balls
 
                     if (detections.length > 1) {
-                        double bestWCSS = Double.POSITIVE_INFINITY;
-                        KMeans bestKMeans = null;
+                        KMeans bestKMeans = getBestKmeans(pieces);
 
-                        for (int i = 1; i < pieces.size() - 1; i++) {
-                            KMeans kMean = new KMeans(i, pieces, 5, 0.1);
-                            if (kMean.getWCSS()
-                                    < bestWCSS) { // smaller WCSS is better WCSS describes how close balls are t o
-                                // each-other
-                                bestWCSS = kMean.getWCSS();
-                                bestKMeans = kMean;
-                            }
-                        }
                         assert bestKMeans
                                 != null; // this should not be possible if the WCSS is in the millions we have a huge
                         // problem
@@ -111,18 +102,8 @@ public class PieceDetection extends SubsystemBase {
                 // make sure there are balls
 
                 if (detections.length > 1) {
-                    double bestWCSS = Double.POSITIVE_INFINITY;
-                    KMeans bestKMeans = null;
+                    KMeans bestKMeans = getBestKmeans(pieces);
 
-                    for (int i = 1; i < pieces.size() - 1; i++) {
-                        KMeans kMean = new KMeans(i, pieces, 5, 0.1);
-                        if (kMean.getWCSS()
-                                < bestWCSS) { // smaller WCSS is better WCSS describes how close balls are t o
-                            // each-other
-                            bestWCSS = kMean.getWCSS();
-                            bestKMeans = kMean;
-                        }
-                    }
                     double smallestDistance = Double.POSITIVE_INFINITY;
                     Centroid centroidWithSmallestDistance = null;
                     for (Centroid centroid : bestKMeans.getCentroids()) {
@@ -132,7 +113,7 @@ public class PieceDetection extends SubsystemBase {
                         }
                     }
                     assert centroidWithSmallestDistance
-                            != null; // yeah the closest cluster being millions away doesn't make sense
+                            != null; // yeah, the closest cluster being millions away doesn't make sense
                     targetAngle = Math.atan2(centroidWithSmallestDistance.getY(), centroidWithSmallestDistance.getX());
                 } else if (detections.length == 1) {
                     Translation2d best = detections[0].toTranslation2d();
@@ -152,18 +133,7 @@ public class PieceDetection extends SubsystemBase {
                         for (Translation3d translation3d : detections) {
                             pieces.add(new Piece(translation3d.toTranslation2d()));
                         }
-                        double bestWCSS = Double.POSITIVE_INFINITY;
-                        KMeans bestKMeans = null;
-
-                        for (int i = 1; i < pieces.size() - 1; i++) {
-                            KMeans kMean = new KMeans(i, pieces, 5, 0.1);
-                            if (kMean.getWCSS()
-                                    < bestWCSS) { // smaller WCSS is better WCSS describes how close balls are t o
-                                // each-other
-                                bestWCSS = kMean.getWCSS();
-                                bestKMeans = kMean;
-                            }
-                        }
+                        KMeans bestKMeans = getBestKmeans(pieces);
                         assert bestKMeans
                                 != null; // this should not be possible if the WCSS is in the millions we have a huge
                         // problem
@@ -189,19 +159,7 @@ public class PieceDetection extends SubsystemBase {
                         for (Translation3d translation3d : detections) {
                             pieces.add(new Piece(translation3d.toTranslation2d()));
                         }
-                        double bestWCSS = Double.POSITIVE_INFINITY;
-                        KMeans bestKMeans = null;
-
-                        for (int i = 1; i < pieces.size() - 1; i++) {
-                            KMeans kMean = new KMeans(i, pieces, 5, 0.1);
-
-                            if (kMean.getWCSS()
-                                    < bestWCSS) { // smaller WCSS is better WCSS describes how close balls are t o
-                                // each-other
-                                bestWCSS = kMean.getWCSS();
-                                bestKMeans = kMean;
-                            }
-                        }
+                        KMeans bestKMeans = getBestKmeans(pieces);
                         assert bestKMeans
                                 != null; // this should not be possible if the WCSS is in the millions we have a huge
                         // problem
@@ -237,19 +195,7 @@ public class PieceDetection extends SubsystemBase {
                     for (Translation3d translation3d : detections) {
                         pieces.add(new Piece(translation3d.toTranslation2d()));
                     }
-                    double bestWCSS = Double.POSITIVE_INFINITY;
-                    KMeans bestKMeans = null;
-
-                    for (int i = 1; i < pieces.size() - 1; i++) {
-                        KMeans kMean = new KMeans(i, pieces, 5, 0.1);
-
-                        if (kMean.getWCSS()
-                                < bestWCSS) { // smaller WCSS is better WCSS describes how close balls are t o
-                            // each-other
-                            bestWCSS = kMean.getWCSS();
-                            bestKMeans = kMean;
-                        }
-                    }
+                    KMeans bestKMeans = getBestKmeans(pieces);
                     // implement deciding which centroid is the best
                     Centroid bestCentroid = null;
                     double bestScore = Double.MIN_VALUE;
@@ -284,5 +230,23 @@ public class PieceDetection extends SubsystemBase {
         }
 
         return pid.calculate(0, targetAngle);
+    }
+
+    private static KMeans getBestKmeans(List<Piece> pieces){
+        double bestWCSS = Double.POSITIVE_INFINITY;
+        KMeans bestKMeans = null;
+
+        for (int i = 1; i < pieces.size() - 1; i++) {
+            KMeans kMean = new KMeans(i, pieces, 5, 0.1);
+
+            if (kMean.getWCSS()
+                    < bestWCSS) { // smaller WCSS is better WCSS describes how close balls are t o
+                // each-other
+                bestWCSS = kMean.getWCSS();
+                bestKMeans = kMean;
+            }
+        }
+        return bestKMeans;
+
     }
 }
