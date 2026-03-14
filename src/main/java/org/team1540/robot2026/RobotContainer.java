@@ -33,6 +33,7 @@ import org.team1540.robot2026.subsystems.shooter.Shooter;
 import org.team1540.robot2026.subsystems.spindexer.Spindexer;
 import org.team1540.robot2026.subsystems.turret.Turret;
 import org.team1540.robot2026.subsystems.vision.AprilTagVision;
+import org.team1540.robot2026.util.HubShiftUtil;
 import org.team1540.robot2026.util.MatchTriggers;
 import org.team1540.robot2026.util.auto.LoggedAutoChooser;
 import org.team1540.robot2026.util.hid.CommandEnvisionController;
@@ -168,8 +169,12 @@ public class RobotContainer {
         driver.rightBumper().onTrue(turret.run(turret::stop).withName("TurretStopCommand"));
 
         // Copilot controls
-        copilot.povUp().onTrue(Commands.runOnce(() -> RobotState.getInstance().incrementShooterRPMOffset(20)));
-        copilot.povDown().onTrue(Commands.runOnce(() -> RobotState.getInstance().incrementShooterRPMOffset(-20)));
+        copilot.povUp()
+                .onTrue(Commands.runOnce(() -> RobotState.getInstance().incrementShooterRPMOffset(20))
+                        .ignoringDisable(true));
+        copilot.povDown()
+                .onTrue(Commands.runOnce(() -> RobotState.getInstance().incrementShooterRPMOffset(-20))
+                        .ignoringDisable(true));
 
         copilot.back()
                 .whileTrue(turret.zeroCommand()
@@ -322,11 +327,18 @@ public class RobotContainer {
         RobotModeTriggers.teleop()
                 .and(DriverStation::isFMSAttached)
                 .onTrue(drivetrain.runOnce(drivetrain::zeroFieldOrientation));
+
+        // Reset hub shift timer at the start of each mode
+        RobotModeTriggers.teleop().onTrue(Commands.runOnce(HubShiftUtil::initialize));
+        RobotModeTriggers.autonomous().onTrue(Commands.runOnce(HubShiftUtil::initialize));
+        RobotModeTriggers.disabled()
+                .onTrue(Commands.runOnce(HubShiftUtil::initialize).ignoringDisable(true));
     }
 
     private void configurePeriodicCallbacks() {
         addPeriodicCallback(autoChooser::update, "AutoChooserUpdate");
         addPeriodicCallback(robotState::periodic, "RobotStatePeriodic");
+        addPeriodicCallback(HubShiftUtil::periodic, "HubShiftPeriodic");
         if (Constants.CURRENT_MODE == Constants.Mode.SIM) {
             addPeriodicCallback(SimState.getInstance()::update, "SimulationUpdate");
         }

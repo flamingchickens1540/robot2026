@@ -129,6 +129,7 @@ public class RobotState {
     }
 
     public void periodic() {
+        SmartDashboard.putString("Aiming/Shooter RPM Offset", String.format("%.1f", shooterRPMOffset));
         clearAimingParameters();
     }
 
