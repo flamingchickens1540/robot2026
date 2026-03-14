@@ -173,7 +173,7 @@ public class Autos {
                                 FeedingCommands.feedCommand(turret, hood, spindexer),
                                 intake.jiggleCommand().asProxy(),
                                 moveToDepot.spawnCmd()));
-        moveToDepot.atTime("StartIntake").onTrue(intake.commandRunIntake(1.0));
+        moveToDepot.atTime("StartIntake").onTrue(intake.commandRunDepotIntake(1.0));
         moveToDepot.atTime("StopIntake").onTrue(intake.jiggleCommand());
         return routine;
     }
