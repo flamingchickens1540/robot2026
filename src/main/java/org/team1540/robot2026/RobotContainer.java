@@ -165,6 +165,7 @@ public class RobotContainer {
                                 .commandShowPattern(CustomLEDPatterns.strobe(Color.kGreen))
                                 .withTimeout(0.5))
                         .ignoringDisable(true));
+        driver.rightBumper().onTrue(turret.run(turret::stop).withName("TurretStopCommand"));
 
         // Copilot controls
         copilot.povUp().onTrue(Commands.runOnce(() -> RobotState.getInstance().incrementShooterRPMOffset(20)));
@@ -279,11 +280,12 @@ public class RobotContainer {
                                         .runCommand(() -> 1.0, () -> 1.0)
                                         .withTimeout(5.0)))));
         autoChooser.addRoutine("Left Trench 1 Sweep", autos::leftTrench1Sweep);
-        autoChooser.addRoutine("Left Trench 2 Sweep", autos::leftTrench2Sweep);
+        autoChooser.addRoutine("Left Trench 2 Sweep", () -> autos.leftTrench2Sweep(false));
+        autoChooser.addRoutine("Left Trench 2 Sweep Sprint", () -> autos.leftTrench2Sweep(true));
         autoChooser.addRoutine("Left Trench 2 Sweep Depot", autos::leftTrench2SweepDepot);
-        autoChooser.addRoutine("Left Trench 2 Sweep Depot Pause", autos::leftTrench2SweepDepotPause);
         autoChooser.addRoutine("Right Trench 1 Sweep", autos::rightTrench1Sweep);
-        autoChooser.addRoutine("Right Trench 2 Sweep", autos::rightTrench2Sweep);
+        autoChooser.addRoutine("Right Trench 2 Sweep", () -> autos.rightTrench2Sweep(false));
+        autoChooser.addRoutine("Right Trench 2 Sweep Sprint", () -> autos.rightTrench2Sweep(true));
 
         // Characterization routines
         if (Constants.isTuningMode()) {
