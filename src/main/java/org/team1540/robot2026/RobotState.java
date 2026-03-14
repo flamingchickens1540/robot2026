@@ -80,7 +80,7 @@ public class RobotState {
     private final InterpolatingDoubleTreeMap shuffleTOFMap = new InterpolatingDoubleTreeMap();
 
     @AutoLogOutput(key = "Aiming/ShooterRPMOffset")
-    private double shooterRPMOffset = 0.0;
+    private double shooterRPMOffset = 60.0;
 
     @AutoLogOutput(key = "Aiming/Hub/LastParameters")
     private AimingParameters lastHubAimingParameters;
