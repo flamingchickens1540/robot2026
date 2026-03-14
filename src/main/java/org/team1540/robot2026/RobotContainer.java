@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import java.util.function.BooleanSupplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.team1540.robot2026.autos.Autos;
 import org.team1540.robot2026.commands.CharacterizationCommands;
@@ -125,6 +126,8 @@ public class RobotContainer {
                 .onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual).withName("ManualDriveZero"));
 
         // Shoot/intake controls
+        BooleanSupplier manualFeedOverride =
+                () -> driver.rightBumper().getAsBoolean() || turretLockedMode; // TODO figure out better override binding
         Command intakeCmd = intake.commandRunIntake(1.0).withName("IntakeCommand");
         Command shootCmd = Commands.either(
                         ShootingCommands.shooterAimTurretLockedCommand(driver.getHID(), drivetrain, shooter, hood)
@@ -134,8 +137,8 @@ public class RobotContainer {
                                 .withName("ShooterAimCommand")
                                 .asProxy(),
                         () -> turretLockedMode)
-                .alongWith(
-                        FeedingCommands.feedCommand(turret, hood, spindexer),
+                .deadlineFor(
+                        FeedingCommands.feedCommand(turret, hood, spindexer, manualFeedOverride),
                         intake.jiggleCommand()
                                 .asProxy()
                                 .unless(intakeCmd::isScheduled)
@@ -166,7 +169,7 @@ public class RobotContainer {
                                 .commandShowPattern(CustomLEDPatterns.strobe(Color.kGreen))
                                 .withTimeout(0.5))
                         .ignoringDisable(true));
-        driver.rightBumper().onTrue(turret.run(turret::stop).withName("TurretStopCommand"));
+        driver.leftBumper().onTrue(turret.run(turret::stop).withName("TurretStopCommand"));
 
         // Copilot controls
         copilot.povUp()
@@ -219,7 +222,7 @@ public class RobotContainer {
                         .withName("IntakeZeroCommand"));
         copilot.leftBumper()
                 .whileTrue(spindexer.runCommand(() -> -0.67, () -> -0.67).withName("SpindexerReverseCommand"));
-        copilot.y()
+        copilot.rightStick()
                 .toggleOnTrue(turret.run(turret::stop)
                         .alongWith(Commands.runOnce(() -> {
                             turretLockedMode = true;
@@ -231,11 +234,15 @@ public class RobotContainer {
                         }));
         copilot.rightTrigger()
                 .whileTrue(ShootingCommands.closeShotCommand(shooter, hood)
-                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand())
+                        .alongWith(
+                                FeedingCommands.feedCommand(turret, hood, spindexer, manualFeedOverride),
+                                intake.jiggleCommand())
                         .withName("CloseShotCommand"));
         copilot.rightBumper()
                 .whileTrue(ShootingCommands.trenchShotCommand(shooter, hood)
-                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand())
+                        .alongWith(
+                                FeedingCommands.feedCommand(turret, hood, spindexer, manualFeedOverride),
+                                intake.jiggleCommand())
                         .withName("trenchSHotCommand"));
 
         // Shooter tuning bindings
@@ -254,7 +261,8 @@ public class RobotContainer {
                 .whileTrue(leds.viewFull.commandDefaultPattern(() -> CustomLEDPatterns.movingRainbow(Hertz.of(0.5))));
         RobotModeTriggers.teleop().whileTrue(leds.viewFull.commandDefaultPattern(() -> {
             if (intakeCmd.isScheduled()) {
-                if (!shootCmd.isScheduled()) return LEDPattern.solid(Color.kPurple);
+                if (turretLockedMode) return CustomLEDPatterns.strobe(Color.kRed);
+                else if (!shootCmd.isScheduled()) return LEDPattern.solid(Color.kPurple);
                 else return LEDPattern.solid(Color.kPurple).blink(Seconds.of(0.25));
             } else if (shootCmd.isScheduled()) {
                 return LEDPattern.solid(LEDs.getAllianceColor()).blink(Seconds.of(0.25));
@@ -263,7 +271,7 @@ public class RobotContainer {
         RobotModeTriggers.autonomous()
                 .whileTrue(leds.viewFull.commandDefaultPattern(
                         () -> LEDPattern.solid(LEDs.getAllianceColor()).blink(Seconds.of(0.25))));
-        new Trigger(() -> !FeedingCommands.shouldFeed(turret, hood) && shootCmd.isScheduled())
+        new Trigger(() -> !FeedingCommands.shouldFeed(turret, hood, manualFeedOverride) && shootCmd.isScheduled())
                 .whileTrue(leds.viewFull.commandShowPattern(CustomLEDPatterns.strobe(Color.kOrange)));
         MatchTriggers.timeRemaining(30)
                 .or(MatchTriggers.timeRemaining(15))

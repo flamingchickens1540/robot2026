@@ -56,7 +56,7 @@ public class ShootingCommands {
 
     public static Command shooterAimTurretLockedCommand(
             EnvisionController controller, Drivetrain drivetrain, Shooter shooter, Hood hood) {
-        return Commands.parallel(
+        return Commands.deadline(
                         drivetrain.teleopDriveWithHeadingCommand(controller, () -> RobotState.getInstance()
                                 .getAimingParameters()
                                 .turretAngle()

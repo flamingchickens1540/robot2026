@@ -172,7 +172,6 @@ public class Intake extends SubsystemBase {
                 .withName("RunDepotCommand");
     }
 
-
     public Command jiggleCommand() {
         return Commands.runOnce(() -> setRollerVoltage(12.0))
                 .andThen(Commands.repeatingSequence(
