@@ -16,7 +16,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import java.util.function.BooleanSupplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.team1540.robot2026.autos.Autos;
 import org.team1540.robot2026.commands.CharacterizationCommands;
@@ -126,8 +125,7 @@ public class RobotContainer {
                 .onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual).withName("ManualDriveZero"));
 
         // Shoot/intake controls
-        BooleanSupplier manualFeedOverride =
-                () -> driver.rightBumper().getAsBoolean() || turretLockedMode; // TODO figure out better override binding
+        Trigger manualFeedOverride = driver.leftBumper().or(() -> turretLockedMode);
         Command intakeCmd = intake.commandRunIntake(1.0).withName("IntakeCommand");
         Command shootCmd = Commands.either(
                         ShootingCommands.shooterAimTurretLockedCommand(driver.getHID(), drivetrain, shooter, hood)
@@ -260,9 +258,9 @@ public class RobotContainer {
         RobotModeTriggers.disabled()
                 .whileTrue(leds.viewFull.commandDefaultPattern(() -> CustomLEDPatterns.movingRainbow(Hertz.of(0.5))));
         RobotModeTriggers.teleop().whileTrue(leds.viewFull.commandDefaultPattern(() -> {
-            if (intakeCmd.isScheduled()) {
-                if (turretLockedMode) return CustomLEDPatterns.strobe(Color.kRed);
-                else if (!shootCmd.isScheduled()) return LEDPattern.solid(Color.kPurple);
+            if (turretLockedMode) return CustomLEDPatterns.strobe(Color.kRed);
+            else if (intakeCmd.isScheduled()) {
+                if (!shootCmd.isScheduled()) return LEDPattern.solid(Color.kPurple);
                 else return LEDPattern.solid(Color.kPurple).blink(Seconds.of(0.25));
             } else if (shootCmd.isScheduled()) {
                 return LEDPattern.solid(LEDs.getAllianceColor()).blink(Seconds.of(0.25));

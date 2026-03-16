@@ -34,8 +34,9 @@ public class FeedingCommands {
                         () -> shouldFeed(turret, hood, override) ? 1.0 : 0.0,
                         () -> shouldFeed(turret, hood, override) ? 1.0 : 0.0)
                 .alongWith(Commands.run(() -> {
-                    Logger.recordOutput("Spindexer/IsFeeding", shouldFeed(turret, hood, override));
-                    Logger.recordOutput("Spindexer/FeedOverride", override.getAsBoolean());
+                    boolean shouldFeed = shouldFeed(turret, hood, override);
+                    Logger.recordOutput("Spindexer/IsFeeding", shouldFeed);
+                    Logger.recordOutput("Spindexer/FeedOverride", override.getAsBoolean() && !shouldFeed);
                 }))
                 .withName("FeedShooterCommand");
     }
