@@ -4,6 +4,7 @@ import static org.team1540.robot2026.subsystems.drive.DrivetrainConstants.*;
 
 import choreo.trajectory.SwerveSample;
 import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
@@ -57,6 +58,8 @@ public class Drivetrain extends SubsystemBase {
 
     private Rotation2d fieldOrientationOffset = Rotation2d.kZero;
     private Rotation2d rawGyroRotation = Rotation2d.kZero;
+
+    SlewRateLimiter slewRateLimiterFilter = new SlewRateLimiter(0.5);
 
     private final SwerveDriveKinematics kinematics = RobotState.getInstance().getKinematics();
     private SwerveModulePosition[] lastModulePositions = new SwerveModulePosition[4];
@@ -305,23 +308,23 @@ public class Drivetrain extends SubsystemBase {
     public Command teleopDriveCommand(XboxController controller) {
         return percentDriveCommand(
                         () -> JoystickUtil.deadzonedJoystickTranslation(
-                                -controller.getLeftY(), -controller.getLeftX(), 0.1),
-                        () -> JoystickUtil.smartDeadzone(-controller.getRightX(), 0.1))
+                                slewRateLimiterFilter.calculate(-controller.getLeftY()), slewRateLimiterFilter.calculate(-controller.getLeftX()), 0.1),
+                        () -> JoystickUtil.smartDeadzone(slewRateLimiterFilter.calculate(-controller.getRightX()), 0.1))
                 .withName("TeleopDriveCommand");
     }
 
     public Command teleopDriveCommand(EnvisionController controller) {
         return percentDriveCommand(
                         () -> JoystickUtil.deadzonedJoystickTranslation(
-                                -controller.getLeftY(), -controller.getLeftX(), 0.1),
-                        () -> JoystickUtil.smartDeadzone(-controller.getRightX(), 0.1))
+                                slewRateLimiterFilter.calculate(-controller.getLeftY()), slewRateLimiterFilter.calculate(-controller.getLeftX()), 0.1),
+                        () -> JoystickUtil.smartDeadzone(slewRateLimiterFilter.calculate(-controller.getRightX()), 0.1))
                 .withName("TeleopDriveCommand");
     }
 
     public Command teleopDriveWithHeadingCommand(EnvisionController controller, Supplier<Rotation2d> heading) {
         return percentDriveCommand(
                         () -> JoystickUtil.deadzonedJoystickTranslation(
-                                -controller.getLeftY(), -controller.getLeftX(), 0.1),
+                                slewRateLimiterFilter.calculate(-controller.getLeftY()), slewRateLimiterFilter.calculate(-controller.getLeftX()), 0.1),
                         () -> headingController.calculate(
                                         RobotState.getInstance()
                                                 .getRobotHeading()
@@ -332,7 +335,7 @@ public class Drivetrain extends SubsystemBase {
                         RobotState.getInstance().getRobotHeading().getRadians(),
                         RobotState.getInstance().getRobotVelocity().omegaRadiansPerSecond))
                 .alongWith(Commands.run(() -> Logger.recordOutput("Drivetrain/HeadingGoal", heading.get())))
-                .until(() -> Math.abs(controller.getRightX()) >= 0.1);
+                .until(() -> Math.abs(slewRateLimiterFilter.calculate(controller.getRightX())) >= 0.1);
     }
 
     public static Drivetrain createReal() {
