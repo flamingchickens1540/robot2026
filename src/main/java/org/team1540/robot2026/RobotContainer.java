@@ -33,6 +33,7 @@ import org.team1540.robot2026.subsystems.shooter.Shooter;
 import org.team1540.robot2026.subsystems.spindexer.Spindexer;
 import org.team1540.robot2026.subsystems.turret.Turret;
 import org.team1540.robot2026.subsystems.vision.AprilTagVision;
+import org.team1540.robot2026.util.HubShiftUtil;
 import org.team1540.robot2026.util.MatchTriggers;
 import org.team1540.robot2026.util.auto.LoggedAutoChooser;
 import org.team1540.robot2026.util.hid.CommandEnvisionController;
@@ -119,36 +120,32 @@ public class RobotContainer {
                 () -> robotState.getAimingParameters().turretAngle(),
                 () -> robotState.getAimingParameters().turretVelocityRadPerSec(),
                 true));
+        driver.x().onTrue(drivetrain.runOnce(drivetrain::stopWithX).withName("DriveXMode"));
         driver.start()
                 .onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual).withName("ManualDriveZero"));
-        driver.x().onTrue(drivetrain.runOnce(drivetrain::stop).withName("DriveXMode"));
 
         // Shoot/intake controls
-        Command aimCommand = Commands.either(
-                        ShootingCommands.shooterAimTurretLockedCommand(
-                                        driver.getHID(), drivetrain, shooter, hood, turret)
+        Trigger manualFeedOverride = driver.leftBumper().or(() -> turretLockedMode);
+        Command intakeCmd = intake.commandRunIntake(1.0).withName("IntakeCommand");
+        Command shootCmd = Commands.either(
+                        ShootingCommands.shooterAimTurretLockedCommand(driver.getHID(), drivetrain, shooter, hood)
                                 .withName("ShooterAimTurretLockedCommand")
                                 .asProxy(),
                         ShootingCommands.shooterAimCommand(turret, shooter, hood)
                                 .withName("ShooterAimCommand")
                                 .asProxy(),
                         () -> turretLockedMode)
-                .alongWith(JoystickUtil.rumbleCommand(driver.getHID(), 1.0));
-
-        Command feedShooterCmd = FeedingCommands.feedCommand(turret, hood, spindexer);
-
-        Command intakeCmd = intake.commandRunIntake(1.0).withName("IntakeCommand");
+                .deadlineFor(
+                        FeedingCommands.feedCommand(turret, hood, spindexer, manualFeedOverride),
+                        intake.jiggleCommand()
+                                .asProxy()
+                                .unless(intakeCmd::isScheduled)
+                                .repeatedly(),
+                        JoystickUtil.rumbleCommand(driver.getHID(), 1.0))
+                .withName("ShootCommand");
 
         driver.leftTrigger().toggleOnTrue(intakeCmd);
-        driver.rightTrigger()
-                .toggleOnTrue(aimCommand
-                        .alongWith(
-                                feedShooterCmd,
-                                intake.jiggleCommand()
-                                        .asProxy()
-                                        .unless(intakeCmd::isScheduled)
-                                        .repeatedly())
-                        .withName("ShootCommand"));
+        driver.rightTrigger().toggleOnTrue(shootCmd);
 
         // Climb controls
         driver.leftSideButton()
@@ -159,8 +156,8 @@ public class RobotContainer {
                         .withName("ClimbUpCommand"));
 
         // Misc controls
-        driver.leftOuterPaddle().whileTrue(intake.commandRunIntake(-0.67).withName("OuttakeCommand"));
-        driver.leftInnerPaddle()
+        driver.leftInnerPaddle().whileTrue(intake.commandRunIntake(-0.67).withName("OuttakeCommand"));
+        driver.leftOuterPaddle()
                 .onTrue(intake.commandToSetpoint(Intake.IntakeState.STOW).withName("StowIntakeCommand"));
         driver.rightOuterPaddle()
                 .onTrue(hood.setpointCommand(() -> HoodConstants.MIN_ANGLE).withName("HoodDownCommand"));
@@ -170,8 +167,22 @@ public class RobotContainer {
                                 .commandShowPattern(CustomLEDPatterns.strobe(Color.kGreen))
                                 .withTimeout(0.5))
                         .ignoringDisable(true));
+        driver.leftBumper().onTrue(turret.run(turret::stop).withName("TurretStopCommand"));
 
         // Copilot controls
+        copilot.povUp()
+                .onTrue(Commands.runOnce(() -> RobotState.getInstance().incrementShooterRPMOffset(20))
+                        .ignoringDisable(true));
+        copilot.povDown()
+                .onTrue(Commands.runOnce(() -> RobotState.getInstance().incrementShooterRPMOffset(-20))
+                        .ignoringDisable(true));
+
+        copilot.back()
+                .whileTrue(turret.zeroCommand()
+                        .andThen(leds.viewFull
+                                .commandShowPattern(CustomLEDPatterns.strobe(Color.kGreen))
+                                .withTimeout(0.5))
+                        .ignoringDisable(true));
         copilot.a().onTrue(hood.setpointCommand(() -> HoodConstants.MIN_ANGLE).withName("HoodDownCommand"));
         copilot.b()
                 .and(() -> !turretLockedMode)
@@ -200,7 +211,8 @@ public class RobotContainer {
                                 .commandShowPattern(CustomLEDPatterns.strobe(Color.kGreen))
                                 .withTimeout(0.5))
                         .withName("HoodZeroCommand"));
-        copilot.back()
+
+        copilot.leftTrigger()
                 .whileTrue(intake.zeroCommand()
                         .andThen(leds.viewFull
                                 .commandShowPattern(CustomLEDPatterns.strobe(Color.kGreen))
@@ -208,46 +220,56 @@ public class RobotContainer {
                         .withName("IntakeZeroCommand"));
         copilot.leftBumper()
                 .whileTrue(spindexer.runCommand(() -> -0.67, () -> -0.67).withName("SpindexerReverseCommand"));
-        copilot.y()
+        copilot.rightStick()
                 .toggleOnTrue(turret.run(turret::stop)
-                        .andThen(() -> {
+                        .alongWith(Commands.runOnce(() -> {
                             turretLockedMode = true;
                             turretLockedAlert.set(true);
-                        })
+                        }))
                         .finallyDo(() -> {
                             turretLockedMode = false;
                             turretLockedAlert.set(false);
                         }));
         copilot.rightTrigger()
-                .whileTrue(ShootingCommands.hubOneMeterShotCommand(turret, shooter, hood)
-                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand())
+                .whileTrue(ShootingCommands.closeShotCommand(shooter, hood)
+                        .alongWith(
+                                FeedingCommands.feedCommand(turret, hood, spindexer, manualFeedOverride),
+                                intake.jiggleCommand())
                         .withName("CloseShotCommand"));
+        copilot.rightBumper()
+                .whileTrue(ShootingCommands.trenchShotCommand(shooter, hood)
+                        .alongWith(
+                                FeedingCommands.feedCommand(turret, hood, spindexer, manualFeedOverride),
+                                intake.jiggleCommand())
+                        .withName("trenchSHotCommand"));
 
         // Shooter tuning bindings
         if (Constants.isTuningMode()) {
-            copilot.rightBumper()
-                    .toggleOnTrue(ShootingCommands.tuneShooterCommand(turret, shooter, hood)
-                            .withName("TuneShooterCommand"));
-            copilot.povUp()
-                    .whileTrue(
-                            FeedingCommands.feedCommand(turret, hood, spindexer).alongWith(intake.jiggleCommand()));
+            //            copilot.rightBumper()
+            //                    .toggleOnTrue(ShootingCommands.tuneShooterCommand(turret, shooter, hood)
+            //                            .withName("TuneShooterCommand"));
+            //            copilot.povUp()
+            //                    .whileTrue(
+            //                            FeedingCommands.feedCommand(turret, hood,
+            // spindexer).alongWith(intake.jiggleCommand()));
         }
 
         // LED bindings
         RobotModeTriggers.disabled()
                 .whileTrue(leds.viewFull.commandDefaultPattern(() -> CustomLEDPatterns.movingRainbow(Hertz.of(0.5))));
         RobotModeTriggers.teleop().whileTrue(leds.viewFull.commandDefaultPattern(() -> {
-            if (intakeCmd.isScheduled()) {
-                if (!aimCommand.isScheduled()) return LEDPattern.solid(Color.kPurple);
-                else return LEDPattern.solid(Color.kPurple).blink(Seconds.of(0.5));
-            } else if (aimCommand.isScheduled()) {
-                return LEDPattern.solid(Color.kYellow).blink(Seconds.of(0.5));
+            if (turretLockedMode) return CustomLEDPatterns.strobe(Color.kRed);
+            else if (intakeCmd.isScheduled()) {
+                if (!shootCmd.isScheduled()) return LEDPattern.solid(Color.kPurple);
+                else return LEDPattern.solid(Color.kPurple).blink(Seconds.of(0.25));
+            } else if (shootCmd.isScheduled()) {
+                return LEDPattern.solid(LEDs.getAllianceColor()).blink(Seconds.of(0.25));
             } else return LEDPattern.solid(LEDs.getAllianceColor());
         }));
         RobotModeTriggers.autonomous()
                 .whileTrue(leds.viewFull.commandDefaultPattern(
-                        () -> LEDPattern.solid(LEDs.getAllianceColor()).blink(Seconds.of(0.5))));
-        new Trigger(() -> !FeedingCommands.shouldFeed(turret, hood) && feedShooterCmd.isScheduled())
+                        () -> LEDPattern.solid(LEDs.getAllianceColor()).blink(Seconds.of(0.25))));
+        new Trigger(() -> !FeedingCommands.shouldFeed(turret, hood, manualFeedOverride) && shootCmd.isScheduled())
                 .whileTrue(leds.viewFull.commandShowPattern(CustomLEDPatterns.strobe(Color.kOrange)));
         MatchTriggers.timeRemaining(30)
                 .or(MatchTriggers.timeRemaining(15))
@@ -268,14 +290,17 @@ public class RobotContainer {
                                 .andThen(spindexer
                                         .runCommand(() -> 1.0, () -> 1.0)
                                         .withTimeout(5.0)))));
-        autoChooser.addRoutine("Test", autos::testPath);
         autoChooser.addRoutine("Left Trench 1 Sweep", autos::leftTrench1Sweep);
-        autoChooser.addRoutine("Left Trench 2 Sweep", autos::leftTrench2Sweep);
+        autoChooser.addRoutine("Left Trench 2 Sweep", () -> autos.leftTrench2Sweep(false));
+        autoChooser.addRoutine("Left Trench 2 Sweep Sprint", () -> autos.leftTrench2Sweep(true));
+        autoChooser.addRoutine("Left Trench 2 Sweep Depot", autos::leftTrench2SweepDepot);
         autoChooser.addRoutine("Right Trench 1 Sweep", autos::rightTrench1Sweep);
-        autoChooser.addRoutine("Right Trench 2 Sweep", autos::rightTrench2Sweep);
+        autoChooser.addRoutine("Right Trench 2 Sweep", () -> autos.rightTrench2Sweep(false));
+        autoChooser.addRoutine("Right Trench 2 Sweep Sprint", () -> autos.rightTrench2Sweep(true));
 
         // Characterization routines
         if (Constants.isTuningMode()) {
+            autoChooser.addRoutine("Test", autos::testPath);
             autoChooser.addCmd(
                     "Drive FF Characterization",
                     () -> CharacterizationCommands.feedforward(
@@ -308,11 +333,18 @@ public class RobotContainer {
         RobotModeTriggers.teleop()
                 .and(DriverStation::isFMSAttached)
                 .onTrue(drivetrain.runOnce(drivetrain::zeroFieldOrientation));
+
+        // Reset hub shift timer at the start of each mode
+        RobotModeTriggers.teleop().onTrue(Commands.runOnce(HubShiftUtil::initialize));
+        RobotModeTriggers.autonomous().onTrue(Commands.runOnce(HubShiftUtil::initialize));
+        RobotModeTriggers.disabled()
+                .onTrue(Commands.runOnce(HubShiftUtil::initialize).ignoringDisable(true));
     }
 
     private void configurePeriodicCallbacks() {
         addPeriodicCallback(autoChooser::update, "AutoChooserUpdate");
         addPeriodicCallback(robotState::periodic, "RobotStatePeriodic");
+        addPeriodicCallback(HubShiftUtil::periodic, "HubShiftPeriodic");
         if (Constants.CURRENT_MODE == Constants.Mode.SIM) {
             addPeriodicCallback(SimState.getInstance()::update, "SimulationUpdate");
         }

@@ -58,7 +58,7 @@ public class Shooter extends SubsystemBase {
 
         LoggedTunableNumber.ifChanged(
                 hashCode(),
-                () -> shooterIO.configPID(kP.get(), kI.get(), kD.get(), kV.get(), kS.get()),
+                () -> shooterIO.configPID(kP.get(), kI.get(), kD.get(), kS.get(), kV.get()),
                 kP,
                 kI,
                 kD,

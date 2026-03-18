@@ -16,12 +16,13 @@ public class IntakeConstants {
     public static double PIVOT_CRUISE_VELOCITY_RPS = 2.0;
     public static double PIVOT_ACCELERATION_RPS2 = 4.0;
 
-    public static double SPIN_GEAR_RATIO = 1.0;
+    public static double SPIN_GEAR_RATIO = 20.0 / 15;
     public static double PIVOT_GEAR_RATIO = 48.75;
 
     public static Rotation2d PIVOT_MIN_ANGLE = Rotation2d.fromDegrees(-140.0);
     public static Rotation2d PIVOT_MAX_ANGLE = Rotation2d.fromDegrees(0.0);
     public static Rotation2d PIVOT_JIGGLE_ANGLE = Rotation2d.fromDegrees(-30);
+    public static Rotation2d PIVOT_DEPOT_ANGLE = Rotation2d.fromDegrees(-7);
 
     public static double PIVOT_MOI_KGM2 = 0.2089;
 }

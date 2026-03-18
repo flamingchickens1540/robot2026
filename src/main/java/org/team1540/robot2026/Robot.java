@@ -86,6 +86,10 @@ public class Robot extends LoggedRobot {
         // and put our autonomous chooser on the dashboard.
         robotContainer = new RobotContainer();
 
+        // Aiming calculation warmup
+        RobotState.getInstance().getHubAimingParameters();
+        RobotState.getInstance().getShuffleAimingParameters();
+
         CommandScheduler.getInstance()
                 .schedule(Commands.waitSeconds(0.5)
                         .andThen(robotContainer.turret.zeroCommand())

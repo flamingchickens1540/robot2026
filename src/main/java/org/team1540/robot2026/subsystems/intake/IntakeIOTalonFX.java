@@ -34,7 +34,7 @@ public class IntakeIOTalonFX implements IntakeIO {
     private final StatusSignal<Voltage> pivotMotorAppliedVolts = pivotMotor.getMotorVoltage();
     private final StatusSignal<Current> pivotSupplyCurrentAmps = pivotMotor.getSupplyCurrent();
 
-    private final VoltageOut spinVoltageRequest = new VoltageOut(0);
+    private final VoltageOut spinVoltageRequest = new VoltageOut(0).withEnableFOC(false);
 
     private final MotionMagicVoltage pivotPositionRequest = new MotionMagicVoltage(0).withSlot(0);
 
@@ -54,12 +54,11 @@ public class IntakeIOTalonFX implements IntakeIO {
         intakeTalonFXConfig.CurrentLimits.StatorCurrentLimitEnable = true;
         intakeTalonFXConfig.CurrentLimits.StatorCurrentLimit = 120;
         intakeTalonFXConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-        intakeTalonFXConfig.CurrentLimits.SupplyCurrentLimit = 70;
-        intakeTalonFXConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
-        intakeTalonFXConfig.CurrentLimits.SupplyCurrentLowerTime = 1.0;
+        intakeTalonFXConfig.CurrentLimits.SupplyCurrentLimit = 40;
         intakeTalonFXConfig.MotorOutput.Inverted =
                 InvertedValue.CounterClockwise_Positive; // TODO: is it inverted or not?
-        intakeTalonFXConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+        intakeTalonFXConfig.Feedback.SensorToMechanismRatio = SPIN_GEAR_RATIO;
+        intakeTalonFXConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
         Slot0Configs pivotGains = pivotTalonFXConfig.Slot0;
         pivotGains.kS = PIVOT_KS;
