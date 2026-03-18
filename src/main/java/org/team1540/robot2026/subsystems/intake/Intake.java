@@ -83,7 +83,8 @@ public class Intake extends SubsystemBase {
                 pivotKG);
 
         pivotDisconnectedAlert.set(!inputs.pivotConnected);
-        rollerDisconnectedAlert.set(!inputs.spinConnected);
+        rollerDisconnectedAlert.set(!inputs.leftSpinConnected);
+        rollerDisconnectedAlert.set(!inputs.rightSpinConnected);
 
         LoggedTracer.record("Intake");
     }

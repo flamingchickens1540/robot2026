@@ -21,8 +21,12 @@ public class IntakeIOSim implements IntakeIO {
     private static final double SIM_PIVOT_KI = 0.0;
     private static final double SIM_PIVOT_KD = 0.0;
 
-    private final DCMotorSim spinSim = new DCMotorSim(
-            LinearSystemId.createDCMotorSystem(DCMotor.getFalcon500Foc(1), 0.001, SPIN_GEAR_RATIO),
+    private final DCMotorSim leftSpinSim = new DCMotorSim(
+            LinearSystemId.createDCMotorSystem(DCMotor.getFalcon500Foc(1), 0.001, LEFT_SPIN_GEAR_RATIO),
+            DCMotor.getFalcon500Foc(1));
+
+    private final DCMotorSim rightSpinSim = new DCMotorSim(
+            LinearSystemId.createDCMotorSystem(DCMotor.getFalcon500Foc(1), 0.001, LEFT_SPIN_GEAR_RATIO),
             DCMotor.getFalcon500Foc(1));
 
     private final SingleJointedArmSim pivotSim = new SingleJointedArmSim(
@@ -59,15 +63,23 @@ public class IntakeIOSim implements IntakeIO {
                             Units.rotationsToRadians(pivotController.getSetpoint().position),
                             Units.rotationsToRadians(pivotController.getSetpoint().velocity));
         }
-        spinSim.setInputVoltage(spinAppliedVolts);
+        leftSpinSim.setInputVoltage(spinAppliedVolts);
+        rightSpinSim.setInputVoltage(spinAppliedVolts);
         pivotSim.setInputVoltage(pivotAppliedVolts);
-        spinSim.update(Constants.LOOP_PERIOD_SECS);
+
+        leftSpinSim.update(Constants.LOOP_PERIOD_SECS);
+        rightSpinSim.update(Constants.LOOP_PERIOD_SECS);
         pivotSim.update(Constants.LOOP_PERIOD_SECS);
 
-        inputs.spinMotorAppliedVolts = spinAppliedVolts;
-        inputs.spinMotorVelocityRPS = spinSim.getAngularVelocityRPM() / 60.0;
-        inputs.spinStatorCurrentAmps = spinSim.getCurrentDrawAmps();
-        inputs.spinSupplyCurrentAmps = spinSim.getCurrentDrawAmps();
+        inputs.leftSpinMotorAppliedVolts = spinAppliedVolts;
+        inputs.leftSpinMotorVelocityRPS = leftSpinSim.getAngularVelocityRPM() / 60.0;
+        inputs.leftSpinStatorCurrentAmps = leftSpinSim.getCurrentDrawAmps();
+        inputs.leftSpinSupplyCurrentAmps = leftSpinSim.getCurrentDrawAmps();
+
+        inputs.rightSpinMotorAppliedVolts = spinAppliedVolts;
+        inputs.rightSpinMotorVelocityRPS = leftSpinSim.getAngularVelocityRPM() / 60.0;
+        inputs.rightSpinStatorCurrentAmps = leftSpinSim.getCurrentDrawAmps();
+        inputs.rightSpinSupplyCurrentAmps = leftSpinSim.getCurrentDrawAmps();
 
         inputs.pivotMotorAppliedVolts = pivotAppliedVolts;
         inputs.pivotPosition = Rotation2d.fromRadians(pivotSim.getAngleRads());

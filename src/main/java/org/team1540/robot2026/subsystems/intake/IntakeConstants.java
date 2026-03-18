@@ -4,7 +4,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 
 public class IntakeConstants {
     public static int PIVOT_MOTOR_ID = 27;
-    public static int INTAKE_MOTOR_ID = 14;
+    public static int LEFT_INTAKE_MOTOR_ID = 14;
+    public static int RIGHT_INTAKE_MOTOR_ID = 15;
 
     public static double PIVOT_KS = 0.0;
     public static double PIVOT_KV = 4.76;
@@ -16,7 +17,7 @@ public class IntakeConstants {
     public static double PIVOT_CRUISE_VELOCITY_RPS = 2.0;
     public static double PIVOT_ACCELERATION_RPS2 = 4.0;
 
-    public static double SPIN_GEAR_RATIO = 1.0;
+    public static double LEFT_SPIN_GEAR_RATIO = 1.0;
     public static double PIVOT_GEAR_RATIO = 48.75;
 
     public static Rotation2d PIVOT_MIN_ANGLE = Rotation2d.fromDegrees(-140.0);
