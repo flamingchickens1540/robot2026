@@ -104,6 +104,20 @@ public class Autos {
         return routine;
     }
 
+    public AutoRoutine towerBNPH(){
+        final String trajName = "TowerBNPH";
+        AutoRoutine routine = autoFactory.newRoutine("TowerBNPH");
+        AutoTrajectory traj = routine.trajectory(trajName);
+
+        routine.active()
+                .onTrue(intake.zeroCommand().andThen(intake.commandRunIntake(0.68)));
+        traj.done()
+                .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
+                        .alongWith(spindexer.runCommand(() -> 1.0, () -> 1.0), intake.jiggleCommand())
+                        .withTimeout(5.0));
+        return routine;
+    }
+
     public AutoRoutine leftTrench2Sweep() {
         final String trajName = "LeftTrench2Sweep";
 
