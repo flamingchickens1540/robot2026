@@ -9,9 +9,12 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
+
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.Constants;
@@ -33,17 +36,26 @@ public class Turret extends SubsystemBase {
 
     private Rotation2d setpointRotation = Rotation2d.kZero;
 
+    private boolean zeroed = false;
+
+    @AutoLogOutput(key = "Turret/CRT/CalculatedPosition")
+    private Rotation2d lastCalculatedCRTPosition = Rotation2d.kZero; // Last calculated position from CRT encoders
+
     @AutoLogOutput(key = "Turret/CRT/Error")
-    private Rotation2d lastCRTError = Rotation2d.kZero;
+    private Rotation2d lastCRTError = Rotation2d.kZero; // Error between two CRT encoders
 
     @AutoLogOutput(key = "Turret/CRT/ZeroingError")
-    private Rotation2d zeroingCRTError = Rotation2d.kZero;
+    private Rotation2d zeroingCRTError = Rotation2d.kZero; // Error between two CRT encoders at the moment of zeroing
+
+    @AutoLogOutput(key = "Turret/CRT/MotorToCRTError")
+    private Rotation2d lastMotorToCRTError = Rotation2d.kZero; // Error between motor encoder and CRT
 
     private final Alert motorDisconnectedAlert = new Alert("Turret motor disconnected", Alert.AlertType.kError);
     private final Alert smallEncoderDisconnectedAlert =
             new Alert("Turret " + SMALL_ENCODER_GEAR_TOOTH_COUNT + "t encoder disconnected", Alert.AlertType.kError);
     private final Alert bigEncoderDisconnectedAlert =
             new Alert("Turret " + BIG_ENCODER_GEAR_TOOTH_COUNT + "t encoder disconnected", Alert.AlertType.kError);
+
     private final Alert zeroingErrorAlert = new Alert(
             "Large encoder error of " + zeroingCRTError.getDegrees() + " degrees during zeroing",
             Alert.AlertType.kWarning);
@@ -55,6 +67,12 @@ public class Turret extends SubsystemBase {
         if (hasInstance) throw new IllegalStateException("Instance of turret already exists");
         this.io = turretIO;
         hasInstance = true;
+
+        CommandScheduler.getInstance()
+                .schedule(Commands.waitUntil(new Trigger(() -> getVelocityRPS() < 0.001).debounce(5.0))
+                        .andThen(zeroCommand())
+                        .repeatedly()
+                        .ignoringDisable(true));
     }
 
     @Override
@@ -66,13 +84,9 @@ public class Turret extends SubsystemBase {
 
         if (DriverStation.isDisabled()) {
             stop();
-            Rotation2d crtToMotorError = getMotorToCRTError();
-            Logger.recordOutput("Turret/CRT/CalculatedPosition", calculateTurretAngle());
-            Logger.recordOutput("Turret/CRT/MotorToCRTErr", crtToMotorError);
-
-            unzeroedAlert.setText("Large error between CRT position and motor position of "
-                    + crtToMotorError.getDegrees() + " deg, press driver back button to rezero");
-            unzeroedAlert.set(crtToMotorError.getDegrees() > 1.0);
+            calculateTurretAngle();
+            lastMotorToCRTError =
+                    Rotation2d.fromDegrees(Math.abs(lastCalculatedCRTPosition.minus(inputs.position).getDegrees()));
         }
 
         RobotState.getInstance()
@@ -85,8 +99,13 @@ public class Turret extends SubsystemBase {
         motorDisconnectedAlert.set(!inputs.connected);
         smallEncoderDisconnectedAlert.set(!inputs.smallEncoderConnected);
         bigEncoderDisconnectedAlert.set(!inputs.bigEncoderConnected);
+
         zeroingErrorAlert.setText("Large encoder error of " + zeroingCRTError.getDegrees() + " degrees during zeroing");
         zeroingErrorAlert.set(zeroingCRTError.getDegrees() > 5.0);
+
+        unzeroedAlert.setText("Large error between CRT position and motor position of "
+                + lastMotorToCRTError.getDegrees() + " deg, press driver back button to rezero");
+        unzeroedAlert.set(!zeroed);
 
         Command activeCmd = CommandScheduler.getInstance().requiring(this);
         Logger.recordOutput(
@@ -127,12 +146,9 @@ public class Turret extends SubsystemBase {
         Rotation2d rawPosition = Rotation2d.fromRotations(out);
         Logger.recordOutput("Turret/CRT/RawPosition", rawPosition);
 
-        return Rotation2d.fromRotations(rawPosition.getRotations() - ANGLE_OFFSET.getRotations());
-    }
-
-    private Rotation2d getMotorToCRTError() {
-        return Rotation2d.fromDegrees(
-                Math.abs(calculateTurretAngle().minus(inputs.position).getDegrees()));
+        Rotation2d position = Rotation2d.fromRotations(rawPosition.getRotations() - ANGLE_OFFSET.getRotations());
+        lastCalculatedCRTPosition = position;
+        return position;
     }
 
     private Rotation2d unwrapTurretAngle(Rotation2d targetAngle) {
@@ -151,6 +167,11 @@ public class Turret extends SubsystemBase {
             }
         }
         return Rotation2d.fromRotations(bestRot);
+    }
+
+    @AutoLogOutput(key = "Turret/IsZeroed")
+    public boolean isZeroed() {
+        return zeroed;
     }
 
     public void stop() {
@@ -220,7 +241,9 @@ public class Turret extends SubsystemBase {
                 .andThen(runOnce(() -> {
                     io.setMotorPosition(calculateTurretAngle());
                     zeroingCRTError = lastCRTError;
-                    unzeroedAlert.set(getMotorToCRTError().getDegrees() > 1.0);
+                    lastMotorToCRTError =
+                            Rotation2d.fromDegrees(Math.abs(lastCalculatedCRTPosition.minus(inputs.position).getDegrees()));
+                    zeroed = lastMotorToCRTError.getDegrees() < 1.0;
                 }))
                 .withName("TurretZeroCommand");
     }

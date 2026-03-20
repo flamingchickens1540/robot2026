@@ -164,7 +164,7 @@ public class RobotContainer {
         driver.rightOuterPaddle()
                 .onTrue(hood.setpointCommand(() -> HoodConstants.MIN_ANGLE).withName("HoodDownCommand"));
         driver.back()
-                .whileTrue(turret.zeroCommand()
+                .onTrue(turret.zeroCommand()
                         .andThen(leds.viewFull
                                 .commandShowPattern(CustomLEDPatterns.strobe(Color.kGreen))
                                 .withTimeout(0.5))
@@ -180,7 +180,7 @@ public class RobotContainer {
                         .ignoringDisable(true));
 
         copilot.back()
-                .whileTrue(turret.zeroCommand()
+                .onTrue(turret.zeroCommand()
                         .andThen(leds.viewFull
                                 .commandShowPattern(CustomLEDPatterns.strobe(Color.kGreen))
                                 .withTimeout(0.5))
@@ -257,7 +257,10 @@ public class RobotContainer {
 
         // LED bindings
         RobotModeTriggers.disabled()
-                .whileTrue(leds.viewFull.commandDefaultPattern(() -> CustomLEDPatterns.movingRainbow(Hertz.of(0.5))));
+                .whileTrue(leds.viewFull.commandDefaultPattern(() -> {
+                    if (!turret.isZeroed()) return CustomLEDPatterns.strobe(Color.kRed);
+                    return CustomLEDPatterns.movingRainbow(Hertz.of(0.5));
+                }));
         RobotModeTriggers.teleop().whileTrue(leds.viewFull.commandDefaultPattern(() -> {
             if (turretLockedMode) return CustomLEDPatterns.strobe(Color.kRed);
             else if (intakeCmd.isScheduled()) {
@@ -273,8 +276,6 @@ public class RobotContainer {
         new Trigger(() -> !FeedingCommands.shouldFeed(turret, hood, manualFeedOverride) && shootCmd.isScheduled())
                 .whileTrue(leds.viewFull.commandShowPattern(CustomLEDPatterns.strobe(Color.kOrange)));
         MatchTriggers.timeRemaining(30)
-                .or(MatchTriggers.timeRemaining(15))
-                .or(MatchTriggers.timeRemaining(10))
                 .onTrue(leds.viewFull
                         .commandShowPattern(CustomLEDPatterns.strobe(Color.kWhite))
                         .withTimeout(1.0));
