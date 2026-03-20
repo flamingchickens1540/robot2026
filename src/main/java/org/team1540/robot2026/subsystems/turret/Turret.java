@@ -7,14 +7,13 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
-
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.Constants;
@@ -68,11 +67,7 @@ public class Turret extends SubsystemBase {
         this.io = turretIO;
         hasInstance = true;
 
-        CommandScheduler.getInstance()
-                .schedule(Commands.waitUntil(new Trigger(() -> getVelocityRPS() < 0.001).debounce(5.0))
-                        .andThen(zeroCommand())
-                        .repeatedly()
-                        .ignoringDisable(true));
+        CommandScheduler.getInstance().schedule(autoZeroOnStartupCommand());
     }
 
     @Override
@@ -85,8 +80,8 @@ public class Turret extends SubsystemBase {
         if (DriverStation.isDisabled()) {
             stop();
             calculateTurretAngle();
-            lastMotorToCRTError =
-                    Rotation2d.fromDegrees(Math.abs(lastCalculatedCRTPosition.minus(inputs.position).getDegrees()));
+            lastMotorToCRTError = Rotation2d.fromDegrees(
+                    Math.abs(lastCalculatedCRTPosition.minus(inputs.position).getDegrees()));
         }
 
         RobotState.getInstance()
@@ -238,14 +233,31 @@ public class Turret extends SubsystemBase {
 
     public Command zeroCommand() {
         return runOnce(this::stop)
-                .andThen(runOnce(() -> {
+                .andThen(() -> {
                     io.setMotorPosition(calculateTurretAngle());
                     zeroingCRTError = lastCRTError;
-                    lastMotorToCRTError =
-                            Rotation2d.fromDegrees(Math.abs(lastCalculatedCRTPosition.minus(inputs.position).getDegrees()));
+                    lastMotorToCRTError = Rotation2d.fromDegrees(Math.abs(
+                            lastCalculatedCRTPosition.minus(inputs.position).getDegrees()));
                     zeroed = lastMotorToCRTError.getDegrees() < 1.0;
-                }))
+                })
+                .ignoringDisable(true)
                 .withName("TurretZeroCommand");
+    }
+
+    public Command autoZeroOnStartupCommand() {
+        Timer stationaryTimer = new Timer();
+        return Commands.runOnce(() -> {
+                    if (getVelocityRPS() > 0.001) stationaryTimer.restart();
+                })
+                .andThen(zeroCommand()
+                        .asProxy()
+                        .andThen(stationaryTimer::restart)
+                        .onlyIf(() -> stationaryTimer.hasElapsed(5.0)))
+                .repeatedly()
+                .beforeStarting(stationaryTimer::restart)
+                .ignoringDisable(true)
+                .until(DriverStation::isEnabled)
+                .withName("TurretStartupAutoZeroCommand");
     }
 
     public static Turret createReal() {

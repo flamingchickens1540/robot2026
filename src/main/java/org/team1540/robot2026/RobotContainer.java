@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import java.util.function.Supplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.team1540.robot2026.autos.Autos;
 import org.team1540.robot2026.commands.CharacterizationCommands;
@@ -163,13 +164,14 @@ public class RobotContainer {
                 .onTrue(intake.commandToSetpoint(Intake.IntakeState.STOW).withName("StowIntakeCommand"));
         driver.rightOuterPaddle()
                 .onTrue(hood.setpointCommand(() -> HoodConstants.MIN_ANGLE).withName("HoodDownCommand"));
+        driver.leftBumper().onTrue(turret.run(turret::stop).withName("TurretStopCommand"));
         driver.back()
                 .onTrue(turret.zeroCommand()
+                        .asProxy()
                         .andThen(leds.viewFull
                                 .commandShowPattern(CustomLEDPatterns.strobe(Color.kGreen))
                                 .withTimeout(0.5))
                         .ignoringDisable(true));
-        driver.leftBumper().onTrue(turret.run(turret::stop).withName("TurretStopCommand"));
 
         // Copilot controls
         copilot.povUp()
@@ -181,6 +183,7 @@ public class RobotContainer {
 
         copilot.back()
                 .onTrue(turret.zeroCommand()
+                        .asProxy()
                         .andThen(leds.viewFull
                                 .commandShowPattern(CustomLEDPatterns.strobe(Color.kGreen))
                                 .withTimeout(0.5))
@@ -243,7 +246,7 @@ public class RobotContainer {
                         .alongWith(
                                 FeedingCommands.feedCommand(turret, hood, spindexer, manualFeedOverride),
                                 intake.jiggleCommand())
-                        .withName("trenchSHotCommand"));
+                        .withName("trenchShotCommand"));
 
         // Shooter tuning bindings
         if (Constants.isTuningMode()) {
@@ -256,12 +259,13 @@ public class RobotContainer {
         }
 
         // LED bindings
-        RobotModeTriggers.disabled()
-                .whileTrue(leds.viewFull.commandDefaultPattern(() -> {
-                    if (!turret.isZeroed()) return CustomLEDPatterns.strobe(Color.kRed);
-                    return CustomLEDPatterns.movingRainbow(Hertz.of(0.5));
-                }));
-        RobotModeTriggers.teleop().whileTrue(leds.viewFull.commandDefaultPattern(() -> {
+        Supplier<LEDPattern> disabledPattern = () -> {
+            if (!DriverStation.isDSAttached())
+                return LEDPattern.solid(Color.kWhite).breathe(Seconds.of(1.5));
+            else if (!turret.isZeroed()) return CustomLEDPatterns.strobe(Color.kRed);
+            return CustomLEDPatterns.movingRainbow(Hertz.of(0.5));
+        };
+        Supplier<LEDPattern> teleopPattern = () -> {
             if (turretLockedMode) return CustomLEDPatterns.strobe(Color.kRed);
             else if (intakeCmd.isScheduled()) {
                 if (!shootCmd.isScheduled()) return LEDPattern.solid(Color.kPurple);
@@ -269,10 +273,15 @@ public class RobotContainer {
             } else if (shootCmd.isScheduled()) {
                 return LEDPattern.solid(LEDs.getAllianceColor()).blink(Seconds.of(0.25));
             } else return LEDPattern.solid(LEDs.getAllianceColor());
-        }));
-        RobotModeTriggers.autonomous()
-                .whileTrue(leds.viewFull.commandDefaultPattern(
-                        () -> LEDPattern.solid(LEDs.getAllianceColor()).blink(Seconds.of(0.25))));
+        };
+        Supplier<LEDPattern> autoPattern =
+                () -> LEDPattern.solid(LEDs.getAllianceColor()).blink(Seconds.of(0.25));
+
+        leds.viewFull.setDefaultPattern(disabledPattern);
+        RobotModeTriggers.disabled().whileTrue(leds.viewFull.commandDefaultPattern(disabledPattern));
+        RobotModeTriggers.teleop().whileTrue(leds.viewFull.commandDefaultPattern(teleopPattern));
+        RobotModeTriggers.autonomous().whileTrue(leds.viewFull.commandDefaultPattern(autoPattern));
+
         new Trigger(() -> !FeedingCommands.shouldFeed(turret, hood, manualFeedOverride) && shootCmd.isScheduled())
                 .whileTrue(leds.viewFull.commandShowPattern(CustomLEDPatterns.strobe(Color.kOrange)));
         MatchTriggers.timeRemaining(30)
@@ -334,13 +343,17 @@ public class RobotContainer {
     private void configureRobotModeTriggers() {
         RobotModeTriggers.teleop()
                 .and(DriverStation::isFMSAttached)
-                .onTrue(drivetrain.runOnce(drivetrain::zeroFieldOrientation));
+                .onTrue(drivetrain.runOnce(drivetrain::zeroFieldOrientation).withName("DriveOrientToOdometry"));
 
         // Reset hub shift timer at the start of each mode
-        RobotModeTriggers.teleop().onTrue(Commands.runOnce(HubShiftUtil::initialize));
-        RobotModeTriggers.autonomous().onTrue(Commands.runOnce(HubShiftUtil::initialize));
+        RobotModeTriggers.teleop()
+                .onTrue(Commands.runOnce(HubShiftUtil::initialize).withName("HubShiftInit"));
+        RobotModeTriggers.autonomous()
+                .onTrue(Commands.runOnce(HubShiftUtil::initialize).withName("HubShiftInit"));
         RobotModeTriggers.disabled()
-                .onTrue(Commands.runOnce(HubShiftUtil::initialize).ignoringDisable(true));
+                .onTrue(Commands.runOnce(HubShiftUtil::initialize)
+                        .ignoringDisable(true)
+                        .withName("HubShiftInit"));
     }
 
     private void configurePeriodicCallbacks() {
