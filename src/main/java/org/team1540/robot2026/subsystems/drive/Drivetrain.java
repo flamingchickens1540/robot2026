@@ -49,6 +49,9 @@ public class Drivetrain extends SubsystemBase {
     private static final LoggedTunableNumber rotationKI = new LoggedTunableNumber("Drivetrain/Rotation/kI", 0.0);
     private static final LoggedTunableNumber rotationKD = new LoggedTunableNumber("Drivetrain/Rotation/kD", 0.0);
 
+    private static final double TRANSLATION_RATE_LIMIT = 1.0;
+    private static final double ROTATION_RATE_LIMIT = 1.0;
+
     private static final LoggedTunableNumber sampleRejectionThreshold =
             new LoggedTunableNumber("Drivetrain/Odometry/SampleRejectionThreshold", 2.0);
 
@@ -58,8 +61,6 @@ public class Drivetrain extends SubsystemBase {
 
     private Rotation2d fieldOrientationOffset = Rotation2d.kZero;
     private Rotation2d rawGyroRotation = Rotation2d.kZero;
-
-    SlewRateLimiter slewRateLimiterFilter = new SlewRateLimiter(0.5);
 
     private final SwerveDriveKinematics kinematics = RobotState.getInstance().getKinematics();
     private SwerveModulePosition[] lastModulePositions = new SwerveModulePosition[4];
@@ -305,37 +306,96 @@ public class Drivetrain extends SubsystemBase {
                 .withName("PercentDriveCommand");
     }
 
-    public Command teleopDriveCommand(XboxController controller) {
+    public Command teleopDriveCommand(XboxController controller, BooleanSupplier rateLimit) {
+        SlewRateLimiter translationRateLimiter = new SlewRateLimiter(TRANSLATION_RATE_LIMIT);
+        SlewRateLimiter rotationRateLimiter = new SlewRateLimiter(ROTATION_RATE_LIMIT);
         return percentDriveCommand(
-                        () -> JoystickUtil.deadzonedJoystickTranslation(
-                                slewRateLimiterFilter.calculate(-controller.getLeftY()), slewRateLimiterFilter.calculate(-controller.getLeftX()), 0.1),
-                        () -> JoystickUtil.smartDeadzone(slewRateLimiterFilter.calculate(-controller.getRightX()), 0.1))
+                        () -> {
+                            Translation2d translation = JoystickUtil.deadzonedJoystickTranslation(
+                                    -controller.getLeftY(), -controller.getLeftX(), 0.1);
+                            if (rateLimit.getAsBoolean()) {
+                                return new Translation2d(
+                                        translationRateLimiter.calculate(translation.getNorm()),
+                                        translation.getAngle());
+                            }
+                            return translation;
+                        },
+                        () -> {
+                            double input = JoystickUtil.smartDeadzone(-controller.getRightX(), 0.1);
+                            return rateLimit.getAsBoolean()
+                                    ? rotationRateLimiter.calculate(
+                                            JoystickUtil.smartDeadzone(-controller.getRightX(), 0.1))
+                                    : input;
+                        })
+                .beforeStarting(() -> {
+                    translationRateLimiter.reset(JoystickUtil.deadzonedJoystickTranslation(
+                                    -controller.getLeftY(), -controller.getLeftX(), 0.1)
+                            .getNorm());
+                    rotationRateLimiter.reset(JoystickUtil.smartDeadzone(-controller.getRightX(), 0.1));
+                })
                 .withName("TeleopDriveCommand");
     }
 
-    public Command teleopDriveCommand(EnvisionController controller) {
+    public Command teleopDriveCommand(EnvisionController controller, BooleanSupplier rateLimit) {
+        SlewRateLimiter translationRateLimiter = new SlewRateLimiter(TRANSLATION_RATE_LIMIT);
+        SlewRateLimiter rotationRateLimiter = new SlewRateLimiter(ROTATION_RATE_LIMIT);
         return percentDriveCommand(
-                        () -> JoystickUtil.deadzonedJoystickTranslation(
-                                slewRateLimiterFilter.calculate(-controller.getLeftY()), slewRateLimiterFilter.calculate(-controller.getLeftX()), 0.1),
-                        () -> JoystickUtil.smartDeadzone(slewRateLimiterFilter.calculate(-controller.getRightX()), 0.1))
+                        () -> {
+                            Translation2d translation = JoystickUtil.deadzonedJoystickTranslation(
+                                    -controller.getLeftY(), -controller.getLeftX(), 0.1);
+                            if (rateLimit.getAsBoolean()) {
+                                return new Translation2d(
+                                        translationRateLimiter.calculate(translation.getNorm()),
+                                        translation.getAngle());
+                            }
+                            return translation;
+                        },
+                        () -> {
+                            double input = JoystickUtil.smartDeadzone(-controller.getRightX(), 0.1);
+                            return rateLimit.getAsBoolean()
+                                    ? rotationRateLimiter.calculate(
+                                            JoystickUtil.smartDeadzone(-controller.getRightX(), 0.1))
+                                    : input;
+                        })
+                .beforeStarting(() -> {
+                    translationRateLimiter.reset(JoystickUtil.deadzonedJoystickTranslation(
+                                    -controller.getLeftY(), -controller.getLeftX(), 0.1)
+                            .getNorm());
+                    rotationRateLimiter.reset(JoystickUtil.smartDeadzone(-controller.getRightX(), 0.1));
+                })
                 .withName("TeleopDriveCommand");
     }
 
-    public Command teleopDriveWithHeadingCommand(EnvisionController controller, Supplier<Rotation2d> heading) {
+    public Command teleopDriveWithHeadingCommand(
+            EnvisionController controller, BooleanSupplier rateLimit, Supplier<Rotation2d> heading) {
+        SlewRateLimiter translationRateLimiter = new SlewRateLimiter(TRANSLATION_RATE_LIMIT);
         return percentDriveCommand(
-                        () -> JoystickUtil.deadzonedJoystickTranslation(
-                                slewRateLimiterFilter.calculate(-controller.getLeftY()), slewRateLimiterFilter.calculate(-controller.getLeftX()), 0.1),
+                        () -> {
+                            Translation2d translation = JoystickUtil.deadzonedJoystickTranslation(
+                                    -controller.getLeftY(), -controller.getLeftX(), 0.1);
+                            if (rateLimit.getAsBoolean()) {
+                                return new Translation2d(
+                                        translationRateLimiter.calculate(translation.getNorm()),
+                                        translation.getAngle());
+                            }
+                            return translation;
+                        },
                         () -> headingController.calculate(
                                         RobotState.getInstance()
                                                 .getRobotHeading()
                                                 .getRadians(),
                                         heading.get().getRadians())
                                 / MAX_ANGULAR_SPEED_RAD_PER_SEC)
-                .beforeStarting(() -> headingController.reset(
-                        RobotState.getInstance().getRobotHeading().getRadians(),
-                        RobotState.getInstance().getRobotVelocity().omegaRadiansPerSecond))
+                .beforeStarting(() -> {
+                    translationRateLimiter.reset(JoystickUtil.deadzonedJoystickTranslation(
+                                    -controller.getLeftY(), -controller.getLeftX(), 0.1)
+                            .getNorm());
+                    headingController.reset(
+                            RobotState.getInstance().getRobotHeading().getRadians(),
+                            RobotState.getInstance().getRobotVelocity().omegaRadiansPerSecond);
+                })
                 .alongWith(Commands.run(() -> Logger.recordOutput("Drivetrain/HeadingGoal", heading.get())))
-                .until(() -> Math.abs(slewRateLimiterFilter.calculate(controller.getRightX())) >= 0.1);
+                .until(() -> Math.abs(controller.getRightX()) >= 0.1);
     }
 
     public static Drivetrain createReal() {

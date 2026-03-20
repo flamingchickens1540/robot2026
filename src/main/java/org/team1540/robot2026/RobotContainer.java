@@ -115,16 +115,6 @@ public class RobotContainer {
     }
 
     private void configureButtonBindings() {
-        drivetrain.setDefaultCommand(drivetrain.teleopDriveCommand(driver.getHID()));
-        turret.setDefaultCommand(turret.commandToSetpoint(
-                () -> robotState.getAimingParameters().turretAngle(),
-                () -> robotState.getAimingParameters().turretVelocityRadPerSec(),
-                true));
-        driver.x().onTrue(drivetrain.runOnce(drivetrain::stopWithX).withName("DriveXMode"));
-        driver.start()
-                .onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual).withName("ManualDriveZero"));
-
-        // Shoot/intake controls
         Trigger manualFeedOverride = driver.leftBumper().or(() -> turretLockedMode);
         Command intakeCmd = intake.commandRunIntake(1.0).withName("IntakeCommand");
         Command shootCmd = Commands.either(
@@ -144,6 +134,18 @@ public class RobotContainer {
                         JoystickUtil.rumbleCommand(driver.getHID(), 1.0))
                 .withName("ShootCommand");
 
+        drivetrain.setDefaultCommand(drivetrain.teleopDriveCommand(
+                driver.getHID(),
+                () -> shootCmd.isScheduled() && robotState.getTargetingMode() == RobotState.TargetingMode.HUB));
+        turret.setDefaultCommand(turret.commandToSetpoint(
+                () -> robotState.getAimingParameters().turretAngle(),
+                () -> robotState.getAimingParameters().turretVelocityRadPerSec(),
+                true));
+        driver.x().onTrue(drivetrain.runOnce(drivetrain::stopWithX).withName("DriveXMode"));
+        driver.start()
+                .onTrue(Commands.runOnce(drivetrain::zeroFieldOrientationManual).withName("ManualDriveZero"));
+
+        // Shoot/intake controls
         driver.leftTrigger().toggleOnTrue(intakeCmd);
         driver.rightTrigger().toggleOnTrue(shootCmd);
 
@@ -245,13 +247,12 @@ public class RobotContainer {
 
         // Shooter tuning bindings
         if (Constants.isTuningMode()) {
-            //            copilot.rightBumper()
-            //                    .toggleOnTrue(ShootingCommands.tuneShooterCommand(turret, shooter, hood)
-            //                            .withName("TuneShooterCommand"));
-            //            copilot.povUp()
-            //                    .whileTrue(
-            //                            FeedingCommands.feedCommand(turret, hood,
-            // spindexer).alongWith(intake.jiggleCommand()));
+            copilot.y()
+                    .toggleOnTrue(ShootingCommands.tuneShooterCommand(turret, shooter, hood)
+                            .withName("TuneShooterCommand"));
+            copilot.povUp()
+                    .whileTrue(
+                            FeedingCommands.feedCommand(turret, hood, spindexer).alongWith(intake.jiggleCommand()));
         }
 
         // LED bindings

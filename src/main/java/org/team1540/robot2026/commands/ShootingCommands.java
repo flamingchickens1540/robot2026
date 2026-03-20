@@ -24,7 +24,7 @@ public class ShootingCommands {
     public static Command tuneShooterCommand(Turret turret, Shooter shooter, Hood hood) {
         return Commands.parallel(
                 turret.commandToSetpoint(
-                        () -> RobotState.getInstance().getAimingParameters().turretAngle(), () -> 0.0, true),
+                        () -> RobotState.getInstance().getHubAimingParameters().turretAngle(), () -> 0.0, true),
                 shooter.commandVelocity(shooterRPM),
                 hood.setpointCommand(() -> Rotation2d.fromDegrees(hoodDegrees.get())),
                 Commands.run(() -> Logger.recordOutput(
@@ -57,10 +57,13 @@ public class ShootingCommands {
     public static Command shooterAimTurretLockedCommand(
             EnvisionController controller, Drivetrain drivetrain, Shooter shooter, Hood hood) {
         return Commands.deadline(
-                        drivetrain.teleopDriveWithHeadingCommand(controller, () -> RobotState.getInstance()
-                                .getAimingParameters()
-                                .turretAngle()
-                                .minus(RobotState.getInstance().getTurretAngle())),
+                        drivetrain.teleopDriveWithHeadingCommand(
+                                controller,
+                                () -> RobotState.getInstance().getTargetingMode() == RobotState.TargetingMode.HUB,
+                                () -> RobotState.getInstance()
+                                        .getAimingParameters()
+                                        .turretAngle()
+                                        .minus(RobotState.getInstance().getTurretAngle())),
                         shooter.commandVelocity(() ->
                                 RobotState.getInstance().getAimingParameters().shooterRPM()),
                         hood.setpointCommand(() ->
@@ -90,10 +93,13 @@ public class ShootingCommands {
     public static Command hubAimTurretLockedCommand(
             EnvisionController controller, Drivetrain drivetrain, Shooter shooter, Hood hood, Turret turret) {
         return Commands.parallel(
-                        drivetrain.teleopDriveWithHeadingCommand(controller, () -> RobotState.getInstance()
-                                .getHubAimingParameters()
-                                .turretAngle()
-                                .minus(turret.getPosition())),
+                        drivetrain.teleopDriveWithHeadingCommand(
+                                controller,
+                                () -> RobotState.getInstance().getTargetingMode() == RobotState.TargetingMode.HUB,
+                                () -> RobotState.getInstance()
+                                        .getHubAimingParameters()
+                                        .turretAngle()
+                                        .minus(turret.getPosition())),
                         shooter.commandVelocity(() -> RobotState.getInstance()
                                 .getHubAimingParameters()
                                 .shooterRPM()),
@@ -137,10 +143,13 @@ public class ShootingCommands {
     public static Command shuffleAimTurretLockedCommand(
             EnvisionController controller, Drivetrain drivetrain, Shooter shooter, Hood hood, Turret turret) {
         return Commands.parallel(
-                        drivetrain.teleopDriveWithHeadingCommand(controller, () -> (RobotState.getInstance()
-                                        .getShuffleAimingParameters()
-                                        .turretAngle())
-                                .minus(turret.getPosition())),
+                        drivetrain.teleopDriveWithHeadingCommand(
+                                controller,
+                                () -> RobotState.getInstance().getTargetingMode() == RobotState.TargetingMode.HUB,
+                                () -> (RobotState.getInstance()
+                                                .getShuffleAimingParameters()
+                                                .turretAngle())
+                                        .minus(turret.getPosition())),
                         shooter.commandVelocity(() -> RobotState.getInstance()
                                 .getShuffleAimingParameters()
                                 .shooterRPM()),
