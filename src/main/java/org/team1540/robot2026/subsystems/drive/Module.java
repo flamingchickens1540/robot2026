@@ -1,5 +1,7 @@
 package org.team1540.robot2026.subsystems.drive;
 
+import static org.team1540.robot2026.subsystems.drive.DrivetrainConstants.*;
+
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
@@ -69,27 +71,39 @@ public class Module {
         turnEncoderDisconnectedAlert.set(!inputs.turnEncoderConnected);
     }
 
-    /** Runs the module with the specified setpoint state. Mutates the state to optimize it. */
     public void runSetpoint(SwerveModuleState state) {
+        runSetpoint(state, 0.0);
+    }
+
+    /** Runs the module with the specified setpoint state. Mutates the state to optimize it. */
+    public void runSetpoint(SwerveModuleState state, double wheelTorqueNM) {
         // Optimize velocity setpoint
         state.optimize(getTurnAngle());
+
+        // Cosine scale the velocity and torque setpoints based on turn angle
         state.cosineScale(inputs.turnPosition);
+        wheelTorqueNM *= state.angle.minus(getTurnAngle()).getCos();
 
         // Apply setpoints
-        io.setDriveVelocity(state.speedMetersPerSecond / constants.WheelRadius);
+        double velocityRadPerSec = state.speedMetersPerSecond / constants.WheelRadius;
+        if (USE_DRIVE_TORQUE_CONTROL) {
+            io.setDriveVelocityTorqueCurrent(velocityRadPerSec, wheelTorqueNM / DRIVE_KT);
+        } else {
+            io.setDriveVelocityVoltage(velocityRadPerSec);
+        }
         io.setTurnPosition(state.angle);
     }
 
     /** Runs the module with the specified output while controlling to zero degrees. */
     public void runCharacterization(double output) {
-        io.setDriveOpenLoop(output);
+        io.setDriveVoltage(output);
         io.setTurnPosition(Rotation2d.kZero);
     }
 
     /** Disables all outputs to motors. */
     public void stop() {
-        io.setDriveOpenLoop(0.0);
-        io.setTurnOpenLoop(0.0);
+        io.setDriveVoltage(0.0);
+        io.setTurnVoltage(0.0);
     }
 
     /** Returns the current turn angle of the module. */

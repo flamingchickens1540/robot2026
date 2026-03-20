@@ -3,8 +3,10 @@ package org.team1540.robot2026.subsystems.drive;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 
 import com.ctre.phoenix6.CANBus;
+import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
+import org.team1540.robot2026.Robot;
 import org.team1540.robot2026.generated.TunerConstants;
 
 public class DrivetrainConstants {
@@ -25,6 +27,12 @@ public class DrivetrainConstants {
             DCMotor.getFalcon500Foc(1).withReduction(TunerConstants.FrontLeft.SteerMotorGearRatio).freeSpeedRadPerSec;
 
     public static final double WHEEL_COF = 1.4;
+
+    public static final boolean USE_DRIVE_TORQUE_CONTROL = TunerConstants.FrontLeft.DriveMotorClosedLoopOutput
+                    == SwerveModuleConstants.ClosedLoopOutputType.TorqueCurrentFOC
+            && Robot.isReal();
+    public static final double DRIVE_KT =
+            DCMotor.getKrakenX60Foc(1).withReduction(TunerConstants.FrontLeft.DriveMotorGearRatio).KtNMPerAmp;
 
     public static Translation2d[] getModuleTranslations() {
         return new Translation2d[] {

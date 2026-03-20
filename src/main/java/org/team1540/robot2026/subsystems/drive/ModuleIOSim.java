@@ -72,6 +72,8 @@ public class ModuleIOSim implements ModuleIO {
         inputs.driveAppliedVolts = driveAppliedVolts.in(Volts);
         inputs.driveSupplyCurrentAmps = moduleSim.getDriveMotorSupplyCurrent().in(Amps);
         inputs.driveStatorCurrentAmps = moduleSim.getDriveMotorStatorCurrent().in(Amps);
+        inputs.driveTorqueCurrentAmps =
+                moduleSim.getDriveMotorStatorCurrent().in(Amps) * Math.signum(driveAppliedVolts.in(Volts));
 
         inputs.turnConnected = true;
         inputs.turnEncoderConnected = true;
@@ -90,15 +92,20 @@ public class ModuleIOSim implements ModuleIO {
     }
 
     @Override
-    public void setDriveVelocity(double velocityRadPerSec) {
+    public void setDriveVelocityVoltage(double velocityRadPerSec) {
         driveClosedLoop = true;
         drivePID.setSetpoint(Units.radiansToRotations(velocityRadPerSec));
     }
 
     @Override
-    public void setDriveOpenLoop(double input) {
+    public void setDriveVelocityTorqueCurrent(double velocityRadPerSec, double ffCurrentAmps) {
+        setDriveVelocityVoltage(velocityRadPerSec);
+    }
+
+    @Override
+    public void setDriveVoltage(double volts) {
         driveClosedLoop = false;
-        driveAppliedVolts = Volts.of(MathUtil.clamp(input, -12.0, 12.0));
+        driveAppliedVolts = Volts.of(MathUtil.clamp(volts, -12.0, 12.0));
         drivePID.reset();
     }
 
@@ -109,9 +116,9 @@ public class ModuleIOSim implements ModuleIO {
     }
 
     @Override
-    public void setTurnOpenLoop(double input) {
+    public void setTurnVoltage(double volts) {
         turnClosedLoop = false;
-        turnAppliedVolts = Volts.of(MathUtil.clamp(input, -12.0, 12.0));
+        turnAppliedVolts = Volts.of(MathUtil.clamp(volts, -12.0, 12.0));
         turnPID.reset();
     }
 }
