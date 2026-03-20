@@ -95,6 +95,13 @@ public class IntakeIOTalonFX implements IntakeIO {
                 leftSpinSupplyCurrentAmps,
                 leftSpinStatorCurrentAmps,
                 leftSpinMotorTemp,
+
+                rightSpinMotorVelocityRPS,
+                rightSpinMotorAppliedVolts,
+                rightSpinSupplyCurrentAmps,
+                rightSpinStatorCurrentAmps,
+                rightSpinMotorTemp,
+
                 pivotMotorVelocityRPS,
                 pivotPositon,
                 pivotMotorAppliedVolts,
