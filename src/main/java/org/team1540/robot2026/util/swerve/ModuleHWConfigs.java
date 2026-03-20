@@ -17,8 +17,11 @@ public record ModuleHWConfigs(
             .withKS(0.25854004341546240)
             .withKV(0.9146790761644792);
 
-    public static final Slot0Configs DRIVE_TORQUE_GAINS =
-            new Slot0Configs().withKP(35.0).withKI(0.0).withKD(0.0).withKS(5.0);
+    public static final Slot0Configs DRIVE_TORQUE_GAINS = new Slot0Configs()
+            .withKP(35.0)
+            .withKI(0.0)
+            .withKD(0.0)
+            .withKS(5.0);
 
     public static final Slot0Configs STEER_GAINS = new Slot0Configs()
             .withKP(100)
@@ -39,7 +42,7 @@ public record ModuleHWConfigs(
         driveConfig.Feedback.SensorToMechanismRatio = constants.DriveMotorGearRatio;
 
         driveConfig.TorqueCurrent.PeakForwardTorqueCurrent = constants.SlipCurrent;
-        driveConfig.TorqueCurrent.PeakReverseTorqueCurrent = constants.SlipCurrent;
+        driveConfig.TorqueCurrent.PeakReverseTorqueCurrent = -constants.SlipCurrent;
         driveConfig.CurrentLimits.StatorCurrentLimit = constants.SlipCurrent;
         driveConfig.CurrentLimits.StatorCurrentLimitEnable = true;
 
@@ -78,8 +81,9 @@ public record ModuleHWConfigs(
         turnConfig.MotionMagic.MotionMagicCruiseVelocity = Units.radiansToRotations(
                 DCMotor.getFalcon500Foc(1).withReduction(constants.SteerMotorGearRatio).freeSpeedRadPerSec);
         turnConfig.MotionMagic.MotionMagicAcceleration = turnConfig.MotionMagic.MotionMagicCruiseVelocity / 0.1;
-        turnConfig.MotionMagic.MotionMagicExpo_kV = 1.0 / Units.radiansToRotations(
-                DCMotor.getFalcon500Foc(1).withReduction(constants.SteerMotorGearRatio).KvRadPerSecPerVolt);
+        turnConfig.MotionMagic.MotionMagicExpo_kV = 1.0
+                / Units.radiansToRotations(
+                        DCMotor.getFalcon500Foc(1).withReduction(constants.SteerMotorGearRatio).KvRadPerSecPerVolt);
         turnConfig.MotionMagic.MotionMagicExpo_kA = 0.1;
         turnConfig.ClosedLoopGeneral.ContinuousWrap = true;
 
