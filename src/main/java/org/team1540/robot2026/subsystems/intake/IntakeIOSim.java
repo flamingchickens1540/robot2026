@@ -22,8 +22,8 @@ public class IntakeIOSim implements IntakeIO {
     private static final double SIM_PIVOT_KD = 0.0;
 
     private final DCMotorSim spinSim = new DCMotorSim(
-            LinearSystemId.createDCMotorSystem(DCMotor.getFalcon500Foc(1), 0.001, SPIN_GEAR_RATIO),
-            DCMotor.getFalcon500Foc(1));
+            LinearSystemId.createDCMotorSystem(DCMotor.getKrakenX60Foc(2), 0.001, SPIN_GEAR_RATIO),
+            DCMotor.getKrakenX60Foc(2));
 
     private final SingleJointedArmSim pivotSim = new SingleJointedArmSim(
             DCMotor.getFalcon500Foc(1),
@@ -64,10 +64,10 @@ public class IntakeIOSim implements IntakeIO {
         spinSim.update(Constants.LOOP_PERIOD_SECS);
         pivotSim.update(Constants.LOOP_PERIOD_SECS);
 
-        inputs.spinMotorAppliedVolts = spinAppliedVolts;
-        inputs.spinMotorVelocityRPS = spinSim.getAngularVelocityRPM() / 60.0;
-        inputs.spinStatorCurrentAmps = spinSim.getCurrentDrawAmps();
-        inputs.spinSupplyCurrentAmps = spinSim.getCurrentDrawAmps();
+        inputs.spinMotorAppliedVolts = new double[] {spinAppliedVolts};
+        inputs.spinMotorVelocityRPS = new double[] {spinSim.getAngularVelocityRPM() / 60.0};
+        inputs.spinStatorCurrentAmps = new double[] {spinSim.getCurrentDrawAmps()};
+        inputs.spinSupplyCurrentAmps = new double[] {spinSim.getCurrentDrawAmps()};
 
         inputs.pivotMotorAppliedVolts = pivotAppliedVolts;
         inputs.pivotPosition = Rotation2d.fromRadians(pivotSim.getAngleRads());

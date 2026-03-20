@@ -8,10 +8,12 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.*;
@@ -19,13 +21,20 @@ import edu.wpi.first.units.measure.*;
 public class IntakeIOTalonFX implements IntakeIO {
 
     private final TalonFX pivotMotor = new TalonFX(PIVOT_MOTOR_ID);
-    private final TalonFX spinMotor = new TalonFX(INTAKE_MOTOR_ID);
+    private final TalonFX rightSpinMotor = new TalonFX(RIGHT_SPIN_MOTOR_ID);
+    private final TalonFX leftSpinMotor = new TalonFX(LEFT_SPIN_MOTOR_ID);
 
-    private final StatusSignal<AngularVelocity> spinMotorVelocityRPS = spinMotor.getVelocity();
-    private final StatusSignal<Voltage> spinMotorAppliedVolts = spinMotor.getMotorVoltage();
-    private final StatusSignal<Current> spinSupplyCurrentAmps = spinMotor.getSupplyCurrent();
-    private final StatusSignal<Current> spinStatorCurrentAmps = spinMotor.getStatorCurrent();
-    private final StatusSignal<Temperature> spinMotorTemp = spinMotor.getDeviceTemp();
+    private final StatusSignal<AngularVelocity> leftSpinVelocity = leftSpinMotor.getVelocity();
+    private final StatusSignal<Voltage> leftSpinVoltage = leftSpinMotor.getMotorVoltage();
+    private final StatusSignal<Current> leftSpinSupplyCurrent = leftSpinMotor.getSupplyCurrent();
+    private final StatusSignal<Current> leftSpinStatorCurrent = leftSpinMotor.getStatorCurrent();
+    private final StatusSignal<Temperature> leftSpinMotorTemp = leftSpinMotor.getDeviceTemp();
+
+    private final StatusSignal<AngularVelocity> rightSpinVelocity = rightSpinMotor.getVelocity();
+    private final StatusSignal<Voltage> rightSpinVoltage = rightSpinMotor.getMotorVoltage();
+    private final StatusSignal<Current> rightSpinSupplyCurrent = rightSpinMotor.getSupplyCurrent();
+    private final StatusSignal<Current> rightSpinStatorCurrent = rightSpinMotor.getStatorCurrent();
+    private final StatusSignal<Temperature> rightSpinMotorTemp = rightSpinMotor.getDeviceTemp();
 
     private final StatusSignal<Angle> pivotPositon = pivotMotor.getPosition();
     private final StatusSignal<AngularVelocity> pivotMotorVelocityRPS = pivotMotor.getVelocity();
@@ -50,16 +59,6 @@ public class IntakeIOTalonFX implements IntakeIO {
         pivotTalonFXConfig.Feedback.SensorToMechanismRatio = PIVOT_GEAR_RATIO;
         pivotTalonFXConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
-        TalonFXConfiguration intakeTalonFXConfig = new TalonFXConfiguration();
-        intakeTalonFXConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        intakeTalonFXConfig.CurrentLimits.StatorCurrentLimit = 120;
-        intakeTalonFXConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-        intakeTalonFXConfig.CurrentLimits.SupplyCurrentLimit = 40;
-        intakeTalonFXConfig.MotorOutput.Inverted =
-                InvertedValue.CounterClockwise_Positive; // TODO: is it inverted or not?
-        intakeTalonFXConfig.Feedback.SensorToMechanismRatio = SPIN_GEAR_RATIO;
-        intakeTalonFXConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-
         Slot0Configs pivotGains = pivotTalonFXConfig.Slot0;
         pivotGains.kS = PIVOT_KS;
         pivotGains.kV = PIVOT_KV;
@@ -73,33 +72,69 @@ public class IntakeIOTalonFX implements IntakeIO {
         motionMagicConfig.MotionMagicAcceleration = PIVOT_ACCELERATION_RPS2;
 
         pivotMotor.getConfigurator().apply(pivotTalonFXConfig);
-        spinMotor.getConfigurator().apply(intakeTalonFXConfig);
+
+        TalonFXConfiguration intakeTalonFXConfig = new TalonFXConfiguration();
+        intakeTalonFXConfig.CurrentLimits.StatorCurrentLimitEnable = true;
+        intakeTalonFXConfig.CurrentLimits.StatorCurrentLimit = 120;
+        intakeTalonFXConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+        intakeTalonFXConfig.CurrentLimits.SupplyCurrentLimit = 40;
+        intakeTalonFXConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        intakeTalonFXConfig.Feedback.SensorToMechanismRatio = SPIN_GEAR_RATIO;
+        intakeTalonFXConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+
+        leftSpinMotor.getConfigurator().apply(intakeTalonFXConfig);
+        rightSpinMotor.getConfigurator().apply(intakeTalonFXConfig);
+        leftSpinMotor.setControl(new Follower(rightSpinMotor.getDeviceID(), MotorAlignmentValue.Opposed));
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 50.0,
-                spinMotorVelocityRPS,
-                spinMotorAppliedVolts,
-                spinSupplyCurrentAmps,
-                spinStatorCurrentAmps,
-                spinMotorTemp,
+                leftSpinVelocity,
+                leftSpinVoltage,
+                leftSpinSupplyCurrent,
+                leftSpinStatorCurrent,
+                leftSpinMotorTemp,
+                rightSpinVelocity,
+                rightSpinVoltage,
+                rightSpinSupplyCurrent,
+                rightSpinStatorCurrent,
+                rightSpinMotorTemp,
                 pivotMotorVelocityRPS,
                 pivotPositon,
                 pivotMotorAppliedVolts,
                 pivotSupplyCurrentAmps,
                 pivotStatorCurrentAmps,
                 pivotMotorTemp);
-        spinMotor.optimizeBusUtilization();
+        rightSpinMotor.optimizeBusUtilization();
         pivotMotor.optimizeBusUtilization();
     }
 
     @Override
     public void updateInputs(IntakeInputs inputs) {
-        StatusCode spinStatus = BaseStatusSignal.refreshAll(
-                spinMotorVelocityRPS,
-                spinMotorAppliedVolts,
-                spinSupplyCurrentAmps,
-                spinStatorCurrentAmps,
-                spinMotorTemp);
+        inputs.rightSpinConnected = BaseStatusSignal.refreshAll(
+                        rightSpinVelocity,
+                        rightSpinVoltage,
+                        rightSpinSupplyCurrent,
+                        rightSpinStatorCurrent,
+                        rightSpinMotorTemp)
+                .isOK();
+        inputs.leftSpinConnected = BaseStatusSignal.refreshAll(
+                        leftSpinVelocity,
+                        leftSpinVoltage,
+                        leftSpinSupplyCurrent,
+                        leftSpinStatorCurrent,
+                        leftSpinMotorTemp)
+                .isOK();
+        inputs.spinMotorVelocityRPS =
+                new double[] {leftSpinVelocity.getValueAsDouble(), rightSpinVelocity.getValueAsDouble()};
+        inputs.spinMotorAppliedVolts =
+                new double[] {leftSpinVoltage.getValueAsDouble(), rightSpinVoltage.getValueAsDouble()};
+        inputs.spinSupplyCurrentAmps =
+                new double[] {leftSpinSupplyCurrent.getValueAsDouble(), rightSpinSupplyCurrent.getValueAsDouble()};
+        inputs.spinStatorCurrentAmps =
+                new double[] {leftSpinStatorCurrent.getValueAsDouble(), rightSpinStatorCurrent.getValueAsDouble()};
+        inputs.spinMotorTemp =
+                new double[] {leftSpinMotorTemp.getValueAsDouble(), rightSpinMotorTemp.getValueAsDouble()};
+
         StatusCode pivotStatus = BaseStatusSignal.refreshAll(
                 pivotMotorVelocityRPS,
                 pivotPositon,
@@ -107,14 +142,6 @@ public class IntakeIOTalonFX implements IntakeIO {
                 pivotSupplyCurrentAmps,
                 pivotStatorCurrentAmps,
                 pivotMotorTemp);
-
-        inputs.spinConnected = spinStatus.isOK();
-        inputs.spinMotorVelocityRPS = spinMotorVelocityRPS.getValueAsDouble();
-        inputs.spinMotorAppliedVolts = spinMotorAppliedVolts.getValueAsDouble();
-        inputs.spinSupplyCurrentAmps = spinSupplyCurrentAmps.getValueAsDouble();
-        inputs.spinStatorCurrentAmps = spinStatorCurrentAmps.getValueAsDouble();
-        inputs.spinMotorTemp = spinMotorTemp.getValueAsDouble();
-
         inputs.pivotConnected = pivotStatus.isOK();
         inputs.pivotPosition = Rotation2d.fromRotations(pivotPositon.getValueAsDouble());
         inputs.pivotMotorVelocityRPS = pivotMotorVelocityRPS.getValueAsDouble();
@@ -126,7 +153,7 @@ public class IntakeIOTalonFX implements IntakeIO {
 
     @Override
     public void setIntakeVoltage(double voltage) {
-        spinMotor.setControl(spinVoltageRequest.withOutput(voltage));
+        rightSpinMotor.setControl(spinVoltageRequest.withOutput(voltage));
     }
 
     @Override

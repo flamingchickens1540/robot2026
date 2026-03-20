@@ -48,7 +48,10 @@ public class Intake extends SubsystemBase {
     private final LoggedTunableNumber pivotKG = new LoggedTunableNumber("Intake/kG", PIVOT_KG);
 
     private final Alert pivotDisconnectedAlert = new Alert("Intake pivot disconnected", Alert.AlertType.kError);
-    private final Alert rollerDisconnectedAlert = new Alert("Intake roller disconnected", Alert.AlertType.kError);
+    private final Alert leftRollerDisconnectedAlert =
+            new Alert("Left intake roller disconnected", Alert.AlertType.kError);
+    private final Alert rightRollerDisconnectedAlert =
+            new Alert("Right intake roller disconnected", Alert.AlertType.kError);
 
     private final IntakeInputsAutoLogged inputs = new IntakeInputsAutoLogged();
 
@@ -85,7 +88,8 @@ public class Intake extends SubsystemBase {
                 pivotKG);
 
         pivotDisconnectedAlert.set(!inputs.pivotConnected);
-        rollerDisconnectedAlert.set(!inputs.spinConnected);
+        leftRollerDisconnectedAlert.set(!inputs.leftSpinConnected);
+        rightRollerDisconnectedAlert.set(!inputs.rightSpinConnected);
 
         Command activeCmd = CommandScheduler.getInstance().requiring(this);
         Logger.recordOutput(

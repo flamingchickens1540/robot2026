@@ -4,7 +4,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 
 public class IntakeConstants {
     public static int PIVOT_MOTOR_ID = 27;
-    public static int INTAKE_MOTOR_ID = 14;
+    public static int LEFT_SPIN_MOTOR_ID = 14;
+    public static int RIGHT_SPIN_MOTOR_ID = 21;
 
     public static double PIVOT_KS = 0.0;
     public static double PIVOT_KV = 4.76;
