@@ -66,14 +66,13 @@ public class Turret extends SubsystemBase {
 
         if (DriverStation.isDisabled()) {
             stop();
-            Rotation2d crtAngle = calculateTurretAngle();
-            Logger.recordOutput("Turret/CRT/CalculatedPosition", crtAngle);
+            Rotation2d crtToMotorError = getMotorToCRTError();
+            Logger.recordOutput("Turret/CRT/CalculatedPosition", calculateTurretAngle());
+            Logger.recordOutput("Turret/CRT/MotorToCRTErr", crtToMotorError);
 
-            double crtToMotorError =
-                    Math.abs(calculateTurretAngle().minus(inputs.position).getDegrees());
-            unzeroedAlert.setText("Large error between CRT position and motor position of " + crtToMotorError
-                    + " deg, press driver back button to rezero");
-            unzeroedAlert.set(crtToMotorError > 1.0 && DriverStation.isDisabled());
+            unzeroedAlert.setText("Large error between CRT position and motor position of "
+                    + crtToMotorError.getDegrees() + " deg, press driver back button to rezero");
+            unzeroedAlert.set(crtToMotorError.getDegrees() > 1.0);
         }
 
         RobotState.getInstance()
@@ -97,7 +96,7 @@ public class Turret extends SubsystemBase {
         LoggedTracer.record("Turret");
     }
 
-    public Rotation2d calculateTurretAngle() {
+    private Rotation2d calculateTurretAngle() {
         double smallEncoderPos = inputs.smallEncoderPosition.getRotations();
         double bigEncoderPos = inputs.bigEncoderPosition.getRotations();
 
@@ -131,7 +130,12 @@ public class Turret extends SubsystemBase {
         return Rotation2d.fromRotations(rawPosition.getRotations() - ANGLE_OFFSET.getRotations());
     }
 
-    public Rotation2d unwrapTurretAngle(Rotation2d targetAngle) {
+    private Rotation2d getMotorToCRTError() {
+        return Rotation2d.fromDegrees(
+                Math.abs(calculateTurretAngle().minus(inputs.position).getDegrees()));
+    }
+
+    private Rotation2d unwrapTurretAngle(Rotation2d targetAngle) {
         double targetRot = targetAngle.plus(Rotation2d.kZero).getRotations();
         double currentRot = getPosition().getRotations();
         double bestRot = 0.0;
@@ -216,6 +220,7 @@ public class Turret extends SubsystemBase {
                 .andThen(runOnce(() -> {
                     io.setMotorPosition(calculateTurretAngle());
                     zeroingCRTError = lastCRTError;
+                    unzeroedAlert.set(getMotorToCRTError().getDegrees() > 1.0);
                 }))
                 .withName("TurretZeroCommand");
     }
