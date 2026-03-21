@@ -1,6 +1,9 @@
 package org.team1540.robot2026;
 
 import au.grapplerobotics.CanBridge;
+import edu.wpi.first.math.MathShared;
+import edu.wpi.first.math.MathSharedStore;
+import edu.wpi.first.math.MathUsageId;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -78,6 +81,28 @@ public class Robot extends LoggedRobot {
 
         // Start AdvantageKit logger
         Logger.start();
+
+        // Silence Rotation2d warnings
+        MathShared mathShared = MathSharedStore.getMathShared();
+        MathSharedStore.setMathShared(new MathShared() {
+            @Override
+            public void reportError(String error, StackTraceElement[] stackTrace) {
+                if (error.startsWith("x and y components of Rotation2d are zero")) {
+                    return;
+                }
+                mathShared.reportError(error, stackTrace);
+            }
+
+            @Override
+            public void reportUsage(MathUsageId id, int count) {
+                mathShared.reportUsage(id, count);
+            }
+
+            @Override
+            public double getTimestamp() {
+                return mathShared.getTimestamp();
+            }
+        });
 
         // Set up command logging
         CommandScheduler.getInstance()
