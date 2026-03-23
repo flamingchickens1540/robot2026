@@ -1,7 +1,9 @@
 package org.team1540.robot2026;
 
+import static org.team1540.robot2026.subsystems.turret.TurretConstants.*;
 import static org.team1540.robot2026.subsystems.vision.AprilTagVisionConstants.*;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
@@ -26,7 +28,7 @@ import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.AutoLogOutputManager;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.subsystems.drive.DrivetrainConstants;
-import org.team1540.robot2026.subsystems.turret.TurretConstants;
+import org.team1540.robot2026.subsystems.hood.HoodConstants;
 import org.team1540.robot2026.subsystems.vision.AprilTagVisionIO;
 import org.team1540.robot2026.util.AimingParameters;
 import org.team1540.robot2026.util.AllianceFlipUtil;
@@ -42,7 +44,9 @@ public class RobotState {
 
     private static final LoggedTunableNumber aimingPhaseDelay = new LoggedTunableNumber("Aiming/PhaseDelay", 0.03);
     private static final LoggedTunableNumber shuffleTargetX =
-            new LoggedTunableNumber("Aiming/ShuffleX", FieldConstants.LinesVertical.starting - 2.0);
+            new LoggedTunableNumber("Aiming/ShuffleX", FieldConstants.LinesVertical.starting - 1.0);
+    private static final LoggedTunableNumber trenchAvoidanceRetractionTime =
+            new LoggedTunableNumber("TrenchAvoidance/RetractionTime", 0.3);
 
     private Rotation2d lastGyroRotation = Rotation2d.kZero;
     private SwerveModulePosition[] lastModulePositions = new SwerveModulePosition[] {
@@ -57,6 +61,7 @@ public class RobotState {
     private final Timer poseResetTimer = new Timer();
 
     private Rotation2d lastTurretAngle = Rotation2d.kZero;
+    private double lastTurretVelocityRadPerSec = 0.0;
 
     private final TimeInterpolatableBuffer<Pose2d> poseBuffer = TimeInterpolatableBuffer.createBuffer(0.5);
     private final TimeInterpolatableBuffer<Rotation2d> turretAngleBuffer = TimeInterpolatableBuffer.createBuffer(0.5);
@@ -74,6 +79,9 @@ public class RobotState {
     private final InterpolatingDoubleTreeMap shuffleShooterSpeedMap = new InterpolatingDoubleTreeMap();
     private final InterpolatingDoubleTreeMap shuffleTOFMap = new InterpolatingDoubleTreeMap();
 
+    @AutoLogOutput(key = "Aiming/ShooterRPMOffset")
+    private double shooterRPMOffset = 40.0;
+
     @AutoLogOutput(key = "Aiming/Hub/LastParameters")
     private AimingParameters lastHubAimingParameters;
 
@@ -85,40 +93,43 @@ public class RobotState {
         SmartDashboard.putData(field);
 
         // Set up interpolations
-        hubHoodAngleMap.put(2.713, Rotation2d.fromDegrees(22));
-        hubHoodAngleMap.put(1.724, Rotation2d.fromDegrees(17));
-        hubHoodAngleMap.put(1.414, Rotation2d.fromDegrees(15));
-        hubHoodAngleMap.put(4.888, Rotation2d.fromDegrees(29));
-        hubHoodAngleMap.put(3.700, Rotation2d.fromDegrees(25));
+        hubHoodAngleMap.put(3.169, Rotation2d.fromDegrees(23.4));
+        hubHoodAngleMap.put(2.543, Rotation2d.fromDegrees(21.1));
+        hubHoodAngleMap.put(1.421, Rotation2d.fromDegrees(15));
+        hubHoodAngleMap.put(5.540, Rotation2d.fromDegrees(29));
+        hubHoodAngleMap.put(4.155, Rotation2d.fromDegrees(26.5));
 
-        hubShooterSpeedMap.put(2.713, 1375.0);
-        hubShooterSpeedMap.put(1.724, 1225.0);
-        hubShooterSpeedMap.put(1.414, 1125.0);
-        hubShooterSpeedMap.put(4.888, 1625.0);
-        hubShooterSpeedMap.put(3.700, 1475.0);
+        hubShooterSpeedMap.put(3.169, 2056.0);
+        hubShooterSpeedMap.put(2.543, 1923.0);
+        hubShooterSpeedMap.put(1.421, 1678.0);
+        hubShooterSpeedMap.put(5.540, 2481.0);
+        hubShooterSpeedMap.put(4.155, 2154.0);
 
-        hubTOFMap.put(2.713, 1.040466598);
-        hubTOFMap.put(1.724, 0.9290552488);
-        hubTOFMap.put(1.414, 0.8884556774);
-        hubTOFMap.put(4.888, 1.229432436);
-        hubTOFMap.put(3.700, 1.153830441);
+        hubTOFMap.put(3.169, 1.098457062);
+        hubTOFMap.put(2.543, 1.028185787);
+        hubTOFMap.put(1.421, 0.8914489253);
+        hubTOFMap.put(5.540, 1.32339774);
+        hubTOFMap.put(4.155, 1.188565533);
 
-        shuffleHoodAngleMap.put(10.02, Rotation2d.fromDegrees(45));
-        shuffleHoodAngleMap.put(1.81, Rotation2d.fromDegrees(45));
+        shuffleHoodAngleMap.put(2.412, Rotation2d.fromDegrees(30));
+        shuffleHoodAngleMap.put(4.466, Rotation2d.fromDegrees(35));
+        shuffleHoodAngleMap.put(7.590, Rotation2d.fromDegrees(40));
+        shuffleHoodAngleMap.put(12.132, Rotation2d.fromDegrees(45));
 
-        shuffleShooterSpeedMap.put(10.03, 4414.0);
-        shuffleShooterSpeedMap.put(6.364, 1778.0);
-        shuffleShooterSpeedMap.put(4.491, 1540.0);
-        shuffleShooterSpeedMap.put(1.81, 1023.0);
+        shuffleShooterSpeedMap.put(2.412, 1323.0);
+        shuffleShooterSpeedMap.put(4.466, 1923.0);
+        shuffleShooterSpeedMap.put(7.590, 2471.0);
+        shuffleShooterSpeedMap.put(12.132, 4414.0);
 
-        shuffleTOFMap.put(10.03, 1.356);
-        shuffleTOFMap.put(6.364, 1.045);
-        shuffleTOFMap.put(4.491, 0.843);
-        shuffleTOFMap.put(1.81, 0.405);
+        shuffleTOFMap.put(2.412, 0.8041877681);
+        shuffleTOFMap.put(4.466, 1.04664185);
+        shuffleTOFMap.put(7.590, 1.280397483);
+        shuffleTOFMap.put(12.132, 1.50628167);
         AutoLogOutputManager.addObject(this);
     }
 
     public void periodic() {
+        SmartDashboard.putString("Aiming/Shooter RPM Offset", String.format("%.1f", shooterRPMOffset));
         clearAimingParameters();
     }
 
@@ -147,11 +158,24 @@ public class RobotState {
         return poseEstimator.getEstimatedPosition();
     }
 
+    @AutoLogOutput(key = "Odometry/TurretPose")
+    public Pose2d getTurretPose() {
+        return getEstimatedPose().transformBy(new Transform2d(ROBOT_TO_TURRET_2D.getTranslation(), lastTurretAngle));
+    }
+
     public Rotation2d getRobotHeading() {
         return getEstimatedPose().getRotation();
     }
 
-    public void setRobotVelocity(ChassisSpeeds velocity) {
+    public Rotation2d getTurretAngle() {
+        return lastTurretAngle;
+    }
+
+    public Rotation2d getFieldRelativeTurretAngle() {
+        return getTurretAngle().plus(getRobotHeading());
+    }
+
+    public void addVelocityObservation(ChassisSpeeds velocity) {
         lastVelocity = velocity;
     }
 
@@ -160,6 +184,7 @@ public class RobotState {
         return lastVelocity;
     }
 
+    @AutoLogOutput(key = "Odometry/FieldRelativeVelocity")
     public ChassisSpeeds getFieldRelativeVelocity() {
         return ChassisSpeeds.fromRobotRelativeSpeeds(lastVelocity, getRobotHeading());
     }
@@ -185,8 +210,9 @@ public class RobotState {
         Logger.recordOutput("Odometry/Trajectory/TargetPose", target);
     }
 
-    public void addTurretObservation(Rotation2d turretAngle, double timestamp) {
+    public void addTurretObservation(Rotation2d turretAngle, double turretVelocityRadPerSec, double timestamp) {
         lastTurretAngle = turretAngle;
+        lastTurretVelocityRadPerSec = turretVelocityRadPerSec;
         turretAngleBuffer.addSample(timestamp, turretAngle);
     }
 
@@ -208,7 +234,7 @@ public class RobotState {
             Pose2d robotPose = turretPose
                     .estimatedPoseMeters()
                     .transformBy(new Transform3d(
-                                    TurretConstants.ROBOT_TO_TURRET_3D.getTranslation(),
+                                    ROBOT_TO_TURRET_3D.getTranslation(),
                                     new Rotation3d(0.0, 0.0, turretAngleAtMeasurement.getRadians()))
                             .inverse())
                     .toPose2d();
@@ -247,11 +273,19 @@ public class RobotState {
 
     private Translation2d getShuffleTarget() {
         if (AllianceFlipUtil.apply(getEstimatedPose()).getY() < FieldConstants.LinesHorizontal.center) {
-            return AllianceFlipUtil.apply(
-                    new Translation2d(shuffleTargetX.get(), FieldConstants.LinesHorizontal.rightBumpMiddle));
+            return AllianceFlipUtil.apply(new Translation2d(
+                    shuffleTargetX.get(),
+                    MathUtil.clamp(
+                            AllianceFlipUtil.apply(getEstimatedPose()).getY(),
+                            FieldConstants.LinesHorizontal.rightTrenchOpenEnd + FieldConstants.RightTrench.width / 2,
+                            FieldConstants.LinesHorizontal.rightBumpMiddle)));
         } else {
-            return AllianceFlipUtil.apply(
-                    new Translation2d(shuffleTargetX.get(), FieldConstants.LinesHorizontal.leftBumpMiddle));
+            return AllianceFlipUtil.apply(new Translation2d(
+                    shuffleTargetX.get(),
+                    MathUtil.clamp(
+                            AllianceFlipUtil.apply(getEstimatedPose()).getY(),
+                            FieldConstants.LinesHorizontal.leftBumpMiddle,
+                            FieldConstants.LinesHorizontal.leftTrenchOpenStart - FieldConstants.LeftTrench.width / 2)));
         }
     }
 
@@ -269,22 +303,26 @@ public class RobotState {
                 velocity.vyMetersPerSecond * phaseDelay,
                 velocity.omegaRadiansPerSecond * phaseDelay));
 
-        Pose2d turretPose = estimatedPose.transformBy(TurretConstants.ROBOT_TO_TURRET_2D);
+        Pose2d turretPose = estimatedPose.transformBy(ROBOT_TO_TURRET_2D);
         double targetDistance = target.getDistance(turretPose.getTranslation());
 
         Logger.recordOutput("Aiming/" + loggingKey + "/ActualTarget", target);
         Logger.recordOutput("Aiming/" + loggingKey + "/ActualTargetDistanceMeters", targetDistance);
 
-        double turretVelocityX = getFieldRelativeVelocity().vxMetersPerSecond;
-        double turretVelocityY = getFieldRelativeVelocity().vyMetersPerSecond;
+        Translation2d turretVelocity = new Translation2d(
+                        getFieldRelativeVelocity().vxMetersPerSecond, getFieldRelativeVelocity().vyMetersPerSecond)
+                .plus(new Translation2d(
+                        velocity.omegaRadiansPerSecond
+                                * ROBOT_TO_TURRET_2D.getTranslation().getNorm(),
+                        estimatedPose.getRotation().rotateBy(Rotation2d.kCW_90deg)));
 
         double timeOfFlight = tofMap.applyAsDouble(targetDistance);
         Pose2d lookaheadPose = turretPose;
         double lookaheadDistance = targetDistance;
 
         for (int i = 0; i < 20; i++) {
-            double offsetX = turretVelocityX * timeOfFlight;
-            double offsetY = turretVelocityY * timeOfFlight;
+            double offsetX = turretVelocity.getX() * timeOfFlight;
+            double offsetY = turretVelocity.getY() * timeOfFlight;
             lookaheadPose = new Pose2d(
                     turretPose.getTranslation().plus(new Translation2d(offsetX, offsetY)), turretPose.getRotation());
             lookaheadDistance = target.getDistance(lookaheadPose.getTranslation());
@@ -293,10 +331,10 @@ public class RobotState {
 
         Logger.recordOutput(
                 "Aiming/" + loggingKey + "/CompensatedTurretPose",
-                lookaheadPose.rotateAround(lookaheadPose.getTranslation(), lastTurretAngle));
+                lookaheadPose.rotateAround(lookaheadPose.getTranslation(), getFieldRelativeTurretAngle()));
         Logger.recordOutput(
                 "Aiming/" + loggingKey + "/CompensatedRobotPose",
-                lookaheadPose.transformBy(TurretConstants.ROBOT_TO_TURRET_2D.inverse()));
+                lookaheadPose.transformBy(ROBOT_TO_TURRET_2D.inverse()));
         Logger.recordOutput(
                 "Aiming/" + loggingKey + "/CompensatedTarget",
                 target.plus(turretPose.getTranslation().minus(lookaheadPose.getTranslation())));
@@ -306,14 +344,14 @@ public class RobotState {
                 target.minus(lookaheadPose.getTranslation()).getAngle(),
                 -getRobotVelocity().omegaRadiansPerSecond,
                 hoodAngleMap.apply(lookaheadDistance),
-                shooterSpeedMap.applyAsDouble(lookaheadDistance));
+                shooterSpeedMap.applyAsDouble(lookaheadDistance) + shooterRPMOffset);
     }
 
     public AimingParameters getHubAimingParameters() {
         if (lastHubAimingParameters != null) return lastHubAimingParameters;
         lastHubAimingParameters = getCompensatedAimingParameters(
                 AllianceFlipUtil.apply(FieldConstants.Hub.topCenterPoint.toTranslation2d()),
-                hubHoodAngleMap::get,
+                distance -> shouldLowerHood() ? HoodConstants.MIN_ANGLE : hubHoodAngleMap.get(distance),
                 hubShooterSpeedMap::get,
                 hubTOFMap::get,
                 "Hub");
@@ -324,7 +362,11 @@ public class RobotState {
         if (lastShuffleAimingParameters != null) return lastShuffleAimingParameters;
         Translation2d shuffleTarget = getShuffleTarget();
         lastShuffleAimingParameters = getCompensatedAimingParameters(
-                shuffleTarget, shuffleHoodAngleMap::get, shuffleShooterSpeedMap::get, shuffleTOFMap::get, "Shuffle");
+                shuffleTarget,
+                distance -> shouldLowerHood() ? HoodConstants.MIN_ANGLE : shuffleHoodAngleMap.get(distance),
+                shuffleShooterSpeedMap::get,
+                shuffleTOFMap::get,
+                "Shuffle");
         return lastShuffleAimingParameters;
     }
 
@@ -335,8 +377,44 @@ public class RobotState {
                 : getShuffleAimingParameters();
     }
 
-    public void clearAimingParameters() {
+    private void clearAimingParameters() {
         lastHubAimingParameters = null;
         lastShuffleAimingParameters = null;
+    }
+
+    public void incrementShooterRPMOffset(double rpm) {
+        shooterRPMOffset += rpm;
+    }
+
+    @AutoLogOutput(key = "TrenchAvoidance/Active")
+    public boolean shouldLowerHood() {
+        Pose2d robotPose = getEstimatedPose();
+        if (robotPose.getY() >= FieldConstants.LinesHorizontal.rightTrenchOpenStart
+                && robotPose.getY() < FieldConstants.LinesHorizontal.leftTrenchOpenEnd)
+            return false; // Don't lower hood if not in trench strips
+
+        Pose2d turretPose = getTurretPose();
+        ChassisSpeeds robotVelocity = getFieldRelativeVelocity();
+
+        Rectangle2d[] trenches = FieldConstants.Regions.trenches;
+        for (Rectangle2d trench : trenches) {
+            if (trench.contains(turretPose.getTranslation())) return true; // Lower hood if directly under trench
+
+            Translation2d closestPoint = trench.nearest(turretPose.getTranslation());
+            Translation2d turretToTrench = closestPoint.minus(turretPose.getTranslation());
+
+            Translation2d velocityVector =
+                    new Translation2d(robotVelocity.vxMetersPerSecond, robotVelocity.vyMetersPerSecond);
+            double closingSpeed = velocityVector.dot(turretToTrench.div(
+                    turretToTrench.getNorm())); // Direction of robot velocity moving towards the trench
+            Logger.recordOutput("TrenchAvoidance/ClosingSpeed", closingSpeed);
+            if (closingSpeed <= 0.0) continue; // Moving away from trench, no risk of entering
+
+            double regionWidth = trench.getXWidth() + 2 * trenchAvoidanceRetractionTime.get() * closingSpeed;
+            Rectangle2d avoidanceRegion = new Rectangle2d(trench.getCenter(), regionWidth, trench.getYWidth());
+            if (avoidanceRegion.contains(turretPose.getTranslation()))
+                return true; // Lower hood if in avoidance region around trench
+        }
+        return false;
     }
 }

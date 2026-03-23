@@ -2,9 +2,7 @@ package org.team1540.robot2026;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Filesystem;
 import java.io.IOException;
@@ -181,6 +179,7 @@ public class FieldConstants {
         public static final double height = Units.inchesToMeters(40.25);
         public static final double openingWidth = Units.inchesToMeters(50.34);
         public static final double openingHeight = Units.inchesToMeters(22.25);
+        public static final double barWidth = Units.inchesToMeters(24.0);
 
         // Relevant reference points on alliance side
         public static final Translation3d openingTopLeft =
@@ -203,6 +202,7 @@ public class FieldConstants {
         public static final double height = Units.inchesToMeters(40.25);
         public static final double openingWidth = Units.inchesToMeters(50.34);
         public static final double openingHeight = Units.inchesToMeters(22.25);
+        public static final double barWidth = Units.inchesToMeters(24.0);
 
         // Relevant reference points on alliance side
         public static final Translation3d openingTopLeft =
@@ -235,7 +235,7 @@ public class FieldConstants {
 
         // Relevant reference points on alliance side
         public static final Translation2d centerPoint = new Translation2d(
-                frontFaceX,
+                frontFaceX - depth / 2.0,
                 AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(31).get().getY());
         public static final Translation2d leftUpright = new Translation2d(
                 frontFaceX,
@@ -289,6 +289,36 @@ public class FieldConstants {
         // Relevant reference points on alliance side
         public static final Translation2d centerPoint = new Translation2d(
                 0, AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(29).get().getY());
+    }
+
+    public static class Regions {
+        // Alliance
+        public static final Rectangle2d underAllianceTower =
+                new Rectangle2d(new Pose2d(Tower.centerPoint, Rotation2d.kZero), Tower.depth, Tower.width);
+        // Opposing
+        public static final Rectangle2d behindOpposingHub =
+                new Rectangle2d(Hub.oppFarLeftCorner, new Translation2d(fieldLength, LinesHorizontal.rightBumpStart));
+
+        // Trenches
+        public static final Rectangle2d leftTrench = new Rectangle2d(
+                new Translation2d(LinesVertical.hubCenter - LeftTrench.barWidth / 2, fieldWidth),
+                new Translation2d(
+                        LinesVertical.hubCenter + LeftTrench.barWidth / 2, LinesHorizontal.leftTrenchOpenEnd));
+        public static final Rectangle2d rightTrench = new Rectangle2d(
+                new Translation2d(LinesVertical.hubCenter - RightTrench.barWidth / 2, 0),
+                new Translation2d(
+                        LinesVertical.hubCenter + RightTrench.barWidth / 2, LinesHorizontal.rightTrenchOpenStart));
+        public static final Rectangle2d oppLeftTrench = new Rectangle2d(
+                new Translation2d(LinesVertical.oppHubCenter - LeftTrench.barWidth / 2, fieldWidth),
+                new Translation2d(
+                        LinesVertical.oppHubCenter + LeftTrench.barWidth / 2, LinesHorizontal.leftTrenchOpenEnd));
+        public static final Rectangle2d oppRightTrench = new Rectangle2d(
+                new Translation2d(LinesVertical.oppHubCenter - RightTrench.barWidth / 2, 0),
+                new Translation2d(
+                        LinesVertical.oppHubCenter + RightTrench.barWidth / 2, LinesHorizontal.rightTrenchOpenStart));
+
+        public static final Rectangle2d[] trenches =
+                new Rectangle2d[] {leftTrench, rightTrench, oppLeftTrench, oppRightTrench};
     }
 
     public enum FieldType {

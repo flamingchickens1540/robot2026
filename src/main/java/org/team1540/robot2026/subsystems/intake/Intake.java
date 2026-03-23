@@ -7,6 +7,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -24,7 +25,8 @@ public class Intake extends SubsystemBase {
     public enum IntakeState {
         STOW(new LoggedTunableNumber("Intake/Setpoints/Stow/AngleDegrees", -120)),
         INTAKE(new LoggedTunableNumber("Intake/Setpoints/Intake/AngleDegrees", PIVOT_MAX_ANGLE.getDegrees())),
-        JIGGLE(new LoggedTunableNumber("Intake/Setpoints/Jiggle/AngleDegrees", PIVOT_JIGGLE_ANGLE.getDegrees()));
+        JIGGLE(new LoggedTunableNumber("Intake/Setpoints/Jiggle/AngleDegrees", PIVOT_JIGGLE_ANGLE.getDegrees())),
+        DEPOT(new LoggedTunableNumber("Intake/Setpoints/Depot/AngleDegrees", PIVOT_DEPOT_ANGLE.getDegrees()));
 
         private final DoubleSupplier pivotPosition;
 
@@ -85,6 +87,11 @@ public class Intake extends SubsystemBase {
         pivotDisconnectedAlert.set(!inputs.pivotConnected);
         rollerDisconnectedAlert.set(!inputs.leftSpinConnected);
         rollerDisconnectedAlert.set(!inputs.rightSpinConnected);
+
+        Command activeCmd = CommandScheduler.getInstance().requiring(this);
+        Logger.recordOutput(
+                "Intake/ActiveCommand",
+                activeCmd != null ? activeCmd.getName() + "_" + Integer.toHexString(activeCmd.hashCode()) : "None");
 
         LoggedTracer.record("Intake");
     }
@@ -150,6 +157,20 @@ public class Intake extends SubsystemBase {
                         },
                         this)
                 .withName("RunIntakeCommand");
+    }
+
+    public Command commandRunDepotIntake(double percent) {
+        return Commands.startEnd(
+                        () -> {
+                            this.setRollerVoltage(percent * 12);
+                            this.setPivotSetpoint(IntakeState.DEPOT.pivotPosition());
+                        },
+                        () -> {
+                            this.setRollerVoltage(0);
+                            this.holdPivot();
+                        },
+                        this)
+                .withName("RunDepotCommand");
     }
 
     public Command jiggleCommand() {

@@ -28,6 +28,9 @@ public class Shooter extends SubsystemBase {
 
     private final LinearFilter speedFilter = LinearFilter.movingAverage(5);
 
+    @AutoLogOutput(key = "Shooter/FilteredRPM")
+    private double filteredRPM = 0.0;
+
     @AutoLogOutput(key = "Shooter/SetpointRPM")
     private double setpointRPM;
 
@@ -47,7 +50,7 @@ public class Shooter extends SubsystemBase {
         shooterIO.updateInputs(inputs);
         Logger.processInputs("Shooter", inputs);
 
-        Logger.recordOutput("Shooter/FilteredSpeedRPM", speedFilter.calculate(getVelocityRPM()));
+        filteredRPM = speedFilter.calculate(getVelocityRPM());
 
         if (DriverStation.isDisabled()) {
             stop();
@@ -55,7 +58,7 @@ public class Shooter extends SubsystemBase {
 
         LoggedTunableNumber.ifChanged(
                 hashCode(),
-                () -> shooterIO.configPID(kP.get(), kI.get(), kD.get(), kV.get(), kS.get()),
+                () -> shooterIO.configPID(kP.get(), kI.get(), kD.get(), kS.get(), kV.get()),
                 kP,
                 kI,
                 kD,
@@ -76,7 +79,6 @@ public class Shooter extends SubsystemBase {
 
     public void runVelocity(double rpm) {
         setpointRPM = rpm;
-        speedFilter.reset();
         shooterIO.setSpeed(rpm);
     }
 
@@ -94,8 +96,7 @@ public class Shooter extends SubsystemBase {
 
     @AutoLogOutput(key = "Shooter/AtSetpoint")
     public boolean atSetpoint() {
-        return MathUtil.isNear(
-                setpointRPM, speedFilter.calculate(getVelocityRPM()), ShooterConstants.ERROR_TOLERANCE_RPM);
+        return MathUtil.isNear(setpointRPM, filteredRPM, ShooterConstants.ERROR_TOLERANCE_RPM);
     }
 
     public Command commandVelocity(DoubleSupplier setpoint) {
