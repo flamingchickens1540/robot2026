@@ -15,9 +15,8 @@ public class TurretConstants {
     public static final double GEAR_RATIO = 8.5 * 50 / 12;
 
     public static final Rotation2d ANGLE_OFFSET = Rotation2d.fromRadians(5.021413921812452);
-    public static final Rotation2d MAX_ANGLE = Rotation2d.fromDegrees(337.5);
-    // TODO: changed this!
-    public static final Rotation2d MIN_ANGLE = Rotation2d.fromDegrees(-207.25);
+    public static final Rotation2d MAX_ANGLE = Rotation2d.fromDegrees(330.0);
+    public static final Rotation2d MIN_ANGLE = Rotation2d.fromDegrees(-254.0);
 
     // Tuning
     public static final double KS = 0.284;

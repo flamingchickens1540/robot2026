@@ -353,8 +353,7 @@ public class Drivetrain extends SubsystemBase {
                         () -> {
                             double input = JoystickUtil.smartDeadzone(-controller.getRightX(), 0.1);
                             return rateLimit.getAsBoolean()
-                                    ? rotationRateLimiter.calculate(
-                                            JoystickUtil.smartDeadzone(-controller.getRightX(), 0.1))
+                                    ? rotationRateLimiter.calculate(input)
                                     : input;
                         })
                 .beforeStarting(() -> {
