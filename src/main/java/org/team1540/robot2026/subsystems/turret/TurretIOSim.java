@@ -17,7 +17,7 @@ import org.team1540.robot2026.SimState;
 
 public class TurretIOSim implements TurretIO {
     private final DCMotorSim sim = new DCMotorSim(
-            LinearSystemId.createDCMotorSystem(DCMotor.getKrakenX44(1), GEAR_RATIO, MOI_KGM2), DCMotor.getKrakenX44(1));
+            LinearSystemId.createDCMotorSystem(DCMotor.getKrakenX44(1), MOI_KGM2, GEAR_RATIO), DCMotor.getKrakenX44(1));
 
     private final ProfiledPIDController pid = new ProfiledPIDController(
             KP, KI, KD, new TrapezoidProfile.Constraints(CRUISE_VELOCITY_RPS, MAX_ACCEL_RPS2));
@@ -44,6 +44,14 @@ public class TurretIOSim implements TurretIO {
         sim.setInputVoltage(appliedVolts);
         sim.update(Constants.LOOP_PERIOD_SECS);
 
+        if (sim.getAngularPositionRotations() < MIN_ANGLE.getRotations()) {
+            sim.setAngle(MIN_ANGLE.getRadians());
+            sim.setAngularVelocity(0.0);
+        } else if (sim.getAngularPositionRotations() > MAX_ANGLE.getRotations()) {
+            sim.setAngle(MAX_ANGLE.getRadians());
+            sim.setAngularVelocity(0.0);
+        }
+
         inputs.connected = true;
         inputs.position = Rotation2d.fromRotations(sim.getAngularPositionRotations());
         inputs.positionTimestamp = Timer.getTimestamp();
@@ -55,10 +63,14 @@ public class TurretIOSim implements TurretIO {
                 / SimulatedBattery.getBatteryVoltage().in(Volts);
 
         inputs.bigEncoderConnected = true;
-        inputs.bigEncoderPosition = inputs.position.times((double) MAIN_GEAR_TEETH / BIG_ENCODER_TEETH);
-        inputs.smallEncoderConnected = true;
+        inputs.bigEncoderPosition = Rotation2d.fromRotations((inputs.position.getRotations()
+                        + ANGLE_OFFSET.getRotations() * ((double) MAIN_GEAR_TEETH / BIG_ENCODER_TEETH))
+                % 1);
 
-        inputs.smallEncoderPosition = inputs.position.times((double) MAIN_GEAR_TEETH / SMALL_ENCODER_TEETH);
+        inputs.smallEncoderConnected = true;
+        inputs.smallEncoderPosition = Rotation2d.fromRotations((inputs.position.getRotations()
+                        + ANGLE_OFFSET.getRotations() * ((double) MAIN_GEAR_TEETH / SMALL_ENCODER_TEETH))
+                % 1);
     }
 
     @Override

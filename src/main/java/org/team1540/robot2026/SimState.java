@@ -2,9 +2,10 @@ package org.team1540.robot2026;
 
 import static edu.wpi.first.units.Units.*;
 import static edu.wpi.first.units.Units.KilogramSquareMeters;
+import static org.team1540.robot2026.subsystems.turret.TurretConstants.ROBOT_TO_TURRET_2D;
+import static org.team1540.robot2026.subsystems.turret.TurretConstants.ROBOT_TO_TURRET_3D;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.Timer;
 import java.util.function.DoubleSupplier;
@@ -83,6 +84,23 @@ public class SimState {
     @AutoLogOutput(key = "SimState/RobotPose")
     public Pose2d getSimulatedRobotPose() {
         return driveSim.getSimulatedDriveTrainPose();
+    }
+
+    @AutoLogOutput(key = "SimState/TurretPose")
+    public Pose2d getSimulatedTurretPose() {
+        return getSimulatedRobotPose()
+                .transformBy(new Transform2d(
+                        ROBOT_TO_TURRET_2D.getTranslation(),
+                        RobotState.getInstance().getTurretAngle()));
+    }
+
+    @AutoLogOutput(key = "SimState/TurretPose3d")
+    public Pose3d getSimulatedTurretPose3d() {
+        return new Pose3d(getSimulatedRobotPose())
+                .transformBy(new Transform3d(
+                        ROBOT_TO_TURRET_3D.getTranslation(),
+                        new Rotation3d(
+                                0, 0, RobotState.getInstance().getTurretAngle().getRadians())));
     }
 
     public void resetSimPose(Pose2d pose) {

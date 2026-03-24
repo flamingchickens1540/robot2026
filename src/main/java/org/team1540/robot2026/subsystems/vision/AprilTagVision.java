@@ -11,7 +11,6 @@ import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.FieldConstants;
 import org.team1540.robot2026.RobotState;
 import org.team1540.robot2026.SimState;
-import org.team1540.robot2026.subsystems.turret.TurretConstants;
 import org.team1540.robot2026.subsystems.vision.AprilTagVisionIO.PoseObservation;
 import org.team1540.robot2026.util.LoggedTracer;
 
@@ -116,9 +115,8 @@ public class AprilTagVision extends SubsystemBase {
 
     public static AprilTagVision createSim() {
         return new AprilTagVision(
-                new AprilTagVisionIOPhotonSim(TURRET_CAMERA_NAME, TURRET_TO_CAMERA, () -> new Pose3d(
-                                SimState.getInstance().getSimulatedRobotPose())
-                        .transformBy(TurretConstants.ROBOT_TO_TURRET_3D)),
+                new AprilTagVisionIOPhotonSim(
+                        TURRET_CAMERA_NAME, TURRET_TO_CAMERA, SimState.getInstance()::getSimulatedTurretPose3d),
                 new AprilTagVisionIOPhotonSim(
                         BL_CAMERA_NAME,
                         ROBOT_TO_BL_CAMERA,
