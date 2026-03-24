@@ -71,6 +71,10 @@ public class HoodIOSim implements HoodIO {
 
     @Override
     public void setSetpoint(Rotation2d position) {
+        if (!isClosedLoop) {
+            pid.reset(
+                    Units.radiansToRotations(sim.getAngleRads()), Units.radiansToRotations(sim.getVelocityRadPerSec()));
+        }
         isClosedLoop = true;
         pid.setGoal(position.getRotations());
     }

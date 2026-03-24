@@ -14,5 +14,5 @@ public class ShooterConstants {
 
     public static final double ERROR_TOLERANCE_RPM = 100;
 
-    public static final double MOI_KGM2 = 0.000743305;
+    public static final double MOI_KGM2 = 0.0015;
 }

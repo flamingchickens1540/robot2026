@@ -33,5 +33,5 @@ public class HoodConstants {
     public static final double MOI_KGM2 = SingleJointedArmSim.estimateMOI(LENGTH_METERS, MASS_KG);
 
     public static final Transform3d TURRET_TO_HOOD =
-            new Transform3d(Units.inchesToMeters(5.201), 0.0, Units.inchesToMeters(5.875), Rotation3d.kZero);
+            new Transform3d(Units.inchesToMeters(4.25), 0.0, Units.inchesToMeters(5.875), Rotation3d.kZero);
 }

@@ -198,7 +198,7 @@ public class Turret extends SubsystemBase {
 
     public void setSetpoint(Rotation2d position, double velocityRadPerSec) {
         setpoint = unwrapTurretAngle(position);
-        io.setSetpoint(setpoint, velocityRadPerSec);
+        io.setSetpoint(setpoint, KV * Units.radiansToRotations(velocityRadPerSec));
     }
 
     public void setVoltage(double voltage) {

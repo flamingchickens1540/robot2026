@@ -1,5 +1,6 @@
 package org.team1540.robot2026;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -10,6 +11,8 @@ import org.team1540.robot2026.subsystems.intake.IntakeConstants;
 import org.team1540.robot2026.subsystems.turret.TurretConstants;
 
 public class MechanismVisualizer {
+    private static final double MAX_HOPPER_EXTENSION_METERS = 0.269077;
+
     private static Rotation2d turretAngle = Rotation2d.kZero;
     private static Rotation2d turretSetpoint = Rotation2d.kZero;
 
@@ -35,8 +38,16 @@ public class MechanismVisualizer {
         Pose3d intakeSetpointPose = new Pose3d(
                 IntakeConstants.ROBOT_TO_PIVOT.getTranslation(), new Rotation3d(0, intakeSetpoint.getRadians(), 0));
 
-        Logger.recordOutput("Mechanism3d/Measured", turretPose, hoodPose, intakePose);
-        Logger.recordOutput("Mechanism3d/Setpoint", turretSetpointPose, hoodSetpointPose, intakeSetpointPose);
+        double hopperExtensionMeters =
+                MathUtil.clamp(MAX_HOPPER_EXTENSION_METERS * intakeAngle.getCos(), 0, MAX_HOPPER_EXTENSION_METERS);
+        double hopperExtensionSetpointMeters =
+                MathUtil.clamp(MAX_HOPPER_EXTENSION_METERS * intakeSetpoint.getCos(), 0, MAX_HOPPER_EXTENSION_METERS);
+        Pose3d hopperPose = new Pose3d(hopperExtensionMeters, 0, 0, Rotation3d.kZero);
+        Pose3d hopperSetpointPose = new Pose3d(hopperExtensionSetpointMeters, 0, 0, Rotation3d.kZero);
+
+        Logger.recordOutput("Mechanism3d/Measured", turretPose, hoodPose, intakePose, hopperPose);
+        Logger.recordOutput(
+                "Mechanism3d/Setpoint", turretSetpointPose, hoodSetpointPose, intakeSetpointPose, hopperSetpointPose);
     }
 
     public static void addTurretData(Rotation2d angle, Rotation2d setpoint) {
@@ -45,8 +56,8 @@ public class MechanismVisualizer {
     }
 
     public static void addHoodData(Rotation2d angle, Rotation2d setpoint) {
-        hoodAngle = angle;
-        hoodSetpoint = setpoint;
+        hoodAngle = angle.minus(HoodConstants.MIN_ANGLE);
+        hoodSetpoint = setpoint.minus(HoodConstants.MIN_ANGLE);
     }
 
     public static void addIntakeData(Rotation2d angle, Rotation2d setpoint) {

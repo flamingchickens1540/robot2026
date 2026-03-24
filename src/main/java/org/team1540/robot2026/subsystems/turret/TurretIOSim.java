@@ -81,6 +81,9 @@ public class TurretIOSim implements TurretIO {
 
     @Override
     public void setSetpoint(Rotation2d rotation, double voltageFF) {
+        if (!isClosedLoop) {
+            pid.reset(sim.getAngularPositionRotations(), sim.getAngularVelocityRPM() / 60.0);
+        }
         isClosedLoop = true;
         pid.setGoal(new TrapezoidProfile.State(rotation.getRotations(), voltageFF / ff.getKv()));
     }
