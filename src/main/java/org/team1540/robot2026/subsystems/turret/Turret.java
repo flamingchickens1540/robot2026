@@ -68,6 +68,11 @@ public class Turret extends SubsystemBase {
         this.io = turretIO;
         hasInstance = true;
 
+        setDefaultCommand(commandToSetpoint(
+                () -> RobotState.getInstance().getAimingParameters().turretAngle(),
+                () -> RobotState.getInstance().getAimingParameters().turretVelocityRadPerSec(),
+                true));
+
         CommandScheduler.getInstance().schedule(autoZeroOnStartupCommand());
     }
 
