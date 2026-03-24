@@ -15,6 +15,7 @@ import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.Constants;
+import org.team1540.robot2026.MechanismVisualizer;
 import org.team1540.robot2026.util.LoggedTracer;
 import org.team1540.robot2026.util.LoggedTunableNumber;
 
@@ -70,9 +71,9 @@ public class Intake extends SubsystemBase {
         io.updateInputs(inputs);
         Logger.processInputs("Intake", inputs);
 
-        // MechanismVisualizer.getInstance().setIntakeRotation(inputs.pivotPosition);
-
         if (DriverStation.isDisabled()) stopAll();
+
+        MechanismVisualizer.addIntakeData(inputs.pivotPosition, pivotSetpoint);
 
         LoggedTunableNumber.ifChanged(
                 hashCode(),

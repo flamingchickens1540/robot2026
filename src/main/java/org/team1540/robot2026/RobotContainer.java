@@ -35,6 +35,7 @@ import org.team1540.robot2026.subsystems.spindexer.Spindexer;
 import org.team1540.robot2026.subsystems.turret.Turret;
 import org.team1540.robot2026.subsystems.vision.AprilTagVision;
 import org.team1540.robot2026.util.HubShiftUtil;
+import org.team1540.robot2026.util.LoggedTracer;
 import org.team1540.robot2026.util.MatchTriggers;
 import org.team1540.robot2026.util.auto.LoggedAutoChooser;
 import org.team1540.robot2026.util.hid.CommandEnvisionController;
@@ -89,8 +90,8 @@ public class RobotContainer {
                 shooter = Shooter.createSim();
                 turret = Turret.createSim();
                 hood = Hood.createSim();
-                climber = Climber.createSim();
-                vision = AprilTagVision.createDummy();
+                climber = Climber.createDummy();
+                vision = AprilTagVision.createSim();
 
                 RobotState.getInstance().resetPose(new Pose2d(3.0, 3.0, Rotation2d.kZero));
             }
@@ -360,6 +361,7 @@ public class RobotContainer {
         addPeriodicCallback(autoChooser::update, "AutoChooserUpdate");
         addPeriodicCallback(robotState::periodic, "RobotStatePeriodic");
         addPeriodicCallback(HubShiftUtil::periodic, "HubShiftPeriodic");
+        addPeriodicCallback(MechanismVisualizer::periodic, "MechanismVisualizerPeriodic");
         if (Constants.CURRENT_MODE == Constants.Mode.SIM) {
             addPeriodicCallback(SimState.getInstance()::update, "SimulationUpdate");
         }
@@ -367,7 +369,13 @@ public class RobotContainer {
 
     private void addPeriodicCallback(Runnable callback, String name) {
         CommandScheduler.getInstance()
-                .schedule(Commands.run(callback).withName(name).ignoringDisable(true));
+                .schedule(Commands.run(() -> {
+                            LoggedTracer.reset();
+                            callback.run();
+                            LoggedTracer.record(name);
+                        })
+                        .withName(name)
+                        .ignoringDisable(true));
     }
 
     /**

@@ -15,6 +15,7 @@ import java.util.function.Supplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.Constants;
+import org.team1540.robot2026.MechanismVisualizer;
 import org.team1540.robot2026.util.LoggedTracer;
 import org.team1540.robot2026.util.LoggedTunableNumber;
 
@@ -50,6 +51,8 @@ public class Hood extends SubsystemBase {
         Logger.processInputs("Hood", inputs);
 
         if (DriverStation.isDisabled()) stop();
+
+        MechanismVisualizer.addHoodData(inputs.position, setpoint);
 
         LoggedTunableNumber.ifChanged(
                 hashCode(),
@@ -132,7 +135,7 @@ public class Hood extends SubsystemBase {
     public static Hood createSim() {
         if (Constants.CURRENT_MODE == Constants.Mode.REAL)
             DriverStation.reportWarning("Using simulated hood on real robot", false);
-        return new Hood(new HoodIO() {});
+        return new Hood(new HoodIOSim());
     }
 
     public static Hood createDummy() {

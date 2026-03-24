@@ -7,19 +7,20 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.Timer;
+import java.util.function.DoubleSupplier;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.GyroSimulation;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.ironmaple.simulation.drivesims.SwerveModuleSimulation;
 import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
 import org.ironmaple.simulation.drivesims.configs.SwerveModuleSimulationConfig;
+import org.ironmaple.simulation.motorsims.SimulatedBattery;
 import org.ironmaple.simulation.seasonspecific.rebuilt2026.Arena2026Rebuilt;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.AutoLogOutputManager;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.generated.TunerConstants;
 import org.team1540.robot2026.subsystems.drive.DrivetrainConstants;
-import org.team1540.robot2026.util.LoggedTracer;
 
 public class SimState {
     private static SimState instance = null;
@@ -62,15 +63,17 @@ public class SimState {
     }
 
     public void update() {
-        LoggedTracer.reset();
-
         Logger.recordOutput(
                 "SimState/Fuel",
                 SimulatedArena.getInstance().getGamePiecesPosesByType("Fuel").toArray(new Pose3d[0]));
 
         SimulatedArena.getInstance().simulationPeriodic();
+    }
 
-        LoggedTracer.record("Simulation");
+    public void addCurrentDraw(DoubleSupplier statorCurrentAmps, DoubleSupplier appliedVoltage) {
+        SimulatedBattery.addElectricalAppliances(() -> Amps.of(statorCurrentAmps.getAsDouble()
+                * appliedVoltage.getAsDouble()
+                / SimulatedBattery.getBatteryVoltage().in(Volts)));
     }
 
     public SwerveDriveSimulation getDriveSim() {
