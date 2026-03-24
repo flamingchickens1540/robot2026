@@ -14,7 +14,6 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
-import java.util.LinkedList;
 
 public class SpindexerIOTalonFX implements SpindexerIO {
     private final TalonFX spinMotor = new TalonFX(SPIN_MOTOR_ID);
@@ -36,9 +35,9 @@ public class SpindexerIOTalonFX implements SpindexerIO {
     private final VoltageOut spinVoltageCtrlReq = new VoltageOut(0).withEnableFOC(true);
     private final VoltageOut feederVoltageCtrlReq = new VoltageOut(0).withEnableFOC(true);
 
-//    private int numBallsCounted = 0;
-//    private double lastMeasurement = 0;
-//    private LinkedList<Long> measurements = new LinkedList<>();
+    //    private int numBallsCounted = 0;
+    //    private double lastMeasurement = 0;
+    //    private LinkedList<Long> measurements = new LinkedList<>();
 
     public SpindexerIOTalonFX() {
         TalonFXConfiguration config = new TalonFXConfiguration();
@@ -96,19 +95,19 @@ public class SpindexerIOTalonFX implements SpindexerIO {
         inputs.feederStatorCurrentAmps = feederStatorCurrent.getValueAsDouble();
         inputs.feederTempCelsius = feederTemp.getValueAsDouble();
         inputs.distanceMM = laserCan.getMeasurement().distance_mm;
-//        if (lastMeasurement != 0
-//                && inputs.distanceMM
-//                == 0) { // could have issues skipping balls if ball goes fully through without getting counted
-//            // (also no dead zone so tool could have just been rounding lol)
-//            numBallsCounted++;
-//            measurements.addLast(System.currentTimeMillis());
-//            if (measurements.getFirst() < System.currentTimeMillis() - 3 * 1000) {
-//                measurements.removeFirst();
-//            }
-//        }
-//        lastMeasurement = inputs.distanceMM;
-//        inputs.numBallsCounted = numBallsCounted;
-//        inputs.bps3 = measurements.size() / 3.0;
+        //        if (lastMeasurement != 0
+        //                && inputs.distanceMM
+        //                == 0) { // could have issues skipping balls if ball goes fully through without getting counted
+        //            // (also no dead zone so tool could have just been rounding lol)
+        //            numBallsCounted++;
+        //            measurements.addLast(System.currentTimeMillis());
+        //            if (measurements.getFirst() < System.currentTimeMillis() - 3 * 1000) {
+        //                measurements.removeFirst();
+        //            }
+        //        }
+        //        lastMeasurement = inputs.distanceMM;
+        //        inputs.numBallsCounted = numBallsCounted;
+        //        inputs.bps3 = measurements.size() / 3.0;
     }
 
     @Override
