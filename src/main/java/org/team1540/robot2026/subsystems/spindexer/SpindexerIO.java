@@ -18,10 +18,8 @@ public interface SpindexerIO {
         public double feederSupplyCurrentAmps = 0.0;
         public double feederStatorCurrentAmps = 0.0;
         public double feederTempCelsius = 0.0;
-
         public double distanceMM = 0.0;
-        public int numBallsCounted = 0;
-        public double bps3 = 0;
+
     }
 
     default void updateInputs(SpindexerIOInputs inputs) {}
