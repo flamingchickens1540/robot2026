@@ -42,7 +42,7 @@ import org.team1540.robot2026.util.auto.LoggedAutoChooser;
 import org.team1540.robot2026.util.hid.JoystickUtil;
 
 public class RobotContainer {
-    private final DriverControls driver = DriverControls.XboxController;
+    private final DriverControls driver = DriverControls.EnvisionController;
     private final CopilotControls copilot = CopilotControls.XboxController;
 
     final Drivetrain drivetrain;

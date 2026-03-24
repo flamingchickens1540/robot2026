@@ -1,5 +1,6 @@
 {
   "name": "Hephaestus",
+  "disableSimplification": true,
   "rotations": [
     {
       "axis": "x",
