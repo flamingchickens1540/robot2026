@@ -2,7 +2,6 @@ package org.team1540.robot2026.subsystems.spindexer;
 
 import static org.team1540.robot2026.subsystems.spindexer.SpindexerConstants.*;
 
-import au.grapplerobotics.LaserCan;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -18,7 +17,6 @@ import edu.wpi.first.units.measure.Voltage;
 public class SpindexerIOTalonFX implements SpindexerIO {
     private final TalonFX spinMotor = new TalonFX(SPIN_MOTOR_ID);
     private final TalonFX feederMotor = new TalonFX(FEEDER_MOTOR_ID);
-    private final LaserCan laserCan = new LaserCan(LASER_CAN_ID);
 
     private final StatusSignal<AngularVelocity> spinVelocity = spinMotor.getVelocity();
     private final StatusSignal<Voltage> spinVoltage = spinMotor.getMotorVoltage();
@@ -34,11 +32,6 @@ public class SpindexerIOTalonFX implements SpindexerIO {
 
     private final VoltageOut spinVoltageCtrlReq = new VoltageOut(0).withEnableFOC(true);
     private final VoltageOut feederVoltageCtrlReq = new VoltageOut(0).withEnableFOC(true);
-
-    @Override
-    public double getDistanceMM() {
-        return laserCan.getMeasurement().distance_mm;
-    }
 
     public SpindexerIOTalonFX() {
         TalonFXConfiguration config = new TalonFXConfiguration();
@@ -95,7 +88,6 @@ public class SpindexerIOTalonFX implements SpindexerIO {
         inputs.feederSupplyCurrentAmps = feederSupplyCurrent.getValueAsDouble();
         inputs.feederStatorCurrentAmps = feederStatorCurrent.getValueAsDouble();
         inputs.feederTempCelsius = feederTemp.getValueAsDouble();
-        inputs.distanceMM = laserCan.getMeasurement().distance_mm;
     }
 
     @Override

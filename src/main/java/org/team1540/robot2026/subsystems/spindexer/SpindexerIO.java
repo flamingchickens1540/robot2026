@@ -18,14 +18,9 @@ public interface SpindexerIO {
         public double feederSupplyCurrentAmps = 0.0;
         public double feederStatorCurrentAmps = 0.0;
         public double feederTempCelsius = 0.0;
-        public double distanceMM = 0.0;
     }
 
     default void updateInputs(SpindexerIOInputs inputs) {}
 
     default void setMotorVoltages(double spinVolts, double feederVolts) {}
-
-    default double getDistanceMM() {
-        return 0.0;
-    }
 }
