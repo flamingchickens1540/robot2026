@@ -90,13 +90,13 @@ public class Spindexer extends SubsystemBase {
     }
 
     public static Spindexer createDummy() {
-        return new Spindexer(new SpindexerIO() {}, null); // no sensor initialization for the laser can
+        return new Spindexer(new SpindexerIO() {}, new SpindexerSensorIO() {});
     }
 
     public static Spindexer createSim() {
         if (Constants.CURRENT_MODE == Constants.Mode.REAL) {
             DriverStation.reportWarning("Using simulated turret on real robot", false);
         }
-        return new Spindexer(new SpindexerIOSim(), null); // no sensor initialization for the laser can
+        return new Spindexer(new SpindexerIOSim(), new SpindexerSensorIO() {});
     }
 }
