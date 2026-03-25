@@ -11,8 +11,6 @@ import org.team1540.robot2026.subsystems.intake.IntakeConstants;
 import org.team1540.robot2026.subsystems.turret.TurretConstants;
 
 public class MechanismVisualizer {
-    private static final double MAX_HOPPER_EXTENSION_METERS = 0.269077;
-
     private static Rotation2d turretAngle = Rotation2d.kZero;
     private static Rotation2d turretSetpoint = Rotation2d.kZero;
 
@@ -38,10 +36,12 @@ public class MechanismVisualizer {
         Pose3d intakeSetpointPose = new Pose3d(
                 IntakeConstants.ROBOT_TO_PIVOT.getTranslation(), new Rotation3d(0, intakeSetpoint.getRadians(), 0));
 
-        double hopperExtensionMeters =
-                MathUtil.clamp(MAX_HOPPER_EXTENSION_METERS * intakeAngle.getCos(), 0, MAX_HOPPER_EXTENSION_METERS);
-        double hopperExtensionSetpointMeters =
-                MathUtil.clamp(MAX_HOPPER_EXTENSION_METERS * intakeSetpoint.getCos(), 0, MAX_HOPPER_EXTENSION_METERS);
+        double hopperExtensionMeters = MathUtil.clamp(
+                IntakeConstants.MAX_EXTENSION_METERS * intakeAngle.getCos(), 0, IntakeConstants.MAX_EXTENSION_METERS);
+        double hopperExtensionSetpointMeters = MathUtil.clamp(
+                IntakeConstants.MAX_EXTENSION_METERS * intakeSetpoint.getCos(),
+                0,
+                IntakeConstants.MAX_EXTENSION_METERS);
         Pose3d hopperPose = new Pose3d(hopperExtensionMeters, 0, 0, Rotation3d.kZero);
         Pose3d hopperSetpointPose = new Pose3d(hopperExtensionSetpointMeters, 0, 0, Rotation3d.kZero);
 

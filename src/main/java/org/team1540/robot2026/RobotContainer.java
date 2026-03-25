@@ -3,8 +3,6 @@ package org.team1540.robot2026;
 import static edu.wpi.first.units.Units.Hertz;
 import static edu.wpi.first.units.Units.Seconds;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -92,8 +90,6 @@ public class RobotContainer {
                 hood = Hood.createSim();
                 climber = Climber.createDummy();
                 vision = AprilTagVision.createSim();
-
-                RobotState.getInstance().resetPose(new Pose2d(3.0, 3.0, Rotation2d.kZero));
             }
             default -> {
                 // Initialize no-op hardware IOs for replay

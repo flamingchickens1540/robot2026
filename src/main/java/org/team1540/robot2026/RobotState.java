@@ -178,6 +178,10 @@ public class RobotState {
         return getTurretAngle().plus(getRobotHeading());
     }
 
+    public double getTurretVelocityRadPerSec() {
+        return lastTurretVelocityRadPerSec;
+    }
+
     public void addVelocityObservation(ChassisSpeeds velocity) {
         lastVelocity = velocity;
     }

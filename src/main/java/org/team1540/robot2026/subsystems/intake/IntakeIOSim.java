@@ -72,13 +72,19 @@ public class IntakeIOSim implements IntakeIO {
         inputs.spinMotorAppliedVolts = new double[] {spinAppliedVolts};
         inputs.spinMotorVelocityRPS = new double[] {spinSim.getAngularVelocityRPM() / 60.0};
         inputs.spinStatorCurrentAmps = new double[] {spinSim.getCurrentDrawAmps()};
-        inputs.spinSupplyCurrentAmps = new double[] {spinSim.getCurrentDrawAmps()};
+        inputs.spinSupplyCurrentAmps = new double[] {
+            spinSim.getCurrentDrawAmps()
+                    * spinAppliedVolts
+                    / SimulatedBattery.getBatteryVoltage().in(Volts)
+        };
 
         inputs.pivotMotorAppliedVolts = -pivotAppliedVolts;
         inputs.pivotPosition = Rotation2d.fromRadians(-pivotSim.getAngleRads());
         inputs.pivotMotorVelocityRPS = Units.rotationsToRadians(pivotSim.getVelocityRadPerSec()) / 60.0;
         inputs.pivotStatorCurrentAmps = pivotSim.getCurrentDrawAmps();
-        inputs.pivotSupplyCurrentAmps = pivotSim.getCurrentDrawAmps();
+        inputs.pivotSupplyCurrentAmps = pivotSim.getCurrentDrawAmps()
+                * pivotAppliedVolts
+                / SimulatedBattery.getBatteryVoltage().in(Volts);
     }
 
     @Override

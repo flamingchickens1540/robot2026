@@ -28,8 +28,10 @@ public class IntakeConstants {
     public static Rotation2d PIVOT_JIGGLE_ANGLE = Rotation2d.fromDegrees(-30);
     public static Rotation2d PIVOT_DEPOT_ANGLE = Rotation2d.fromDegrees(-7);
 
-    public static double PIVOT_MOI_KGM2 = 0.2089;
+    public static final double WIDTH_METERS = Units.inchesToMeters(22.0);
+    public static final double MAX_EXTENSION_METERS = 0.269077;
 
     public static Transform3d ROBOT_TO_PIVOT =
             new Transform3d(Units.inchesToMeters(12.600), 0.0, Units.inchesToMeters(8.500), Rotation3d.kZero);
+    public static double PIVOT_MOI_KGM2 = 0.2089;
 }

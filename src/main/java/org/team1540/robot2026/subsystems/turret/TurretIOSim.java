@@ -25,6 +25,7 @@ public class TurretIOSim implements TurretIO {
 
     private boolean isClosedLoop = false;
     private double voltageRequest = 0.0;
+    private double voltageFF = 0.0;
     private double appliedVolts = 0.0;
 
     public TurretIOSim() {
@@ -37,7 +38,8 @@ public class TurretIOSim implements TurretIO {
         Rotation2d position = Rotation2d.fromRotations(sim.getAngularPositionRotations());
         if (isClosedLoop) {
             voltageRequest = pid.calculate(position.getRotations(), pid.getGoal().position)
-                    + ff.calculate(pid.getSetpoint().velocity);
+                    + ff.calculate(pid.getSetpoint().velocity)
+                    + voltageFF;
         }
         appliedVolts = SimulatedBattery.clamp(Volts.of(voltageRequest)).in(Volts);
 
@@ -85,7 +87,8 @@ public class TurretIOSim implements TurretIO {
             pid.reset(sim.getAngularPositionRotations(), sim.getAngularVelocityRPM() / 60.0);
         }
         isClosedLoop = true;
-        pid.setGoal(new TrapezoidProfile.State(rotation.getRotations(), voltageFF / ff.getKv()));
+        pid.setGoal(rotation.getRotations());
+        this.voltageFF = voltageFF;
     }
 
     @Override

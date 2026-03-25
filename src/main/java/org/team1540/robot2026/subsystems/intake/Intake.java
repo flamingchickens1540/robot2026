@@ -16,6 +16,7 @@ import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.Constants;
 import org.team1540.robot2026.MechanismVisualizer;
+import org.team1540.robot2026.SimState;
 import org.team1540.robot2026.util.LoggedTracer;
 import org.team1540.robot2026.util.LoggedTunableNumber;
 
@@ -74,6 +75,9 @@ public class Intake extends SubsystemBase {
         if (DriverStation.isDisabled()) stopAll();
 
         MechanismVisualizer.addIntakeData(inputs.pivotPosition, pivotSetpoint);
+        if (Constants.CURRENT_MODE == Constants.Mode.SIM) {
+            SimState.getInstance().addIntakeData(inputs.pivotPosition, inputs.spinMotorAppliedVolts[0]);
+        }
 
         LoggedTunableNumber.ifChanged(
                 hashCode(),
