@@ -41,8 +41,10 @@ public class Spindexer extends SubsystemBase {
             numBallsCounted++;
             measurements.addLast(System.currentTimeMillis());
         }
-        if (measurements.getFirst() < System.currentTimeMillis() - 3 * 1000) {
-            measurements.removeFirst();
+        if (!measurements.isEmpty()){
+            if (measurements.getFirst() < System.currentTimeMillis() - 3 * 1000) {
+                measurements.removeFirst();
+            }
         }
         lastMeasurement = sensorIO.getDistanceMM();
         Logger.recordOutput("RealOutputs/Spindexer/balls", numBallsCounted);
