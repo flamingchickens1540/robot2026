@@ -12,6 +12,8 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import java.util.Random;
+import java.util.Set;
 import java.util.function.DoubleSupplier;
 import org.ironmaple.simulation.IntakeSimulation;
 import org.ironmaple.simulation.SimulatedArena;
@@ -25,6 +27,7 @@ import org.ironmaple.simulation.seasonspecific.rebuilt2026.RebuiltFuelOnFly;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.AutoLogOutputManager;
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 import org.team1540.robot2026.generated.TunerConstants;
 import org.team1540.robot2026.subsystems.drive.DrivetrainConstants;
 import org.team1540.robot2026.subsystems.hood.HoodConstants;
@@ -40,7 +43,8 @@ public class SimState {
 
     private static final double SHOT_ORIGIN_HEIGHT_METERS = ROBOT_TO_TURRET_3D.getZ() + Units.inchesToMeters(5.875);
 
-    private static final double BPS = 6.7;
+    private static final double BPS = 8.0;
+    private static final double BPS_STDDEV = 2.54;
 
     private static SimState instance = null;
 
@@ -62,12 +66,17 @@ public class SimState {
 
     private double shooterRPM = 0.0;
 
+    private final Random rng = new Random(); // RNG for bps
+
+    private final LoggedNetworkBoolean efficiencyMode =
+            new LoggedNetworkBoolean("SmartDashboard/Sim/Performance Mode", true);
+
     private SimState() {
         if (Constants.CURRENT_MODE != Constants.Mode.SIM)
             throw new IllegalStateException("SimState should only be used in simulation");
 
         CustomRebuiltArena arena = new CustomRebuiltArena(false);
-        arena.setEfficiencyMode(false);
+        arena.setEfficiencyMode(efficiencyMode.get());
         SimulatedArena.overrideInstance(arena);
         SimulatedArena.getInstance().resetFieldForAuto();
 
@@ -100,13 +109,19 @@ public class SimState {
                 45);
         intakeSim.setCustomIntakeCondition(gamePiece -> isIntakeRunning());
 
+        new Trigger(efficiencyMode)
+                .onChange(Commands.runOnce(() -> arena.setEfficiencyMode(efficiencyMode.get()))
+                        .ignoringDisable(true));
+
         new Trigger(this::isIntakeExtended)
                 .onTrue(Commands.runOnce(intakeSim::startIntake))
                 .onFalse(Commands.runOnce(intakeSim::stopIntake));
         new Trigger(this::isSpindexerRunning)
-                .whileTrue(
-                        Commands.waitSeconds(1.0 / BPS).andThen(this::shootFuel).repeatedly());
-
+                .whileTrue(Commands.defer(
+                                () -> Commands.waitSeconds(1.0 / rng.nextGaussian(BPS, BPS_STDDEV))
+                                        .andThen(this::shootFuel),
+                                Set.of())
+                        .repeatedly());
         AutoLogOutputManager.addObject(this);
     }
 
@@ -115,7 +130,6 @@ public class SimState {
                 "SimState/Fuel",
                 SimulatedArena.getInstance().getGamePiecesPosesByType("Fuel").toArray(new Pose3d[0]));
         Logger.recordOutput("SimState/FuelInHopper", intakeSim.getGamePiecesAmount());
-
         SimulatedArena.getInstance().simulationPeriodic();
     }
 
