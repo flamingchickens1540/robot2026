@@ -24,4 +24,8 @@ public interface SpindexerIO {
     default void updateInputs(SpindexerIOInputs inputs) {}
 
     default void setMotorVoltages(double spinVolts, double feederVolts) {}
+
+    default double getDistanceMM() {
+        return 0.0;
+    }
 }
