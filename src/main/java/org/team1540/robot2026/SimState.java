@@ -21,7 +21,6 @@ import org.ironmaple.simulation.drivesims.SwerveModuleSimulation;
 import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
 import org.ironmaple.simulation.drivesims.configs.SwerveModuleSimulationConfig;
 import org.ironmaple.simulation.motorsims.SimulatedBattery;
-import org.ironmaple.simulation.seasonspecific.rebuilt2026.Arena2026Rebuilt;
 import org.ironmaple.simulation.seasonspecific.rebuilt2026.RebuiltFuelOnFly;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.AutoLogOutputManager;
@@ -30,6 +29,7 @@ import org.team1540.robot2026.generated.TunerConstants;
 import org.team1540.robot2026.subsystems.drive.DrivetrainConstants;
 import org.team1540.robot2026.subsystems.hood.HoodConstants;
 import org.team1540.robot2026.subsystems.intake.IntakeConstants;
+import org.team1540.robot2026.util.sim.CustomRebuiltArena;
 
 public class SimState {
     private static final Rotation2d INTAKE_EXTENSION_THRESH = Rotation2d.fromDegrees(-30);
@@ -66,7 +66,7 @@ public class SimState {
         if (Constants.CURRENT_MODE != Constants.Mode.SIM)
             throw new IllegalStateException("SimState should only be used in simulation");
 
-        Arena2026Rebuilt arena = new Arena2026Rebuilt(false);
+        CustomRebuiltArena arena = new CustomRebuiltArena(false);
         arena.setEfficiencyMode(false);
         SimulatedArena.overrideInstance(arena);
         SimulatedArena.getInstance().resetFieldForAuto();
