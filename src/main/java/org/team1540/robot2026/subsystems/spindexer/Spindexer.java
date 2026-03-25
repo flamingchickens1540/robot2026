@@ -57,7 +57,9 @@ public class Spindexer extends SubsystemBase {
         calculateBPS();
         sensorIO.updateInputs(sensorInputs);
         io.updateInputs(inputs);
+
         Logger.processInputs("Spindexer", inputs);
+        Logger.processInputs("SpindexerSensor", sensorInputs);
 
         if (DriverStation.isDisabled()) stop();
 

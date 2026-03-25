@@ -178,6 +178,7 @@ createVersionFile.dependsOn(eventDeploy)
 
 // Spotless formatting
 boolean lint = !project.hasProperty("nolint") && !isEventBranch
+lint = false
 if (lint) {
     project.compileJava.dependsOn(spotlessApply)
 }
