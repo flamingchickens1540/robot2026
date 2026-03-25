@@ -229,4 +229,36 @@ public class Autos {
                         .andThen(sprint.spawnCmd().onlyIf(() -> shouldSprint)));
         return routine;
     }
+
+    public AutoRoutine leftTrenchFar2SweepSprint(boolean shouldSprint) {
+        final String trajName = "LeftTrenchFar2SweepSprint";
+
+        AutoRoutine routine = autoFactory.newRoutine("LeftTrenchFar2SweepSprint");
+        AutoTrajectory firstSweep = routine.trajectory(trajName, 0);
+        AutoTrajectory secondSweep = routine.trajectory(trajName, 1);
+        AutoTrajectory sprint = routine.trajectory(trajName, 2);
+
+        resetPoseInSim(routine, firstSweep);
+
+        routine.active()
+                .onTrue(firstSweep
+                        .cmd()
+                        .alongWith(
+                                intake.zeroWhileRunningCommand().andThen(intake.commandRunIntake(1.0)),
+                                hood.zeroCommand().withTimeout(1.0)));
+        firstSweep
+                .done()
+                .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
+                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand())
+                        .withTimeout(3.5)
+                        .andThen(secondSweep.spawnCmd()));
+        secondSweep.active().onTrue(intake.commandRunIntake(1.0));
+        secondSweep
+                .done()
+                .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
+                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand())
+                        .withTimeout(shouldSprint ? 5.5 : 10.0)
+                        .andThen(sprint.spawnCmd().onlyIf(() -> shouldSprint)));
+        return routine;
+    }
 }
