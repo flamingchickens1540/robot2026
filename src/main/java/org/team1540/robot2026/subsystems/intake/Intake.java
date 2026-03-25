@@ -26,7 +26,8 @@ public class Intake extends SubsystemBase {
         STOW(new LoggedTunableNumber("Intake/Setpoints/Stow/AngleDegrees", -120)),
         INTAKE(new LoggedTunableNumber("Intake/Setpoints/Intake/AngleDegrees", PIVOT_MAX_ANGLE.getDegrees())),
         JIGGLE(new LoggedTunableNumber("Intake/Setpoints/Jiggle/AngleDegrees", PIVOT_JIGGLE_ANGLE.getDegrees())),
-        DEPOT(new LoggedTunableNumber("Intake/Setpoints/Depot/AngleDegrees", PIVOT_DEPOT_ANGLE.getDegrees()));
+        DEPOT(new LoggedTunableNumber("Intake/Setpoints/Depot/AngleDegrees", PIVOT_DEPOT_ANGLE.getDegrees())),
+        TILT(new LoggedTunableNumber("Intake/Setpoints/Tilt/AngleDegrees", PIVOT_TILT_ANGLE.getDegrees()));
 
         private final DoubleSupplier pivotPosition;
 
@@ -186,6 +187,20 @@ public class Intake extends SubsystemBase {
                             this.setRollerVoltage(0.0);
                         }))
                 .withName("IntakeJiggleCommand");
+    }
+
+    public Command tiltCommand(double percent) {
+        return Commands.startEnd(
+                        () -> {
+                            this.setRollerVoltage(percent * 12);
+                            this.setPivotSetpoint(IntakeState.TILT.pivotPosition());
+                        },
+                        () -> {
+                            this.setRollerVoltage(0);
+                            this.holdPivot();
+                        },
+                        this)
+                .withName("IntakeTiltCommand");
     }
 
     public Command zeroCommand() {

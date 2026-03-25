@@ -222,6 +222,34 @@ public class Drivetrain extends SubsystemBase {
         Logger.recordOutput("Drivetrain/SwerveStates/Setpoints", setpoints);
     }
 
+    @AutoLogOutput(key = "Drivetrain/isSkidding")
+    public boolean isSkidding() {
+        double angularVelocity = kinematics.toChassisSpeeds(getModuleStates()).omegaRadiansPerSecond;
+        SwerveModuleState[] statesForRotation =
+                kinematics.toSwerveModuleStates(new ChassisSpeeds(0, 0, angularVelocity));
+        double[] swerveModuleTranslationalMagnitudes = new double[getModuleStates().length];
+        for (int i = 0; i < getModuleStates().length; i++) {
+            Translation2d swerveStateVector = convertSwerveStateToVelocityVector(getModuleStates()[i]);
+            Translation2d rotationVector = convertSwerveStateToVelocityVector(statesForRotation[i]);
+            Translation2d translationVector = swerveStateVector.minus(rotationVector);
+            swerveModuleTranslationalMagnitudes[i] = translationVector.getNorm();
+        }
+
+        double maximumTranslationalSpeed = 0;
+        double minimalTranslationalSpeed = Double.POSITIVE_INFINITY;
+        for (double translationalSpeed : swerveModuleTranslationalMagnitudes) {
+            maximumTranslationalSpeed = Math.max(maximumTranslationalSpeed, translationalSpeed);
+            minimalTranslationalSpeed = Math.min(minimalTranslationalSpeed, translationalSpeed);
+        }
+        double skidRatio = maximumTranslationalSpeed / minimalTranslationalSpeed;
+        Logger.recordOutput("Drivetrain/skidRatio", skidRatio);
+        return skidRatio > 3;
+    }
+
+    private Translation2d convertSwerveStateToVelocityVector(SwerveModuleState swerveModuleState) {
+        return new Translation2d(swerveModuleState.speedMetersPerSecond, swerveModuleState.angle);
+    }
+
     /** Runs the drivetrain such that it follows the given trajectory sample */
     public void followTrajectory(SwerveSample trajectorySample) {
         RobotState.getInstance().setTrajectoryTarget(trajectorySample.getPose());
@@ -352,9 +380,7 @@ public class Drivetrain extends SubsystemBase {
                         },
                         () -> {
                             double input = JoystickUtil.smartDeadzone(-controller.getRightX(), 0.1);
-                            return rateLimit.getAsBoolean()
-                                    ? rotationRateLimiter.calculate(input)
-                                    : input;
+                            return rateLimit.getAsBoolean() ? rotationRateLimiter.calculate(input) : input;
                         })
                 .beforeStarting(() -> {
                     translationRateLimiter.reset(JoystickUtil.deadzonedJoystickTranslation(
