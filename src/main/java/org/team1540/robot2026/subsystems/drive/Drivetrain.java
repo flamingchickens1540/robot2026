@@ -220,15 +220,17 @@ public class Drivetrain extends SubsystemBase {
         Logger.recordOutput("Drivetrain/SwerveStates/Setpoints", setpoints);
     }
 
-    @AutoLogOutput(key = "Drivetrain/isSkidding")
+    @AutoLogOutput(key = "Drivetrain/SkidDetection/IsSkidding")
     public boolean isSkidding() {
-        double angularVelocity = kinematics.toChassisSpeeds(getModuleStates()).omegaRadiansPerSecond;
+        SwerveModuleState[] currentStates = getModuleStates();
+        double angularVelocity = kinematics.toChassisSpeeds(currentStates).omegaRadiansPerSecond;
         SwerveModuleState[] statesForRotation =
                 kinematics.toSwerveModuleStates(new ChassisSpeeds(0, 0, angularVelocity));
-        double[] swerveModuleTranslationalMagnitudes = new double[getModuleStates().length];
-        for (int i = 0; i < getModuleStates().length; i++) {
-            Translation2d swerveStateVector = convertSwerveStateToVelocityVector(getModuleStates()[i]);
-            Translation2d rotationVector = convertSwerveStateToVelocityVector(statesForRotation[i]);
+        double[] swerveModuleTranslationalMagnitudes = new double[currentStates.length];
+
+        for (int i = 0; i < currentStates.length; i++) {
+            Translation2d swerveStateVector = swerveStateToVelocityVector(currentStates[i]);
+            Translation2d rotationVector = swerveStateToVelocityVector(statesForRotation[i]);
             Translation2d translationVector = swerveStateVector.minus(rotationVector);
             swerveModuleTranslationalMagnitudes[i] = translationVector.getNorm();
         }
@@ -240,11 +242,11 @@ public class Drivetrain extends SubsystemBase {
             minimalTranslationalSpeed = Math.min(minimalTranslationalSpeed, translationalSpeed);
         }
         double skidRatio = maximumTranslationalSpeed / minimalTranslationalSpeed;
-        Logger.recordOutput("Drivetrain/skidRatio", skidRatio);
+        Logger.recordOutput("Drivetrain/SkidDetection/SkidRatio", skidRatio);
         return skidRatio > 3;
     }
 
-    private Translation2d convertSwerveStateToVelocityVector(SwerveModuleState swerveModuleState) {
+    private Translation2d swerveStateToVelocityVector(SwerveModuleState swerveModuleState) {
         return new Translation2d(swerveModuleState.speedMetersPerSecond, swerveModuleState.angle);
     }
 

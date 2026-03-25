@@ -24,7 +24,7 @@ public class DrivetrainConstants {
     public static final double MAX_STEER_SPEED_RAD_PER_SEC =
             DCMotor.getFalcon500Foc(1).withReduction(TunerConstants.FrontLeft.SteerMotorGearRatio).freeSpeedRadPerSec;
 
-    public static final double WHEEL_COF = 1.4;
+    public static final double WHEEL_COF = 1.0;
 
     public static Translation2d[] getModuleTranslations() {
         return new Translation2d[] {
