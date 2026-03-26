@@ -1,6 +1,9 @@
 package org.team1540.robot2026.subsystems.intake;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.util.Units;
 
 public class IntakeConstants {
     public static int PIVOT_MOTOR_ID = 27;
@@ -26,5 +29,10 @@ public class IntakeConstants {
     public static Rotation2d PIVOT_DEPOT_ANGLE = Rotation2d.fromDegrees(-7);
     public static Rotation2d PIVOT_TILT_ANGLE = Rotation2d.fromDegrees(-30);
 
+    public static final double WIDTH_METERS = Units.inchesToMeters(22.0);
+    public static final double MAX_EXTENSION_METERS = 0.269077;
+
+    public static Transform3d ROBOT_TO_PIVOT =
+            new Transform3d(Units.inchesToMeters(12.600), 0.0, Units.inchesToMeters(8.500), Rotation3d.kZero);
     public static double PIVOT_MOI_KGM2 = 0.2089;
 }

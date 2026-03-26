@@ -38,7 +38,7 @@ public class ModuleIOSim implements ModuleIO {
         this.moduleSim = moduleSim;
         this.driveMotor =
                 moduleSim.useGenericMotorControllerForDrive().withCurrentLimit(Amps.of(constants.SlipCurrent));
-        this.turnMotor = moduleSim.useGenericControllerForSteer().withCurrentLimit(Amps.of(40.0));
+        this.turnMotor = moduleSim.useGenericControllerForSteer().withCurrentLimit(Amps.of(120.0));
 
         drivePID = new PIDController(0.8, 0.0, 0.0);
         driveFF = new SimpleMotorFeedforward(0.05098, 0.83092);
@@ -59,9 +59,8 @@ public class ModuleIOSim implements ModuleIO {
                     turnPID.calculate(moduleSim.getSteerAbsoluteFacing().getRotations()));
         }
 
-        double batteryVoltage = SimulatedBattery.getBatteryVoltage().in(Volts);
-        driveAppliedVolts = Volts.of(MathUtil.clamp(driveAppliedVolts.in(Volts), -batteryVoltage, batteryVoltage));
-        turnAppliedVolts = Volts.of(MathUtil.clamp(turnAppliedVolts.in(Volts), -batteryVoltage, batteryVoltage));
+        driveAppliedVolts = SimulatedBattery.clamp(driveAppliedVolts);
+        turnAppliedVolts = SimulatedBattery.clamp(turnAppliedVolts);
 
         driveMotor.requestVoltage(driveAppliedVolts);
         turnMotor.requestVoltage(turnAppliedVolts);

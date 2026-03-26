@@ -111,10 +111,10 @@ public class Autos {
         return routine;
     }
 
-    public AutoRoutine leftTrench2Sweep(boolean shouldSprint) {
-        final String trajName = "LeftTrench2Sweep";
+    public AutoRoutine leftTrench2Sweep(boolean hook, boolean shouldSprint) {
+        final String trajName = "LeftTrench2Sweep" + (hook ? "Hook" : "");
 
-        AutoRoutine routine = autoFactory.newRoutine("LeftTrench2Sweep");
+        AutoRoutine routine = autoFactory.newRoutine("LeftTrench2Sweep" + (hook ? "Hook" : ""));
         AutoTrajectory firstSweep = routine.trajectory(trajName, 0);
         AutoTrajectory secondSweep = routine.trajectory(trajName, 1);
         AutoTrajectory sprint = routine.trajectory(trajName, 2);
@@ -198,10 +198,10 @@ public class Autos {
         return routine;
     }
 
-    public AutoRoutine rightTrench2Sweep(boolean shouldSprint) {
-        final String trajName = "LeftTrench2Sweep";
+    public AutoRoutine rightTrench2Sweep(boolean shouldSprint, boolean hook) {
+        final String trajName = "LeftTrench2Sweep" + (hook ? "Hook" : "");
 
-        AutoRoutine routine = autoFactory.newRoutine("RightTrench2Sweep");
+        AutoRoutine routine = autoFactory.newRoutine("RightTrench2Sweep" + (hook ? "Hook" : ""));
         AutoTrajectory firstSweep = TrajectoryMirror.apply(routine.trajectory(trajName, 0), routine);
         AutoTrajectory secondSweep = TrajectoryMirror.apply(routine.trajectory(trajName, 1), routine);
         AutoTrajectory sprint = TrajectoryMirror.apply(routine.trajectory(trajName, 2), routine);
@@ -244,7 +244,8 @@ public class Autos {
                 .onTrue(firstSweep
                         .cmd()
                         .alongWith(
-                                intake.zeroWhileRunningCommand().andThen(intake.commandRunIntake(1.0)),
+                                Commands.waitSeconds(0.75)
+                                        .andThen(intake.zeroWhileRunningCommand(), intake.commandRunIntake(1.0)),
                                 hood.zeroCommand().withTimeout(1.0)));
         firstSweep
                 .done()
