@@ -77,7 +77,9 @@ public class IntakeIOTalonFX implements IntakeIO {
         intakeTalonFXConfig.CurrentLimits.StatorCurrentLimitEnable = true;
         intakeTalonFXConfig.CurrentLimits.StatorCurrentLimit = 120;
         intakeTalonFXConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-        intakeTalonFXConfig.CurrentLimits.SupplyCurrentLimit = 40;
+        intakeTalonFXConfig.CurrentLimits.SupplyCurrentLimit = 80;
+        intakeTalonFXConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
+        intakeTalonFXConfig.CurrentLimits.SupplyCurrentLowerTime = 1.0;
         intakeTalonFXConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         intakeTalonFXConfig.Feedback.SensorToMechanismRatio = SPIN_GEAR_RATIO;
         intakeTalonFXConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;

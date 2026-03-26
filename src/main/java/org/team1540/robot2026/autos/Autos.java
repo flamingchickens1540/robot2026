@@ -244,7 +244,8 @@ public class Autos {
                 .onTrue(firstSweep
                         .cmd()
                         .alongWith(
-                                intake.zeroWhileRunningCommand().andThen(intake.commandRunIntake(1.0)),
+                                Commands.waitSeconds(0.75)
+                                        .andThen(intake.zeroWhileRunningCommand(), intake.commandRunIntake(1.0)),
                                 hood.zeroCommand().withTimeout(1.0)));
         firstSweep
                 .done()
