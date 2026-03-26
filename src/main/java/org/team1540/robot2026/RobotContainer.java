@@ -136,12 +136,15 @@ public class RobotContainer {
         /* Driver controls */
 
         // Drivetrain controls
-        drivetrain.setDefaultCommand(drivetrain.teleopDriveCommand(
-                driver.driveX,
-                driver.driveY,
-                driver.driveRotation,
-                () -> shootCmd.isScheduled() && robotState.getTargetingMode() == RobotState.TargetingMode.HUB));
+        Trigger rateLimitActive = new Trigger(
+                () -> shootCmd.isScheduled() && robotState.getTargetingMode() == RobotState.TargetingMode.HUB);
+        drivetrain.setDefaultCommand(
+                drivetrain.teleopDriveCommand(driver.driveX, driver.driveY, driver.driveRotation, rateLimitActive));
         driver.driveXMode.onTrue(drivetrain.runOnce(drivetrain::stopWithX).withName("DriveXMode"));
+        driver.pointMode
+                .and(intakeCmd::isScheduled)
+                .whileTrue(drivetrain.teleopDrivePointCommand(
+                        driver.driveX, driver.driveY, driver.driveRotation, rateLimitActive));
         driver.zeroDriveOrientation.onTrue(
                 Commands.runOnce(drivetrain::zeroFieldOrientationManual).withName("ManualDriveZero"));
 

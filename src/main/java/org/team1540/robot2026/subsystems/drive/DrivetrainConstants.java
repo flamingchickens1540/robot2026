@@ -3,8 +3,11 @@ package org.team1540.robot2026.subsystems.drive;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 
 import com.ctre.phoenix6.CANBus;
+import com.pathplanner.lib.config.ModuleConfig;
+import com.pathplanner.lib.config.RobotConfig;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
+import org.team1540.robot2026.Constants;
 import org.team1540.robot2026.generated.TunerConstants;
 
 public class DrivetrainConstants {
@@ -25,6 +28,18 @@ public class DrivetrainConstants {
             DCMotor.getFalcon500Foc(1).withReduction(TunerConstants.FrontLeft.SteerMotorGearRatio).freeSpeedRadPerSec;
 
     public static final double WHEEL_COF = 1.0;
+
+    public static final RobotConfig ROBOT_CONFIG = new RobotConfig(
+            Constants.ROBOT_MASS_KG,
+            Constants.ROBOT_MOI_KGM2,
+            new ModuleConfig(
+                    TunerConstants.FrontLeft.WheelRadius,
+                    MAX_LINEAR_SPEED_MPS,
+                    WHEEL_COF,
+                    DCMotor.getKrakenX60Foc(1).withReduction(TunerConstants.FrontLeft.DriveMotorGearRatio),
+                    TunerConstants.FrontLeft.SlipCurrent,
+                    1),
+            getModuleTranslations());
 
     public static Translation2d[] getModuleTranslations() {
         return new Translation2d[] {

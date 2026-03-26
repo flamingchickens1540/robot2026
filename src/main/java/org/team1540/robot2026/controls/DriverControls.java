@@ -17,6 +17,7 @@ public class DriverControls {
     public final DoubleSupplier driveRotation; // Drive rotation
 
     public final Trigger zeroDriveOrientation; // Zero field orientation controls
+    public final Trigger pointMode; // Point the intake in the translation direction
     public final Trigger driveXMode; // Move wheels to X configuration to resist being pushed
 
     public final Trigger intake; // Run intake
@@ -41,6 +42,7 @@ public class DriverControls {
                 driveRotation = () -> -controller.getRightX();
 
                 zeroDriveOrientation = controller.start();
+                pointMode = controller.a();
                 driveXMode = controller.x();
 
                 intake = controller.leftTrigger();
@@ -63,6 +65,7 @@ public class DriverControls {
                 driveRotation = () -> -controller.getRightX();
 
                 zeroDriveOrientation = controller.start();
+                pointMode = controller.a();
                 driveXMode = controller.x();
 
                 intake = controller.leftTrigger();
