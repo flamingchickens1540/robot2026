@@ -407,7 +407,7 @@ public class Drivetrain extends SubsystemBase {
                     Translation2d stickTranslation = JoystickUtil.deadzonedJoystickTranslation(
                             xPercent.getAsDouble(), yPercent.getAsDouble(), 0.1);
                     if (stickTranslation.getNorm() > 0.001) {
-                        lastAngle.value = stickTranslation.getAngle().rotateBy(fieldOrientationOffset.unaryMinus());
+                        lastAngle.value = stickTranslation.getAngle().rotateBy(fieldOrientationOffset);
                     }
                     return lastAngle.value;
                 })
