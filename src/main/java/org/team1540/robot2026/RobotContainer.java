@@ -303,12 +303,16 @@ public class RobotContainer {
                                         .runCommand(() -> 1.0, () -> 1.0)
                                         .withTimeout(5.0)))));
         autoChooser.addRoutine("Left Trench 1 Sweep", autos::leftTrench1Sweep);
-        autoChooser.addRoutine("Left Trench 2 Sweep", () -> autos.leftTrench2Sweep(false));
-        autoChooser.addRoutine("Left Trench 2 Sweep Sprint", () -> autos.leftTrench2Sweep(true));
+        autoChooser.addRoutine("Left Trench 2 Sweep", () -> autos.leftTrench2Sweep(false, false));
+        autoChooser.addRoutine("Left Trench 2 Sweep Sprint", () -> autos.leftTrench2Sweep(false, true));
+        autoChooser.addRoutine("Left Trench 2 Sweep Hook", () -> autos.leftTrench2Sweep(true, false));
+        autoChooser.addRoutine("Left Trench 2 Sweep Hook Sprint", () -> autos.leftTrench2Sweep(true, true));
         autoChooser.addRoutine("Left Trench 2 Sweep Depot", autos::leftTrench2SweepDepot);
         autoChooser.addRoutine("Right Trench 1 Sweep", autos::rightTrench1Sweep);
-        autoChooser.addRoutine("Right Trench 2 Sweep", () -> autos.rightTrench2Sweep(false));
-        autoChooser.addRoutine("Right Trench 2 Sweep Sprint", () -> autos.rightTrench2Sweep(true));
+        autoChooser.addRoutine("Right Trench 2 Sweep", () -> autos.rightTrench2Sweep(false, false));
+        autoChooser.addRoutine("Right Trench 2 Sweep Sprint", () -> autos.rightTrench2Sweep(false, true));
+        autoChooser.addRoutine("Right Trench 2 Sweep Hook", () -> autos.rightTrench2Sweep(true, false));
+        autoChooser.addRoutine("Right Trench 2 Sweep Hook Sprint", () -> autos.rightTrench2Sweep(true, true));
         autoChooser.addRoutine("Left Trench Far 2 Sweep Sprint", () -> autos.leftTrenchFar2SweepSprint(true));
 
         // Characterization routines
