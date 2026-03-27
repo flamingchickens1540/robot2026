@@ -170,7 +170,7 @@ public class Intake extends SubsystemBase {
         return runOnce(() -> setPivotSetpoint(IntakeState.INTAKE.pivotPosition()))
                 .andThen(
                         Commands.either(
-                                runOnce(() -> setRollerVoltage(-12.0)).andThen(Commands.waitSeconds(0.5)),
+                                runOnce(() -> setRollerVoltage(-12.0)).andThen(Commands.waitSeconds(0.25)),
                                 runOnce(() -> setRollerVoltage(12.0)),
                                 stalling).repeatedly())
                 .finallyDo(() -> {
