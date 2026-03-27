@@ -308,12 +308,13 @@ public class RobotContainer {
         autoChooser.addRoutine("Left Trench 2 Sweep Hook", () -> autos.leftTrench2Sweep(true, false));
         autoChooser.addRoutine("Left Trench 2 Sweep Hook Sprint", () -> autos.leftTrench2Sweep(true, true));
         autoChooser.addRoutine("Left Trench 2 Sweep Depot", autos::leftTrench2SweepDepot);
+        autoChooser.addRoutine("Left Trench Team 2056 from Stoney Creek, Ontario", () -> autos.leftTrenchFar2SweepSprint(true));
         autoChooser.addRoutine("Right Trench 1 Sweep", autos::rightTrench1Sweep);
         autoChooser.addRoutine("Right Trench 2 Sweep", () -> autos.rightTrench2Sweep(false, false));
         autoChooser.addRoutine("Right Trench 2 Sweep Sprint", () -> autos.rightTrench2Sweep(false, true));
         autoChooser.addRoutine("Right Trench 2 Sweep Hook", () -> autos.rightTrench2Sweep(true, false));
         autoChooser.addRoutine("Right Trench 2 Sweep Hook Sprint", () -> autos.rightTrench2Sweep(true, true));
-        autoChooser.addRoutine("Left Trench Far 2 Sweep Sprint", () -> autos.leftTrenchFar2SweepSprint(true));
+        autoChooser.addRoutine("Right Trench Team 2056 from Stoney Creek, Ontario", () -> autos.rightTrenchFar2SweepSprint(true));
 
         // Characterization routines
         if (Constants.isTuningMode()) {

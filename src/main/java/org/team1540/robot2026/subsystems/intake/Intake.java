@@ -11,6 +11,8 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+
+import java.util.Arrays;
 import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
@@ -55,10 +57,17 @@ public class Intake extends SubsystemBase {
             new Alert("Left intake roller disconnected", Alert.AlertType.kError);
     private final Alert rightRollerDisconnectedAlert =
             new Alert("Right intake roller disconnected", Alert.AlertType.kError);
+    private final Alert stallAlert = new Alert("Intake is stalling!", Alert.AlertType.kWarning);
 
     private final IntakeInputsAutoLogged inputs = new IntakeInputsAutoLogged();
 
     private Rotation2d pivotSetpoint = PIVOT_MIN_ANGLE;
+
+    private final Trigger stalling = new Trigger(() -> {
+        double spinVoltage = Arrays.stream(inputs.spinMotorAppliedVolts).max().orElse(0.0);
+        double spinCurrent = Arrays.stream(inputs.spinStatorCurrentAmps).max().orElse(0.0);
+        return spinVoltage >= 0.0 && spinCurrent >= 70.0;
+    }).debounce(1.0);
 
     private Intake(IntakeIO io) {
         if (hasInstance) throw new IllegalStateException("Instance of intake already exists");
@@ -96,6 +105,7 @@ public class Intake extends SubsystemBase {
         pivotDisconnectedAlert.set(!inputs.pivotConnected);
         leftRollerDisconnectedAlert.set(!inputs.leftSpinConnected);
         rightRollerDisconnectedAlert.set(!inputs.rightSpinConnected);
+//        stallAlert.set(stalling.getAsBoolean());
 
         Command activeCmd = CommandScheduler.getInstance().requiring(this);
         Logger.recordOutput(
@@ -152,6 +162,19 @@ public class Intake extends SubsystemBase {
     public Command commandToSetpoint(IntakeState state) {
         return startEnd(() -> setPivotSetpoint(state.pivotPosition()), this::holdPivot)
                 .withName("IntakeSetpointCommand");
+    }
+
+    public Command commandRunIntakeAutoReverse() {
+        return runOnce(() -> setPivotSetpoint(IntakeState.INTAKE.pivotPosition()))
+                .andThen(
+                        Commands.either(
+                                runOnce(() -> setRollerVoltage(-12.0)).andThen(Commands.waitSeconds(0.5)),
+                                runOnce(() -> setRollerVoltage(12.0)),
+                                stalling).repeatedly())
+                .finallyDo(() -> {
+                    this.setRollerVoltage(0);
+                    this.holdPivot();
+                }).withName("RunIntakeAutoReverseCommand");
     }
 
     public Command commandRunIntake(double percent) {
