@@ -114,7 +114,7 @@ public class RobotContainer {
 
     private void configureButtonBindings() {
         Trigger manualFeedOverride = driver.forceShoot.or(() -> turretLockedMode);
-        Command intakeCmd = intake.commandRunIntakeAutoReverse();
+        Command intakeCmd = intake.commandRunIntake(1.0).withName("IntakeCommand");
         Command shootCmd = Commands.either(
                         ShootingCommands.shooterAimTurretLockedCommand(
                                         driver.driveX, driver.driveY, driver.driveRotation, drivetrain, shooter, hood)
