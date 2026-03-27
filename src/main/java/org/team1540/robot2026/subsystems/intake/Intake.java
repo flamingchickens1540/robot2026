@@ -89,6 +89,8 @@ public class Intake extends SubsystemBase {
             SimState.getInstance().addIntakeData(inputs.pivotPosition, inputs.spinMotorAppliedVolts[0]);
         }
 
+        Logger.recordOutput("Intake/StallDetected", stalling.getAsBoolean());
+
         LoggedTunableNumber.ifChanged(
                 hashCode(),
                 () -> io.setPivotPID(pivotKP.get(), pivotKI.get(), pivotKD.get()),
@@ -105,7 +107,7 @@ public class Intake extends SubsystemBase {
         pivotDisconnectedAlert.set(!inputs.pivotConnected);
         leftRollerDisconnectedAlert.set(!inputs.leftSpinConnected);
         rightRollerDisconnectedAlert.set(!inputs.rightSpinConnected);
-//        stallAlert.set(stalling.getAsBoolean());
+        stallAlert.set(stalling.getAsBoolean());
 
         Command activeCmd = CommandScheduler.getInstance().requiring(this);
         Logger.recordOutput(
