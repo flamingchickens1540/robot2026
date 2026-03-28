@@ -234,7 +234,7 @@ public class Intake extends SubsystemBase {
     }
 
     public Command zeroCommand() {
-        return runOnce(() -> setPivotVoltage(4))
+        return runOnce(() -> setPivotVoltage(5))
                 .andThen(
                         Commands.waitUntil(new Trigger(() -> inputs.pivotStatorCurrentAmps >= 80).debounce(0.5)),
                         runOnce(() -> resetPivotPosition(PIVOT_MAX_ANGLE.plus(Rotation2d.fromDegrees(3.0)))))
