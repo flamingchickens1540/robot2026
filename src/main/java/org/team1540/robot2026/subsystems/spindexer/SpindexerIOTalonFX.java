@@ -40,6 +40,7 @@ public class SpindexerIOTalonFX implements SpindexerIO {
 
     private final VoltageOut spinVoltageCtrlReq = new VoltageOut(0).withEnableFOC(true);
     private final VoltageOut feederVoltageCtrlReq = new VoltageOut(0).withEnableFOC(true);
+    private final VoltageOut feeder2VoltageCtrlReq = new VoltageOut(0).withEnableFOC(true);
 
     public SpindexerIOTalonFX() {
         TalonFXConfiguration config = new TalonFXConfiguration();
@@ -83,6 +84,7 @@ public class SpindexerIOTalonFX implements SpindexerIO {
 
         spinMotor1.optimizeBusUtilization();
         feederMotor1.optimizeBusUtilization();
+        feederMotor2.optimizeBusUtilization();
     }
 
     @Override
