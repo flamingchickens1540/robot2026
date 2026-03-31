@@ -74,7 +74,12 @@ public class SpindexerIOTalonFX implements SpindexerIO {
                 feeder1Voltage,
                 feeder1SupplyCurrent,
                 feeder1StatorCurrent,
-                feeder1Temp);
+                feeder1Temp,
+                feeder2Velocity,
+                feeder2Voltage,
+                feeder2SupplyCurrent,
+                feeder2StatorCurrent,
+                feeder2Temp);
 
         spinMotor1.optimizeBusUtilization();
         feederMotor1.optimizeBusUtilization();
@@ -94,23 +99,27 @@ public class SpindexerIOTalonFX implements SpindexerIO {
         inputs.feederMotorConnected = BaseStatusSignal.refreshAll(
                         feeder1Velocity, feeder1Voltage, feeder1SupplyCurrent, feeder1StatorCurrent, feeder2Temp,feeder2Velocity, feeder2Voltage, feeder2SupplyCurrent, feeder2StatorCurrent, feeder2Temp)
                 .isOK();
-        inputs.feederVelocityRPS = feeder1Velocity.getValueAsDouble();
-        inputs.feederAppliedVolts = feeder1Voltage.getValueAsDouble();
-        inputs.feederSupplyCurrentAmps = feeder1SupplyCurrent.getValueAsDouble();
-        inputs.feederStatorCurrentAmps = feeder1StatorCurrent.getValueAsDouble();
-        inputs.feederTempCelsius = feeder1Temp.getValueAsDouble();
 
-        inputs.feederVelocityRPS = feeder2Velocity.getValueAsDouble();
-        inputs.feederAppliedVolts = feeder2Voltage.getValueAsDouble();
-        inputs.feederSupplyCurrentAmps = feeder2SupplyCurrent.getValueAsDouble();
-        inputs.feederStatorCurrentAmps = feeder2StatorCurrent.getValueAsDouble();
-        inputs.feederTempCelsius = feeder2Temp.getValueAsDouble();
+        inputs.feeder2MotorConnected = BaseStatusSignal.refreshAll(
+                feeder2Temp,feeder2Velocity, feeder2Voltage, feeder2SupplyCurrent, feeder2StatorCurrent, feeder2Temp)
+                .isOK();
+        inputs.feeder1VelocityRPS = feeder1Velocity.getValueAsDouble();
+        inputs.feeder1AppliedVolts = feeder1Voltage.getValueAsDouble();
+        inputs.feeder1SupplyCurrentAmps = feeder1SupplyCurrent.getValueAsDouble();
+        inputs.feeder1StatorCurrentAmps = feeder1StatorCurrent.getValueAsDouble();
+        inputs.feeder1TempCelsius = feeder1Temp.getValueAsDouble();
+
+        inputs.feeder2VelocityRPS = feeder2Velocity.getValueAsDouble();
+        inputs.feeder2AppliedVolts = feeder2Voltage.getValueAsDouble();
+        inputs.feeder2SupplyCurrentAmps = feeder2SupplyCurrent.getValueAsDouble();
+        inputs.feeder2StatorCurrentAmps = feeder2StatorCurrent.getValueAsDouble();
+        inputs.feeder2TempCelsius = feeder2Temp.getValueAsDouble();
     }
 
     @Override
-    public void setMotorVoltages(double spinVolts, double feederVolts) {
+    public void setMotorVoltages(double spinVolts, double feeder1Volts, double feeder2Volts) {
         spinMotor1.setControl(spinVoltageCtrlReq.withOutput(spinVolts));
-        feederMotor1.setControl(feederVoltageCtrlReq.withOutput(feederVolts));
-        feederMotor2.setControl(feederVoltageCtrlReq.withOutput(feederVolts));
+        feederMotor1.setControl(feederVoltageCtrlReq.withOutput(feeder1Volts));
+        feederMotor2.setControl(feederVoltageCtrlReq.withOutput(feeder2Volts));
     }
 }

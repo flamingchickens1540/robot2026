@@ -213,7 +213,7 @@ public class RobotContainer {
 
         // Misc mechanism controls
         copilot.reverseSpindexer.whileTrue(
-                spindexer.runCommand(() -> -0.67, () -> -0.67).withName("SpindexerReverseCommand"));
+                spindexer.runCommand(() -> -0.67, () -> -0.67, () -> 0.67).withName("SpindexerReverseCommand"));
         copilot.stowHood.onTrue(
                 hood.setpointCommand(() -> HoodConstants.MIN_ANGLE).withName("StowHoodCommand"));
         copilot.lockTurret.toggleOnTrue(turret.run(turret::stop)
@@ -300,7 +300,7 @@ public class RobotContainer {
                                         () -> turret.atSetpoint() && shooter.atSetpoint() && hood.atSetpoint())
                                 .withTimeout(1.0)
                                 .andThen(spindexer
-                                        .runCommand(() -> 1.0, () -> 1.0)
+                                        .runCommand(() -> 1.0, () -> 1.0, () -> 1.0)
                                         .withTimeout(5.0)))));
         autoChooser.addRoutine("Left Trench 1 Sweep", autos::leftTrench1Sweep);
         autoChooser.addRoutine("Left Trench 2 Sweep", () -> autos.leftTrench2Sweep(false, false));
