@@ -144,6 +144,38 @@ public class Intake extends SubsystemBase {
                 .withName("IntakeSetpointCommand");
     }
 
+    public Command commandToSetpoint(Rotation2d rotation2d) {
+        return startEnd(() -> setPivotSetpoint(rotation2d), this::holdPivot)
+                .withName("IntakeSetpointCommand");
+    }
+
+    public Command slowRise(IntakeState state){
+        int wait = 1;
+
+
+        Command slowRiseCommand = Commands.run(()->{});
+        if (getPivotPosition().getDegrees()>state.pivotPosition().getDegrees()) {// which direction should we go?
+            for (int i = (int) getPivotPosition().getDegrees(); i > state.pivotPosition().getDegrees(); i -= 15) { // go towards the bumper
+                slowRiseCommand = slowRiseCommand
+                        .andThen(commandToSetpoint(Rotation2d.fromDegrees(i)))
+                        .andThen(Commands.waitSeconds(wait));
+            }
+        } else {
+            for (int i = (int) getPivotPosition().getDegrees(); i < state.pivotPosition().getDegrees(); i += 15) { // go towards the stow angle
+                slowRiseCommand = slowRiseCommand
+                        .andThen(commandToSetpoint(Rotation2d.fromDegrees(i)))
+                        .andThen(Commands.waitSeconds(wait));
+            }
+        }
+
+        slowRiseCommand = slowRiseCommand
+                .andThen(commandToSetpoint(state))
+                .andThen(Commands.waitSeconds(wait));
+
+
+        return slowRiseCommand;
+    }
+
     public Command commandRunIntake(double percent) {
         return Commands.startEnd(
                         () -> {

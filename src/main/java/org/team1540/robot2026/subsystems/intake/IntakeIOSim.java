@@ -98,6 +98,21 @@ public class IntakeIOSim implements IntakeIO {
     }
 
     @Override
+    public double getP() {
+        return SIM_PIVOT_KP;
+    }
+
+    @Override
+    public double getI() {
+        return SIM_PIVOT_KI;
+    }
+
+    @Override
+    public double getD() {
+        return SIM_PIVOT_KD;
+    }
+
+    @Override
     public void setPivotSetpoint(Rotation2d pivotPosition) {
         if (!isPivotClosedLoop) {
             pivotController.reset(

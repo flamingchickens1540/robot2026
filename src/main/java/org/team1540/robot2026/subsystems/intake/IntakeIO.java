@@ -35,4 +35,10 @@ public interface IntakeIO {
     default void setPivotPID(double kP, double kI, double kD) {}
 
     default void setPivotFF(double kS, double kV, double kG) {}
+
+    default double getP() {return 0;}
+
+    default double getI() {return 0;}
+
+    default double getD() {return 0;}
 }

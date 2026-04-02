@@ -155,6 +155,27 @@ public class IntakeIOTalonFX implements IntakeIO {
     }
 
     @Override
+    public double getD() {
+        Slot0Configs configs = new Slot0Configs();
+        pivotMotor.getConfigurator().refresh(configs);
+        return configs.kD;
+    }
+
+    @Override
+    public double getI() {
+        Slot0Configs configs = new Slot0Configs();
+        pivotMotor.getConfigurator().refresh(configs);
+        return configs.kI;
+    }
+
+    @Override
+    public double getP() {
+        Slot0Configs configs = new Slot0Configs();
+        pivotMotor.getConfigurator().refresh(configs);
+        return configs.kP;
+    }
+
+    @Override
     public void setPivotFF(double kS, double kV, double kG) {
         Slot0Configs configs = new Slot0Configs();
         pivotMotor.getConfigurator().refresh(configs);
