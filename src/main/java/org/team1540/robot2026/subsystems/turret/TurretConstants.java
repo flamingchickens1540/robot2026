@@ -7,17 +7,16 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.util.Units;
 
 public class TurretConstants {
-    public static final int DRIVEN_GEAR_TOOTH_COUNT = 85;
-    public static final int SMALL_ENCODER_GEAR_TOOTH_COUNT = 13;
-    public static final int BIG_ENCODER_GEAR_TOOTH_COUNT = 14;
+    public static final int MAIN_GEAR_TEETH = 85;
+    public static final int SMALL_ENCODER_TEETH = 13;
+    public static final int BIG_ENCODER_TEETH = 14;
     public static final int POSSIBLE_POS_ACC_DIGITS = 12;
 
     public static final double GEAR_RATIO = 8.5 * 50 / 12;
 
     public static final Rotation2d ANGLE_OFFSET = Rotation2d.fromRadians(5.021413921812452);
-    public static final Rotation2d MAX_ANGLE = Rotation2d.fromDegrees(337.5);
-    // TODO: changed this!
-    public static final Rotation2d MIN_ANGLE = Rotation2d.fromDegrees(-207.25);
+    public static final Rotation2d MAX_ANGLE = Rotation2d.fromDegrees(330.0);
+    public static final Rotation2d MIN_ANGLE = Rotation2d.fromDegrees(-254.0);
 
     // Tuning
     public static final double KS = 0.284;
@@ -45,4 +44,6 @@ public class TurretConstants {
             new Transform2d(Units.inchesToMeters(-7.5), 0.0, Rotation2d.kZero);
     public static final Transform3d ROBOT_TO_TURRET_3D = new Transform3d(
             ROBOT_TO_TURRET_2D.getX(), ROBOT_TO_TURRET_2D.getY(), Units.inchesToMeters(11.625), Rotation3d.kZero);
+
+    public static final double MOI_KGM2 = 0.0773301;
 }

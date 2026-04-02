@@ -3,6 +3,7 @@ package org.team1540.robot2026.commands;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.FieldConstants;
 import org.team1540.robot2026.RobotState;
@@ -14,7 +15,6 @@ import org.team1540.robot2026.subsystems.turret.Turret;
 import org.team1540.robot2026.subsystems.turret.TurretConstants;
 import org.team1540.robot2026.util.AllianceFlipUtil;
 import org.team1540.robot2026.util.LoggedTunableNumber;
-import org.team1540.robot2026.util.hid.EnvisionController;
 
 public class ShootingCommands {
 
@@ -24,7 +24,7 @@ public class ShootingCommands {
     public static Command tuneShooterCommand(Turret turret, Shooter shooter, Hood hood) {
         return Commands.parallel(
                 turret.commandToSetpoint(
-                        () -> RobotState.getInstance().getAimingParameters().turretAngle(), () -> 0.0, true),
+                        () -> RobotState.getInstance().getHubAimingParameters().turretAngle(), () -> 0.0, true),
                 shooter.commandVelocity(shooterRPM),
                 hood.setpointCommand(() -> Rotation2d.fromDegrees(hoodDegrees.get())),
                 Commands.run(() -> Logger.recordOutput(
@@ -55,12 +55,22 @@ public class ShootingCommands {
     }
 
     public static Command shooterAimTurretLockedCommand(
-            EnvisionController controller, Drivetrain drivetrain, Shooter shooter, Hood hood) {
+            DoubleSupplier xPercent,
+            DoubleSupplier yPercent,
+            DoubleSupplier omegaPercent,
+            Drivetrain drivetrain,
+            Shooter shooter,
+            Hood hood) {
         return Commands.deadline(
-                        drivetrain.teleopDriveWithHeadingCommand(controller, () -> RobotState.getInstance()
-                                .getAimingParameters()
-                                .turretAngle()
-                                .minus(RobotState.getInstance().getTurretAngle())),
+                        drivetrain.teleopDriveWithHeadingCommand(
+                                xPercent,
+                                yPercent,
+                                omegaPercent,
+                                () -> RobotState.getInstance().getTargetingMode() == RobotState.TargetingMode.HUB,
+                                () -> RobotState.getInstance()
+                                        .getAimingParameters()
+                                        .turretAngle()
+                                        .minus(RobotState.getInstance().getTurretAngle())),
                         shooter.commandVelocity(() ->
                                 RobotState.getInstance().getAimingParameters().shooterRPM()),
                         hood.setpointCommand(() ->
@@ -88,12 +98,23 @@ public class ShootingCommands {
     }
 
     public static Command hubAimTurretLockedCommand(
-            EnvisionController controller, Drivetrain drivetrain, Shooter shooter, Hood hood, Turret turret) {
+            DoubleSupplier xPercent,
+            DoubleSupplier yPercent,
+            DoubleSupplier omegaPercent,
+            Drivetrain drivetrain,
+            Shooter shooter,
+            Hood hood,
+            Turret turret) {
         return Commands.parallel(
-                        drivetrain.teleopDriveWithHeadingCommand(controller, () -> RobotState.getInstance()
-                                .getHubAimingParameters()
-                                .turretAngle()
-                                .minus(turret.getPosition())),
+                        drivetrain.teleopDriveWithHeadingCommand(
+                                xPercent,
+                                yPercent,
+                                omegaPercent,
+                                () -> RobotState.getInstance().getTargetingMode() == RobotState.TargetingMode.HUB,
+                                () -> RobotState.getInstance()
+                                        .getHubAimingParameters()
+                                        .turretAngle()
+                                        .minus(turret.getPosition())),
                         shooter.commandVelocity(() -> RobotState.getInstance()
                                 .getHubAimingParameters()
                                 .shooterRPM()),
@@ -135,12 +156,23 @@ public class ShootingCommands {
     }
 
     public static Command shuffleAimTurretLockedCommand(
-            EnvisionController controller, Drivetrain drivetrain, Shooter shooter, Hood hood, Turret turret) {
+            DoubleSupplier xPercent,
+            DoubleSupplier yPercent,
+            DoubleSupplier omegaPercent,
+            Drivetrain drivetrain,
+            Shooter shooter,
+            Hood hood,
+            Turret turret) {
         return Commands.parallel(
-                        drivetrain.teleopDriveWithHeadingCommand(controller, () -> (RobotState.getInstance()
-                                        .getShuffleAimingParameters()
-                                        .turretAngle())
-                                .minus(turret.getPosition())),
+                        drivetrain.teleopDriveWithHeadingCommand(
+                                xPercent,
+                                yPercent,
+                                omegaPercent,
+                                () -> RobotState.getInstance().getTargetingMode() == RobotState.TargetingMode.HUB,
+                                () -> (RobotState.getInstance()
+                                                .getShuffleAimingParameters()
+                                                .turretAngle())
+                                        .minus(turret.getPosition())),
                         shooter.commandVelocity(() -> RobotState.getInstance()
                                 .getShuffleAimingParameters()
                                 .shooterRPM()),

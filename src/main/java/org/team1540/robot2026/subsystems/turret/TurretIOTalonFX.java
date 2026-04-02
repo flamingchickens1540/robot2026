@@ -55,6 +55,8 @@ public class TurretIOTalonFX implements TurretIO {
         config.CurrentLimits.SupplyCurrentLimit = 70.0;
         config.CurrentLimits.SupplyCurrentLowerLimit = 40.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 0.5;
+        config.CurrentLimits.StatorCurrentLimitEnable = true;
+        config.CurrentLimits.StatorCurrentLimit = 80.0;
 
         config.Slot0.kP = KP;
         config.Slot0.kI = KI;
