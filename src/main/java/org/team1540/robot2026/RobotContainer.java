@@ -42,6 +42,7 @@ import org.team1540.robot2026.util.hid.JoystickUtil;
 public class RobotContainer {
     private final CommandEnvisionController driver = new CommandEnvisionController(0);
     private final CommandXboxController copilot = new CommandXboxController(1);
+    private final CommandXboxController dummy = new CommandXboxController(2);
 
     final Drivetrain drivetrain;
     final Intake intake;
@@ -242,6 +243,7 @@ public class RobotContainer {
                                 FeedingCommands.feedCommand(turret, hood, spindexer, manualFeedOverride),
                                 intake.jiggleCommand())
                         .withName("trenchSHotCommand"));
+        dummy.rightTrigger().whileTrue(intake.commandToSetpoint(Intake.IntakeState.JIGGLE));
 
         // Shooter tuning bindings
         if (Constants.isTuningMode()) {
