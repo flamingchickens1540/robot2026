@@ -178,7 +178,9 @@ public class SimState {
 
     @AutoLogOutput(key = "SimState/SpindexerRunning")
     public boolean isSpindexerRunning() {
-        return spinVoltage >= SPINDEXER_VOLTAGE_THRESH && feeder1Voltage >= FEEDER_VOLTAGE_THRESH && feeder2Voltage >= FEEDER_VOLTAGE_THRESH;
+        return spinVoltage >= SPINDEXER_VOLTAGE_THRESH
+                && feeder1Voltage >= FEEDER_VOLTAGE_THRESH
+                && feeder2Voltage >= FEEDER_VOLTAGE_THRESH;
     }
 
     public SwerveDriveSimulation getDriveSim() {

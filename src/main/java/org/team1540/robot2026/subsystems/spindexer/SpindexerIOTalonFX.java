@@ -37,7 +37,6 @@ public class SpindexerIOTalonFX implements SpindexerIO {
     private final StatusSignal<Current> feeder2StatorCurrent = feederMotor2.getStatorCurrent();
     private final StatusSignal<Temperature> feeder2Temp = feederMotor2.getDeviceTemp();
 
-
     private final VoltageOut spinVoltageCtrlReq = new VoltageOut(0).withEnableFOC(true);
     private final VoltageOut feederVoltageCtrlReq = new VoltageOut(0).withEnableFOC(true);
     private final VoltageOut feeder2VoltageCtrlReq = new VoltageOut(0).withEnableFOC(true);
@@ -98,11 +97,25 @@ public class SpindexerIOTalonFX implements SpindexerIO {
         inputs.spinTempCelsius = spinTemp.getValueAsDouble();
 
         inputs.feederMotorConnected = BaseStatusSignal.refreshAll(
-                        feeder1Velocity, feeder1Voltage, feeder1SupplyCurrent, feeder1StatorCurrent, feeder2Temp,feeder2Velocity, feeder2Voltage, feeder2SupplyCurrent, feeder2StatorCurrent, feeder2Temp)
+                        feeder1Velocity,
+                        feeder1Voltage,
+                        feeder1SupplyCurrent,
+                        feeder1StatorCurrent,
+                        feeder2Temp,
+                        feeder2Velocity,
+                        feeder2Voltage,
+                        feeder2SupplyCurrent,
+                        feeder2StatorCurrent,
+                        feeder2Temp)
                 .isOK();
 
         inputs.feeder2MotorConnected = BaseStatusSignal.refreshAll(
-                feeder2Temp,feeder2Velocity, feeder2Voltage, feeder2SupplyCurrent, feeder2StatorCurrent, feeder2Temp)
+                        feeder2Temp,
+                        feeder2Velocity,
+                        feeder2Voltage,
+                        feeder2SupplyCurrent,
+                        feeder2StatorCurrent,
+                        feeder2Temp)
                 .isOK();
         inputs.feeder1VelocityRPS = feeder1Velocity.getValueAsDouble();
         inputs.feeder1AppliedVolts = feeder1Voltage.getValueAsDouble();
