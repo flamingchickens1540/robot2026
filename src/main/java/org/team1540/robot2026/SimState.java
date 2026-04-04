@@ -32,6 +32,7 @@ import org.team1540.robot2026.generated.TunerConstants;
 import org.team1540.robot2026.subsystems.drive.DrivetrainConstants;
 import org.team1540.robot2026.subsystems.hood.HoodConstants;
 import org.team1540.robot2026.subsystems.intake.IntakeConstants;
+import org.team1540.robot2026.util.AllianceFlipUtil;
 import org.team1540.robot2026.util.sim.CustomRebuiltArena;
 
 public class SimState {
@@ -69,7 +70,7 @@ public class SimState {
     private final Random rng = new Random(); // RNG for bps
 
     private final LoggedNetworkBoolean efficiencyMode =
-            new LoggedNetworkBoolean("SmartDashboard/Sim/Performance Mode", true);
+            new LoggedNetworkBoolean("SmartDashboard/Sim/Performance Mode", false);
 
     private SimState() {
         if (Constants.CURRENT_MODE != Constants.Mode.SIM)
@@ -131,6 +132,12 @@ public class SimState {
                 SimulatedArena.getInstance().getGamePiecesPosesByType("Fuel").toArray(new Pose3d[0]));
         Logger.recordOutput("SimState/FuelInHopper", intakeSim.getGamePiecesAmount());
         SimulatedArena.getInstance().simulationPeriodic();
+    }
+
+    public void resetForAuto(Pose2d initialBluePose) {
+        SimulatedArena.getInstance().resetFieldForAuto();
+        intakeSim.setGamePiecesCount(8);
+        if (initialBluePose != null) RobotState.getInstance().resetPose(AllianceFlipUtil.apply(initialBluePose));
     }
 
     public void addCurrentDraw(DoubleSupplier statorCurrentAmps, DoubleSupplier appliedVoltage) {

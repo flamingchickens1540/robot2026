@@ -11,7 +11,6 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-
 import java.util.Arrays;
 import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -64,10 +63,13 @@ public class Intake extends SubsystemBase {
     private Rotation2d pivotSetpoint = PIVOT_MIN_ANGLE;
 
     private final Trigger stalling = new Trigger(() -> {
-        double spinVoltage = Arrays.stream(inputs.spinMotorAppliedVolts).max().orElse(0.0);
-        double spinCurrent = Arrays.stream(inputs.spinStatorCurrentAmps).max().orElse(0.0);
-        return spinVoltage >= 0.0 && spinCurrent >= 70.0;
-    }).debounce(1.0);
+                double spinVoltage =
+                        Arrays.stream(inputs.spinMotorAppliedVolts).max().orElse(0.0);
+                double spinCurrent =
+                        Arrays.stream(inputs.spinStatorCurrentAmps).max().orElse(0.0);
+                return spinVoltage >= 0.0 && spinCurrent >= 70.0;
+            })
+            .debounce(1.0);
 
     private Intake(IntakeIO io) {
         if (hasInstance) throw new IllegalStateException("Instance of intake already exists");
@@ -168,15 +170,16 @@ public class Intake extends SubsystemBase {
 
     public Command commandRunIntakeAutoReverse() {
         return runOnce(() -> setPivotSetpoint(IntakeState.INTAKE.pivotPosition()))
-                .andThen(
-                        Commands.either(
+                .andThen(Commands.either(
                                 runOnce(() -> setRollerVoltage(-12.0)).andThen(Commands.waitSeconds(0.25)),
                                 runOnce(() -> setRollerVoltage(12.0)),
-                                stalling).repeatedly())
+                                stalling)
+                        .repeatedly())
                 .finallyDo(() -> {
                     this.setRollerVoltage(0);
                     this.holdPivot();
-                }).withName("RunIntakeAutoReverseCommand");
+                })
+                .withName("RunIntakeAutoReverseCommand");
     }
 
     public Command commandRunIntake(double percent) {

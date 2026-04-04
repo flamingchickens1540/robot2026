@@ -10,6 +10,13 @@ import org.team1540.robot2026.FieldConstants;
 
 public class TrajectoryMirror {
     public static AutoTrajectory apply(AutoTrajectory traj, AutoRoutine routine) {
+        return apply(true, traj, routine);
+    }
+
+    public static AutoTrajectory apply(boolean flip, AutoTrajectory traj, AutoRoutine routine) {
+        if (!flip) {
+            return traj;
+        }
         Trajectory<SwerveSample> rawTraj = traj.getRawTrajectory();
         List<SwerveSample> samples = rawTraj.samples().stream()
                 .map(sample -> new SwerveSample(

@@ -1,5 +1,7 @@
 package org.team1540.robot2026.util;
 
+import choreo.trajectory.SwerveSample;
+import choreo.trajectory.Trajectory;
 import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -24,5 +26,10 @@ public class AllianceFlipUtil {
     public static Rotation2d apply(Rotation2d rotation) {
         if (shouldFlip()) return FlippingUtil.flipFieldRotation(rotation);
         return rotation;
+    }
+
+    public static Trajectory<SwerveSample> apply(Trajectory<SwerveSample> trajectory) {
+        if (shouldFlip()) return trajectory.flipped();
+        return trajectory;
     }
 }
