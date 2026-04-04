@@ -63,7 +63,8 @@ public class SimState {
     private double intakeVoltage = 0.0;
 
     private double spinVoltage = 0.0;
-    private double feederVoltage = 0.0;
+    private double feeder1Voltage = 0.0;
+    private double feeder2Voltage = 0.0;
 
     private double shooterRPM = 0.0;
 
@@ -155,9 +156,10 @@ public class SimState {
         intakeVoltage = voltage;
     }
 
-    public void addSpindexerData(double spinVoltage, double feederVoltage) {
+    public void addSpindexerData(double spinVoltage, double feeder1Voltage, double feeder2Voltage) {
         this.spinVoltage = spinVoltage;
-        this.feederVoltage = feederVoltage;
+        this.feeder1Voltage = feeder1Voltage;
+        this.feeder2Voltage = feeder2Voltage;
     }
 
     public void addShooterData(double leftRPM, double rightRPM) {
@@ -176,7 +178,7 @@ public class SimState {
 
     @AutoLogOutput(key = "SimState/SpindexerRunning")
     public boolean isSpindexerRunning() {
-        return spinVoltage >= SPINDEXER_VOLTAGE_THRESH && feederVoltage >= FEEDER_VOLTAGE_THRESH;
+        return spinVoltage >= SPINDEXER_VOLTAGE_THRESH && feeder1Voltage >= FEEDER_VOLTAGE_THRESH && feeder2Voltage >= FEEDER_VOLTAGE_THRESH;
     }
 
     public SwerveDriveSimulation getDriveSim() {

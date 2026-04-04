@@ -235,7 +235,7 @@ public class RobotContainer {
 
         // Misc mechanism controls
         copilot.reverseSpindexer.whileTrue(
-                spindexer.runCommand(() -> -0.67, () -> -0.67).withName("SpindexerReverseCommand"));
+                spindexer.runCommand(() -> -0.67, () -> -0.67, () -> 0.67).withName("SpindexerReverseCommand"));
         copilot.stowHood.onTrue(
                 hood.setpointCommand(() -> HoodConstants.MIN_ANGLE).withName("StowHoodCommand"));
         copilot.lockTurret.toggleOnTrue(turret.run(turret::stop)

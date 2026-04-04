@@ -13,14 +13,21 @@ public interface SpindexerIO {
         public double spinTempCelsius = 0.0;
 
         public boolean feederMotorConnected = false;
-        public double feederVelocityRPS = 0.0;
-        public double feederAppliedVolts = 0.0;
-        public double feederSupplyCurrentAmps = 0.0;
-        public double feederStatorCurrentAmps = 0.0;
-        public double feederTempCelsius = 0.0;
+        public double feeder1VelocityRPS = 0.0;
+        public double feeder1AppliedVolts = 0.0;
+        public double feeder1SupplyCurrentAmps = 0.0;
+        public double feeder1StatorCurrentAmps = 0.0;
+        public double feeder1TempCelsius = 0.0;
+
+        public boolean feeder2MotorConnected = false;
+        public double feeder2VelocityRPS = 0.0;
+        public double feeder2AppliedVolts = 0.0;
+        public double feeder2SupplyCurrentAmps = 0.0;
+        public double feeder2StatorCurrentAmps = 0.0;
+        public double feeder2TempCelsius = 0.0;
     }
 
     default void updateInputs(SpindexerIOInputs inputs) {}
 
-    default void setMotorVoltages(double spinVolts, double feederVolts) {}
+    default void setMotorVoltages(double spinVolts, double feederVolts, double feeder2Volts) {}
 }
