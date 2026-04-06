@@ -20,7 +20,7 @@ public class Spindexer extends SubsystemBase {
     private final Alert spinMotorDisconnectedAlert = new Alert("Spindexer motor disconnected", Alert.AlertType.kError);
     private final Alert feederMotorDisconnectedAlert = new Alert("Feeder motor disconnected", Alert.AlertType.kError);
     private final Alert feederMotor2DisconnectedAlert =
-            new Alert("Feeder motor 2 disconnected", Alert.AlertType.kError);
+            new Alert("Hopper feeder motor disconnected", Alert.AlertType.kError);
 
     private Spindexer(SpindexerIO io) {
         if (hasInstance) throw new IllegalStateException("Instance of spindexer already exists");
@@ -44,6 +44,7 @@ public class Spindexer extends SubsystemBase {
 
         spinMotorDisconnectedAlert.set(!inputs.spinMotorConnected);
         feederMotorDisconnectedAlert.set(!inputs.feederMotorConnected);
+        feederMotor2DisconnectedAlert.set(!inputs.feeder2MotorConnected);
 
         Command activeCmd = CommandScheduler.getInstance().requiring(this);
         Logger.recordOutput(

@@ -134,6 +134,6 @@ public class SpindexerIOTalonFX implements SpindexerIO {
     public void setMotorVoltages(double spinVolts, double feeder1Volts, double feeder2Volts) {
         spinMotor1.setControl(spinVoltageCtrlReq.withOutput(spinVolts));
         feederMotor1.setControl(feederVoltageCtrlReq.withOutput(feeder1Volts));
-        feederMotor2.setControl(feederVoltageCtrlReq.withOutput(feeder2Volts));
+        feederMotor2.setControl(feeder2VoltageCtrlReq.withOutput(feeder2Volts));
     }
 }
