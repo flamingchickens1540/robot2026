@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
@@ -243,7 +244,14 @@ public class AutoConfigurator {
                                 list.addAll(List.of(traj.getRawTrajectory().getPoses())),
                         ArrayList::addAll);
 
-        selectedAuto = new AutoRoutineData(name, startingSide, startingPose, sweeps, trajectoryPoints, routine.cmd());
+        selectedAuto = new AutoRoutineData(
+                name,
+                startingSide,
+                startingPose,
+                sweeps,
+                trajectoryPoints,
+                routine.cmd()
+                        .beforeStarting(Commands.defer(() -> Commands.waitSeconds(startingDelay.get()), Set.of())));
     }
 
     private Trigger addSweepRoutine(

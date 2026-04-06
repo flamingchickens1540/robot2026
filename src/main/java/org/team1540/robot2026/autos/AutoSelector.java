@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+import org.team1540.robot2026.RobotState;
 import org.team1540.robot2026.autos.AutoConfigurator.StartingSide;
 
 public class AutoSelector {
@@ -22,13 +23,19 @@ public class AutoSelector {
     public AutoSelector(AutoConfigurator configurator) {
         chooser.addDefaultOption("None", "None");
         selectedAuto = defaultAuto;
-        chooser.onChange(autoName -> selectedAuto =
-                autoRoutines.getOrDefault(autoName, () -> defaultAuto).get());
+        chooser.onChange(autoName -> {
+            selectedAuto =
+                    autoRoutines.getOrDefault(autoName, () -> defaultAuto).get();
+            RobotState.getInstance().setSelectedAuto(selectedAuto);
+        });
 
         addAuto("Configured Auto", configurator::getSelectedAuto);
         configurator.addChangeListener(auto -> {
             configuredAuto = configurator.getSelectedAuto();
-            if (chooser.get() != null && chooser.get().equals("Configured Auto")) selectedAuto = configuredAuto;
+            if (chooser.get() != null && chooser.get().equals("Configured Auto")) {
+                selectedAuto = configuredAuto;
+                RobotState.getInstance().setSelectedAuto(selectedAuto);
+            }
         });
     }
 

@@ -18,6 +18,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -27,6 +28,7 @@ import java.util.function.DoubleUnaryOperator;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.AutoLogOutputManager;
 import org.littletonrobotics.junction.Logger;
+import org.team1540.robot2026.autos.AutoRoutineData;
 import org.team1540.robot2026.subsystems.drive.DrivetrainConstants;
 import org.team1540.robot2026.subsystems.hood.HoodConstants;
 import org.team1540.robot2026.subsystems.vision.AprilTagVisionIO;
@@ -88,6 +90,13 @@ public class RobotState {
     @AutoLogOutput(key = "Aiming/Shuffle/LastParameters")
     private AimingParameters lastShuffleAimingParameters;
 
+    private AutoRoutineData selectedAuto;
+
+    private final Alert autoStartPositionAlert =
+            new Alert("Robot is not near the selected auto's starting position", Alert.AlertType.kWarning);
+    private final Alert autoStartRotationAlert =
+            new Alert("Robot is not facing the correct direction for the selected auto", Alert.AlertType.kWarning);
+
     private RobotState() {
         poseResetTimer.start();
         SmartDashboard.putData(field);
@@ -134,6 +143,32 @@ public class RobotState {
     public void periodic() {
         SmartDashboard.putString("Aiming/Shooter RPM Offset", String.format("%.1f", shooterRPMOffset));
         clearAimingParameters();
+
+        if (DriverStation.isAutonomous() && DriverStation.isDisabled()) {
+            autoStartPositionAlert.set(selectedAuto != null
+                    && selectedAuto.startingPose().isPresent()
+                    && getEstimatedPose()
+                                    .getTranslation()
+                                    .getDistance(AllianceFlipUtil.apply(
+                                                    selectedAuto.startingPose().get())
+                                            .getTranslation())
+                            > 0.5);
+            autoStartRotationAlert.set(selectedAuto != null
+                    && selectedAuto.startingPose().isPresent()
+                    && !autoStartRotationAlert.get()
+                    && Math.abs(getEstimatedPose()
+                                    .getRotation()
+                                    .minus(AllianceFlipUtil.apply(
+                                                    selectedAuto.startingPose().get())
+                                            .getRotation())
+                                    .getDegrees())
+                            > 10.0);
+            field.getObject("trajectory").setPoses(AllianceFlipUtil.apply(selectedAuto.trajectoryPoints()));
+        } else {
+            autoStartPositionAlert.set(false);
+            autoStartRotationAlert.set(false);
+            field.getObject("trajectory").setPoses();
+        }
     }
 
     public SwerveDriveKinematics getKinematics() {
@@ -203,14 +238,16 @@ public class RobotState {
 
     public void setActiveTrajectory(Pose2d... trajectory) {
         activeTrajectory = trajectory;
-        field.getObject("trajectory").setPoses(trajectory);
         Logger.recordOutput("Odometry/Trajectory/Current", trajectory);
     }
 
     public void clearActiveTrajectory() {
         activeTrajectory = null;
-        field.getObject("trajectory").setPoses();
         Logger.recordOutput("Odometry/Trajectory/Current", new Pose2d[0]);
+    }
+
+    public void setSelectedAuto(AutoRoutineData auto) {
+        selectedAuto = auto;
     }
 
     public void setTrajectoryTarget(Pose2d target) {

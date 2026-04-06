@@ -8,9 +8,11 @@ import choreo.auto.AutoTrajectory;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Commands;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 import org.team1540.robot2026.Constants;
 import org.team1540.robot2026.RobotState;
 import org.team1540.robot2026.SimState;
@@ -54,13 +56,13 @@ public class AutoPresets {
 
     private void resetPoseInSim(AutoRoutine routine, AutoTrajectory startingTrajectory) {
         if (Constants.CURRENT_MODE == Constants.Mode.SIM) {
-            routine.active().onTrue(Commands.runOnce(() -> {
+            routine.active().onTrue(Commands.runOnce(() ->
                 SimState.getInstance()
                         .resetForAuto(startingTrajectory
                                 .getRawTrajectory()
                                 .getInitialPose(false)
-                                .orElse(new Pose2d(3, 3, Rotation2d.kZero)));
-            }));
+                                .orElse(new Pose2d(3, 3, Rotation2d.kZero)))
+            ));
         }
     }
 
@@ -121,22 +123,27 @@ public class AutoPresets {
         resetPoseInSim(routine, sprintTraj);
 
         routine.active()
-                .onTrue(sprintTraj
-                        .cmd()
+                .onTrue(traj.cmd()
                         .alongWith(
                                 intake.zeroWhileRunningCommand().andThen(intake.commandRunIntake(1.0)),
                                 hood.zeroCommand().withTimeout(1.0)));
-        sprintTraj
-                .done()
+        traj.done()
                 .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
-                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand()));
+                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand())
+                        .withTimeout(sprint ? 5.5 : 10.0)
+                        .andThen(sprintTraj.spawnCmd().onlyIf(() -> sprint)));
 
         return new AutoRoutineData(
                 name,
                 startingSide,
                 sprintTraj.getInitialPose(),
                 List.of(SweepPath.CLOSE_SWEEP),
-                Arrays.asList(sprintTraj.getRawTrajectory().getPoses()),
+                Stream.of(traj, sprintTraj)
+                        .collect(
+                                ArrayList::new,
+                                (list, trajectory) -> list.addAll(
+                                        List.of(trajectory.getRawTrajectory().getPoses())),
+                                ArrayList::addAll),
                 routine.cmd());
     }
 
@@ -179,7 +186,12 @@ public class AutoPresets {
                 startingSide,
                 firstSweep.getInitialPose(),
                 List.of(SweepPath.CLOSE_SWEEP, hook ? SweepPath.CLOSE_HOOK : SweepPath.FAR_SWEEP),
-                Arrays.asList(firstSweep.getRawTrajectory().getPoses()),
+                Stream.of(firstSweep, secondSweep, sprintTraj)
+                        .collect(
+                                ArrayList::new,
+                                (list, trajectory) -> list.addAll(
+                                        List.of(trajectory.getRawTrajectory().getPoses())),
+                                ArrayList::addAll),
                 routine.cmd());
     }
 }

@@ -7,6 +7,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation;
+import java.util.List;
 
 public class AllianceFlipUtil {
     public static boolean shouldFlip() {
@@ -16,6 +17,11 @@ public class AllianceFlipUtil {
     public static Pose2d apply(Pose2d pose) {
         if (shouldFlip()) return FlippingUtil.flipFieldPose(pose);
         return pose;
+    }
+
+    public static List<Pose2d> apply(List<Pose2d> poses) {
+        if (shouldFlip()) return poses.stream().map(AllianceFlipUtil::apply).toList();
+        return poses;
     }
 
     public static Translation2d apply(Translation2d translation) {
