@@ -198,19 +198,26 @@ public class Intake extends SubsystemBase {
                 .withName("RunIntakeCommand");
     }
 
-    public Command slowRise(IntakeState state, double time){
+    public Command slowTiltCommand(double time) {
         Timer timer = new Timer();
 
         Container<Rotation2d> start = new Container<>();
         Container<Rotation2d> goal = new Container<>();
 
-        return Commands.run(()->{
-            setPivotSetpoint(start.value.interpolate(goal.value, timer.get()/time));
-        }).beforeStarting(Commands.runOnce(()->{
-            goal.value = state.pivotPosition();
-            start.value = getPivotPosition();
-        }));
-
+        return run(() -> {
+                    setPivotSetpoint(start.value.interpolate(goal.value, timer.get() / time));
+                })
+                .beforeStarting(() -> {
+                    timer.restart();
+                    setRollerVoltage(12.0);
+                    goal.value = IntakeState.TILT.pivotPosition();
+                    start.value = getPivotPosition();
+                })
+                .finallyDo(() -> {
+                    holdPivot();
+                    setRollerVoltage(0.0);
+                })
+                .withName("IntakeSlowTiltCommand");
     }
 
     public Command commandRunDepotIntake(double percent) {

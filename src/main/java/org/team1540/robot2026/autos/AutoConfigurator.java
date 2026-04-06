@@ -102,6 +102,8 @@ public class AutoConfigurator {
 
     private final LoggedNetworkNumber shootTime =
             new LoggedNetworkNumber("SmartDashboard/Auto/Configurator/Shoot Time", 4.5);
+    private final LoggedNetworkNumber intakeRaiseTime =
+            new LoggedNetworkNumber("SmartDashboard/Auto/Configurator/Intake Raise Time", 2.0);
     private final LoggedNetworkNumber startingDelay =
             new LoggedNetworkNumber("SmartDashboard/Auto/Configurator/Starting Delay", 0.0);
 
@@ -207,7 +209,7 @@ public class AutoConfigurator {
             AutoTrajectory sprintTraj =
                     TrajectoryMirror.apply(startingSide.mirrored, routine.trajectory("Sprint"), routine);
             trajectories.add(sprintTraj);
-            nextTrigger.onTrue(sprintTraj.spawnCmd());
+            nextTrigger.onTrue(sprintTraj.spawnCmd().alongWith(intake.commandRunIntake(1.0)));
         } else if (endAction == EndAction.DEPOT && startingSide == StartingSide.LEFT) {
             SweepPath lastSweep = sweep2 != SweepPath.NONE ? sweep2 : sweep1;
 
@@ -219,7 +221,7 @@ public class AutoConfigurator {
             nextTrigger.onTrue(depotTraj.spawnCmd().alongWith(intake.commandRunIntake(1.0)));
 
             depotTraj.atTime("Intake").onTrue(intake.commandRunDepotIntake(1.0).withName("AutoDepotIntakeCommand"));
-            depotTraj.atTime("StopIntake").onTrue(intake.jiggleCommand());
+            depotTraj.atTime("StopIntake").onTrue(intake.slowTiltCommand(2.0));
         }
 
         Optional<Pose2d> startingPose = trajectories.isEmpty()
@@ -263,8 +265,8 @@ public class AutoConfigurator {
 
         previousTrigger.onTrue(traj.spawnCmd()
                 .alongWith(Commands.waitSeconds(sweep.delayIntake ? 0.75 : 0.0)
-                        .andThen(intake.zeroWhileRunningCommand().andThen(intake.commandRunIntake(1.0))))
-                .withName("AutoZeroAndRunIntakeCommand"));
+                        .andThen(intake.zeroWhileRunningCommand().andThen(intake.commandRunIntake(1.0)))
+                        .withName("AutoZeroAndRunIntakeCommand")));
 
         Trigger doneTrigger =
                 shootIndefinitely ? new Trigger(routine.loop(), () -> false) : traj.doneDelayed(shootTime.get());
@@ -282,7 +284,9 @@ public class AutoConfigurator {
                 .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
                         .alongWith(
                                 FeedingCommands.feedCommand(turret, hood, spindexer),
-                                intake.jiggleCommand().asProxy())
+                                Commands.waitSeconds(Math.max(0.0, shootTime.get() - intakeRaiseTime.get()))
+                                        .andThen(intake.slowTiltCommand(intakeRaiseTime.get()))
+                                        .asProxy())
                         .until(doneTrigger)
                         .withName("AutoShootCommand"));
 
