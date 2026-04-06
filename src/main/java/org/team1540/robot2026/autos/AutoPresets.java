@@ -56,13 +56,11 @@ public class AutoPresets {
 
     private void resetPoseInSim(AutoRoutine routine, AutoTrajectory startingTrajectory) {
         if (Constants.CURRENT_MODE == Constants.Mode.SIM) {
-            routine.active().onTrue(Commands.runOnce(() ->
-                SimState.getInstance()
-                        .resetForAuto(startingTrajectory
-                                .getRawTrajectory()
-                                .getInitialPose(false)
-                                .orElse(new Pose2d(3, 3, Rotation2d.kZero)))
-            ));
+            routine.active().onTrue(Commands.runOnce(() -> SimState.getInstance()
+                    .resetForAuto(startingTrajectory
+                            .getRawTrajectory()
+                            .getInitialPose(false)
+                            .orElse(new Pose2d(3, 3, Rotation2d.kZero)))));
         }
     }
 

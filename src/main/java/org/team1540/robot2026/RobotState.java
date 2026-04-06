@@ -18,6 +18,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
@@ -385,6 +386,12 @@ public class RobotState {
             timeOfFlight = tofMap.applyAsDouble(lookaheadDistance);
         }
 
+        double turretVelocityFFRadPerSec = -target.minus(lookaheadPose.getTranslation())
+                                .rotateBy(Rotation2d.kCCW_90deg)
+                                .dot(turretVelocity)
+                        / (lookaheadDistance * lookaheadDistance)
+                - getRobotVelocity().omegaRadiansPerSecond;
+
         Logger.recordOutput(
                 "Aiming/" + loggingKey + "/CompensatedTurretPose",
                 lookaheadPose.rotateAround(lookaheadPose.getTranslation(), getFieldRelativeTurretAngle()));
@@ -395,10 +402,12 @@ public class RobotState {
                 "Aiming/" + loggingKey + "/CompensatedTarget",
                 target.plus(turretPose.getTranslation().minus(lookaheadPose.getTranslation())));
         Logger.recordOutput("Aiming/" + loggingKey + "/CompensatedTargetDistanceMeters", lookaheadDistance);
+        Logger.recordOutput(
+                "Aiming/" + loggingKey + "/TurretVelocityFFRPS", Units.radiansToRotations(turretVelocityFFRadPerSec));
 
         return new AimingParameters(
                 target.minus(lookaheadPose.getTranslation()).getAngle(),
-                -getRobotVelocity().omegaRadiansPerSecond,
+                turretVelocityFFRadPerSec,
                 hoodAngleMap.apply(lookaheadDistance),
                 shooterSpeedMap.applyAsDouble(lookaheadDistance) + shooterRPMOffset);
     }
