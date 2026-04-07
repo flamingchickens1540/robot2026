@@ -97,25 +97,11 @@ public class SpindexerIOTalonFX implements SpindexerIO {
         inputs.spinTempCelsius = spinTemp.getValueAsDouble();
 
         inputs.feederMotorConnected = BaseStatusSignal.refreshAll(
-                        feeder1Velocity,
-                        feeder1Voltage,
-                        feeder1SupplyCurrent,
-                        feeder1StatorCurrent,
-                        feeder2Temp,
-                        feeder2Velocity,
-                        feeder2Voltage,
-                        feeder2SupplyCurrent,
-                        feeder2StatorCurrent,
-                        feeder2Temp)
+                        feeder1Velocity, feeder1Voltage, feeder1SupplyCurrent, feeder1StatorCurrent, feeder1Temp)
                 .isOK();
 
         inputs.feeder2MotorConnected = BaseStatusSignal.refreshAll(
-                        feeder2Temp,
-                        feeder2Velocity,
-                        feeder2Voltage,
-                        feeder2SupplyCurrent,
-                        feeder2StatorCurrent,
-                        feeder2Temp)
+                        feeder2Velocity, feeder2Voltage, feeder2SupplyCurrent, feeder2StatorCurrent, feeder2Temp)
                 .isOK();
         inputs.feeder1VelocityRPS = feeder1Velocity.getValueAsDouble();
         inputs.feeder1AppliedVolts = feeder1Voltage.getValueAsDouble();

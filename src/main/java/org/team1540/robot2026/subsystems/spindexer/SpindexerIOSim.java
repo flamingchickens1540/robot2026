@@ -56,7 +56,7 @@ public class SpindexerIOSim implements SpindexerIO {
                 * feederAppliedVolts
                 / SimulatedBattery.getBatteryVoltage().in(Volts);
 
-        inputs.feederMotorConnected = true;
+        inputs.feeder2MotorConnected = true;
         inputs.feeder2VelocityRPS = feederSim.getAngularVelocityRPM() / 60.0;
         inputs.feeder2AppliedVolts = feederAppliedVolts;
         inputs.feeder2StatorCurrentAmps = feederSim.getCurrentDrawAmps();
