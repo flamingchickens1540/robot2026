@@ -23,7 +23,6 @@ import org.team1540.robot2026.subsystems.intake.Intake;
 import org.team1540.robot2026.subsystems.shooter.Shooter;
 import org.team1540.robot2026.subsystems.spindexer.Spindexer;
 import org.team1540.robot2026.subsystems.turret.Turret;
-import org.team1540.robot2026.util.auto.TrajectoryMirror;
 
 public class AutoConfigurator {
     public enum StartingSide {
@@ -202,20 +201,19 @@ public class AutoConfigurator {
                 trajectories);
 
         if (endAction == EndAction.SPRINT) {
-            AutoTrajectory sprintTraj =
-                    TrajectoryMirror.apply(startingSide.mirrored, routine.trajectory("Sprint"), routine);
+            AutoTrajectory sprintTraj = routine.trajectory("Sprint");
+            if (startingSide.mirrored) sprintTraj = sprintTraj.mirrorY();
             trajectories.add(sprintTraj);
+
             nextTrigger.onTrue(sprintTraj.spawnCmd().alongWith(intake.commandRunIntake(1.0)));
         } else if (endAction == EndAction.DEPOT && startingSide == StartingSide.LEFT) {
             SweepPath lastSweep = sweep2 != SweepPath.NONE ? sweep2 : sweep1;
 
-            AutoTrajectory depotTraj = TrajectoryMirror.apply(
-                    startingSide.mirrored,
-                    routine.trajectory((lastSweep.rotatedEnd ? "" : "Rotate") + "DepotIntake"),
-                    routine);
+            AutoTrajectory depotTraj = routine.trajectory((lastSweep.rotatedEnd ? "" : "Rotate") + "DepotIntake");
+            if (startingSide.mirrored) depotTraj = depotTraj.mirrorY();
             trajectories.add(depotTraj);
-            nextTrigger.onTrue(depotTraj.spawnCmd().alongWith(intake.commandRunIntake(1.0)));
 
+            nextTrigger.onTrue(depotTraj.spawnCmd().alongWith(intake.commandRunIntake(1.0)));
             depotTraj.atTime("Intake").onTrue(intake.commandRunDepotIntake(1.0).withName("AutoDepotIntakeCommand"));
             depotTraj.atTime("StopIntake").onTrue(intake.slowTiltCommand(2.0));
         }
@@ -262,8 +260,9 @@ public class AutoConfigurator {
             return previousTrigger;
         }
 
-        AutoTrajectory traj =
-                TrajectoryMirror.apply(startingSide.mirrored, routine.trajectory(sweep.trajectoryName, 0), routine);
+        AutoTrajectory traj = routine.trajectory(sweep.trajectoryName, 0);
+        if (startingSide.mirrored) traj = traj.mirrorY();
+
         trajectories.add(traj);
 
         previousTrigger.onTrue(traj.spawnCmd()
@@ -275,8 +274,8 @@ public class AutoConfigurator {
 
         // If the sweep ends rotated, run a rotation trajectory while shooting
         if (sweep.rotatedEnd && alignAtEnd) {
-            AutoTrajectory rotateTraj =
-                    TrajectoryMirror.apply(startingSide.mirrored, routine.trajectory(sweep.trajectoryName, 1), routine);
+            AutoTrajectory rotateTraj = routine.trajectory(sweep.trajectoryName, 1);
+            if (startingSide.mirrored) rotateTraj = rotateTraj.mirrorY();
             trajectories.add(rotateTraj);
             traj.chain(rotateTraj);
         }

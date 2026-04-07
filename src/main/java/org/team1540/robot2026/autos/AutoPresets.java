@@ -24,7 +24,6 @@ import org.team1540.robot2026.subsystems.intake.Intake;
 import org.team1540.robot2026.subsystems.shooter.Shooter;
 import org.team1540.robot2026.subsystems.spindexer.Spindexer;
 import org.team1540.robot2026.subsystems.turret.Turret;
-import org.team1540.robot2026.util.auto.TrajectoryMirror;
 
 public class AutoPresets {
     private final RobotState robotState = RobotState.getInstance();
@@ -114,9 +113,13 @@ public class AutoPresets {
 
         String name = (startingSide == StartingSide.LEFT ? "Left" : "Right") + trajName + (sprint ? "Sprint" : "");
         AutoRoutine routine = autoFactory.newRoutine(name);
-        AutoTrajectory traj = TrajectoryMirror.apply(startingSide.mirrored, routine.trajectory(trajName, 0), routine);
-        AutoTrajectory sprintTraj =
-                TrajectoryMirror.apply(startingSide.mirrored, routine.trajectory(trajName, 1), routine);
+
+        AutoTrajectory traj = routine.trajectory(trajName, 0);
+        AutoTrajectory sprintTraj = routine.trajectory(trajName, 1);
+        if (startingSide.mirrored) {
+            traj = traj.mirrorY();
+            sprintTraj = traj.mirrorY();
+        }
 
         resetPoseInSim(routine, sprintTraj);
 
@@ -150,12 +153,15 @@ public class AutoPresets {
 
         String name = (startingSide == StartingSide.LEFT ? "Left" : "Right") + trajName + (sprint ? "Sprint" : "");
         AutoRoutine routine = autoFactory.newRoutine(name);
-        AutoTrajectory firstSweep =
-                TrajectoryMirror.apply(startingSide.mirrored, routine.trajectory(trajName, 0), routine);
-        AutoTrajectory secondSweep =
-                TrajectoryMirror.apply(startingSide.mirrored, routine.trajectory(trajName, 1), routine);
-        AutoTrajectory sprintTraj =
-                TrajectoryMirror.apply(startingSide.mirrored, routine.trajectory(trajName, 2), routine);
+
+        AutoTrajectory firstSweep = routine.trajectory(trajName, 0);
+        AutoTrajectory secondSweep = routine.trajectory(trajName, 1);
+        AutoTrajectory sprintTraj = routine.trajectory(trajName, 2);
+        if (startingSide.mirrored) {
+            firstSweep = firstSweep.mirrorY();
+            secondSweep = secondSweep.mirrorY();
+            sprintTraj = sprintTraj.mirrorY();
+        }
 
         resetPoseInSim(routine, firstSweep);
 
