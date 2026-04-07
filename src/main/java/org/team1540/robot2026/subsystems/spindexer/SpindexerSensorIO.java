@@ -11,7 +11,4 @@ public interface SpindexerSensorIO {
 
     default void updateInputs(SpindexerSensorIOInputs inputs) {}
 
-    default double getDistanceMM() {
-        return 0.0;
-    }
 }

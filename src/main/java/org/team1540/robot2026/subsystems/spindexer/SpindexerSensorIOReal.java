@@ -7,14 +7,11 @@ import au.grapplerobotics.LaserCan;
 public class SpindexerSensorIOReal implements SpindexerSensorIO {
     private final LaserCan laserCan = new LaserCan(LASER_CAN_ID);
 
-    @Override
-    public double getDistanceMM() {
-        return laserCan.getMeasurement().distance_mm;
-    }
 
     @Override
     public void updateInputs(SpindexerSensorIOInputs inputs) {
-        inputs.distanceMM = laserCan.getMeasurement().distance_mm;
         inputs.isConnected = laserCan.getMeasurement() != null;
+        if (!inputs.isConnected) inputs.distanceMM = laserCan.getMeasurement().distance_mm;
+
     }
 }
