@@ -184,16 +184,15 @@ public class TunerConstants {
                     kFrontLeftEncoderInverted);
     public static final SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
             FrontRight = ConstantCreator.createModuleConstants(
-                            kFrontRightSteerMotorId,
-                            kFrontRightDriveMotorId,
-                            kFrontRightEncoderId,
-                            kFrontRightEncoderOffset,
-                            kFrontRightXPos,
-                            kFrontRightYPos,
-                            kInvertRightSide,
-                            kFrontRightSteerMotorInverted,
-                            kFrontRightEncoderInverted)
-                    .withDriveMotorGearRatio(5.9027777777777777777777);
+                    kFrontRightSteerMotorId,
+                    kFrontRightDriveMotorId,
+                    kFrontRightEncoderId,
+                    kFrontRightEncoderOffset,
+                    kFrontRightXPos,
+                    kFrontRightYPos,
+                    kInvertRightSide,
+                    kFrontRightSteerMotorInverted,
+                    kFrontRightEncoderInverted);
     public static final SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
             BackLeft = ConstantCreator.createModuleConstants(
                     kBackLeftSteerMotorId,

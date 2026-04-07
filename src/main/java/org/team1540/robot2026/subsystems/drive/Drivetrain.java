@@ -42,16 +42,13 @@ public class Drivetrain extends SubsystemBase {
     private static boolean hasInstance = false;
     static final Lock odometryLock = new ReentrantLock();
 
-    private static final LoggedTunableNumber translationKP = new LoggedTunableNumber("Drivetrain/Translation/kP", 6.0);
+    private static final LoggedTunableNumber translationKP = new LoggedTunableNumber("Drivetrain/Translation/kP", 6.7);
     private static final LoggedTunableNumber translationKI = new LoggedTunableNumber("Drivetrain/Translation/kI", 0.0);
     private static final LoggedTunableNumber translationKD = new LoggedTunableNumber("Drivetrain/Translation/kD", 0.0);
 
-    private static final LoggedTunableNumber rotationKP = new LoggedTunableNumber("Drivetrain/Rotation/kP", 3.3);
+    private static final LoggedTunableNumber rotationKP = new LoggedTunableNumber("Drivetrain/Rotation/kP", 4.0);
     private static final LoggedTunableNumber rotationKI = new LoggedTunableNumber("Drivetrain/Rotation/kI", 0.0);
     private static final LoggedTunableNumber rotationKD = new LoggedTunableNumber("Drivetrain/Rotation/kD", 0.0);
-
-    private static final double TRANSLATION_RATE_LIMIT = 1.0;
-    private static final double ROTATION_RATE_LIMIT = 1.0;
 
     private static final LoggedTunableNumber sampleRejectionThreshold =
             new LoggedTunableNumber("Drivetrain/Odometry/SampleRejectionThreshold", 2.0);

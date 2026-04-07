@@ -57,16 +57,11 @@ public class AutoConfigurator {
 
         public final String trajectoryName;
         public final boolean firstSweepOnly; // Can this path only be selected as the first sweep
-        public final boolean rotatedStart; // Whether this path starts with the intake rotated to the side
-        public final boolean
-                delayIntake; // Should this path delay deploying the intake to avoid collisions with the trench
         public final boolean rotatedEnd; // Does this path end with the robot faced away from the neutral zone
 
         SweepPath(String trajectoryName, SweepType type) {
             this.trajectoryName = trajectoryName;
             firstSweepOnly = type == SweepType.PLOW;
-            rotatedStart = type == SweepType.PLOW;
-            delayIntake = rotatedStart;
             rotatedEnd = type == SweepType.HOOK;
         }
     }
@@ -272,9 +267,8 @@ public class AutoConfigurator {
         trajectories.add(traj);
 
         previousTrigger.onTrue(traj.spawnCmd()
-                .alongWith(Commands.waitSeconds(sweep.delayIntake ? 0.75 : 0.0)
-                        .andThen(intake.zeroWhileRunningCommand().andThen(intake.commandRunIntake(1.0)))
-                        .withName("AutoZeroAndRunIntakeCommand")));
+                .alongWith(intake.zeroWhileRunningCommand().andThen(intake.commandRunIntake(1.0)))
+                .withName("AutoZeroAndRunIntakeCommand"));
 
         Trigger doneTrigger =
                 shootIndefinitely ? new Trigger(routine.loop(), () -> false) : traj.doneDelayed(shootTime.get());
