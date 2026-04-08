@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.Constants;
+import org.team1540.robot2026.SimState;
 import org.team1540.robot2026.util.LoggedTracer;
 
 public class Spindexer extends SubsystemBase {
@@ -66,6 +67,10 @@ public class Spindexer extends SubsystemBase {
 
         if (DriverStation.isDisabled()) stop();
 
+        if (Constants.CURRENT_MODE == Constants.Mode.SIM) {
+            SimState.getInstance().addSpindexerData(inputs.spinAppliedVolts, inputs.feederAppliedVolts);
+        }
+
         spinMotorDisconnectedAlert.set(!inputs.spinMotorConnected);
         feederMotorDisconnectedAlert.set(!inputs.feederMotorConnected);
 
@@ -100,7 +105,7 @@ public class Spindexer extends SubsystemBase {
 
     public static Spindexer createSim() {
         if (Constants.CURRENT_MODE == Constants.Mode.REAL) {
-            DriverStation.reportWarning("Using simulated turret on real robot", false);
+            DriverStation.reportWarning("Using simulated spindexer on real robot", false);
         }
         return new Spindexer(new SpindexerIOSim(), new SpindexerSensorIO() {});
     }

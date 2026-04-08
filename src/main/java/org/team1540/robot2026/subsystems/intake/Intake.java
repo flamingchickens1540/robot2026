@@ -15,6 +15,8 @@ import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.Constants;
+import org.team1540.robot2026.MechanismVisualizer;
+import org.team1540.robot2026.SimState;
 import org.team1540.robot2026.util.LoggedTracer;
 import org.team1540.robot2026.util.LoggedTunableNumber;
 
@@ -26,7 +28,8 @@ public class Intake extends SubsystemBase {
         STOW(new LoggedTunableNumber("Intake/Setpoints/Stow/AngleDegrees", -120)),
         INTAKE(new LoggedTunableNumber("Intake/Setpoints/Intake/AngleDegrees", PIVOT_MAX_ANGLE.getDegrees())),
         JIGGLE(new LoggedTunableNumber("Intake/Setpoints/Jiggle/AngleDegrees", PIVOT_JIGGLE_ANGLE.getDegrees())),
-        DEPOT(new LoggedTunableNumber("Intake/Setpoints/Depot/AngleDegrees", PIVOT_DEPOT_ANGLE.getDegrees()));
+        DEPOT(new LoggedTunableNumber("Intake/Setpoints/Depot/AngleDegrees", PIVOT_DEPOT_ANGLE.getDegrees())),
+        TILT(new LoggedTunableNumber("Intake/Setpoints/Tilt/AngleDegrees", PIVOT_TILT_ANGLE.getDegrees()));
 
         private final DoubleSupplier pivotPosition;
 
@@ -70,9 +73,12 @@ public class Intake extends SubsystemBase {
         io.updateInputs(inputs);
         Logger.processInputs("Intake", inputs);
 
-        // MechanismVisualizer.getInstance().setIntakeRotation(inputs.pivotPosition);
-
         if (DriverStation.isDisabled()) stopAll();
+
+        MechanismVisualizer.addIntakeData(inputs.pivotPosition, pivotSetpoint);
+        if (Constants.CURRENT_MODE == Constants.Mode.SIM) {
+            SimState.getInstance().addIntakeData(inputs.pivotPosition, inputs.spinMotorAppliedVolts[0]);
+        }
 
         LoggedTunableNumber.ifChanged(
                 hashCode(),
@@ -186,6 +192,20 @@ public class Intake extends SubsystemBase {
                             this.setRollerVoltage(0.0);
                         }))
                 .withName("IntakeJiggleCommand");
+    }
+
+    public Command tiltCommand(double percent) {
+        return Commands.startEnd(
+                        () -> {
+                            this.setRollerVoltage(percent * 12);
+                            this.setPivotSetpoint(IntakeState.TILT.pivotPosition());
+                        },
+                        () -> {
+                            this.setRollerVoltage(0);
+                            this.holdPivot();
+                        },
+                        this)
+                .withName("IntakeTiltCommand");
     }
 
     public Command zeroCommand() {
