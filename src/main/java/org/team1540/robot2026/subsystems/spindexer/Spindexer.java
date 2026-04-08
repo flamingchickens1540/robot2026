@@ -7,7 +7,6 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import java.util.LinkedList;
 import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.Constants;
@@ -25,8 +24,8 @@ public class Spindexer extends SubsystemBase {
     private final Alert feederMotorDisconnectedAlert = new Alert("Feeder motor disconnected", Alert.AlertType.kError);
 
     private int numBallsCounted = 0;
-    private double lastLaserCanMeasurementMM = Double.MAX_VALUE;
-    private double timeStampLast = 0;
+    private double lastLaserCanMeasurementMM;
+    private double timeStampLast = Double.MAX_VALUE;
     private final LinearFilter bpsFilter = LinearFilter.movingAverage(3);
 
     private Spindexer(SpindexerIO io, SpindexerSensorIO sensorIO) {
@@ -38,18 +37,19 @@ public class Spindexer extends SubsystemBase {
 
     private void calculateBPS() {
 
-        lastLaserCanMeasurementMM = sensorInputs.distanceMM;
+
         if (timeStampLast - Timer.getTimestamp() != 0) { // just to be extra careful
             bpsFilter.calculate(1 / (timeStampLast - Timer.getTimestamp()));
         } else System.out.println("prevented a divide by zero error!!!");
         Logger.recordOutput("RealOutputs/Spindexer/balls", numBallsCounted);
         Logger.recordOutput("RealOutputs/Spindexer/bps3", bpsFilter.lastValue()); // must do this first to prevent a divide by 0 zero error
 
-        if (lastLaserCanMeasurementMM != 0
+        if (!(lastLaserCanMeasurementMM <= (double) 1)
                 && sensorInputs.distanceMM <= (double) 1) { // could have issues skipping balls if ball goes fully through without getting counted
             numBallsCounted++;
             timeStampLast = Timer.getTimestamp();
         }
+        lastLaserCanMeasurementMM = sensorInputs.distanceMM;
 
     }
 
