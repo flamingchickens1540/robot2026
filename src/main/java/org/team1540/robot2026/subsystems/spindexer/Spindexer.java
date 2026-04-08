@@ -25,8 +25,8 @@ public class Spindexer extends SubsystemBase {
     private final Alert feederMotorDisconnectedAlert = new Alert("Feeder motor disconnected", Alert.AlertType.kError);
 
     private int numBallsCounted = 0;
-    private double lastLaserCanMeasurementMM = 0;
-    private final LinkedList<Double> laserCanMeasurementHistory = new LinkedList<>();
+    private double lastLaserCanMeasurementMM = Double.MAX_VALUE;
+    private double timeStampLast = 0;
     private final LinearFilter bpsFilter = LinearFilter.movingAverage(3);
 
     private Spindexer(SpindexerIO io, SpindexerSensorIO sensorIO) {
@@ -36,23 +36,21 @@ public class Spindexer extends SubsystemBase {
         this.sensorIO = sensorIO;
     }
 
-    private void calculateBPS(double threshold) {
-        int isBall = 0;
-        if (lastLaserCanMeasurementMM != 0
-                && sensorInputs.distanceMM <=threshold) { // could have issues skipping balls if ball goes fully through without getting counted
-            numBallsCounted++;
-            laserCanMeasurementHistory.addLast(Timer.getTimestamp());
-            isBall = 1;
-        }
-        if (!laserCanMeasurementHistory.isEmpty()){
-            if (laserCanMeasurementHistory.getFirst() < System.currentTimeMillis() - 3 * 1000) {
-                laserCanMeasurementHistory.removeFirst();
-            }
-        }
+    private void calculateBPS() {
+
         lastLaserCanMeasurementMM = sensorInputs.distanceMM;
+        if (timeStampLast - Timer.getTimestamp() != 0) { // just to be extra careful
+            bpsFilter.calculate(1 / (timeStampLast - Timer.getTimestamp()));
+        } else System.out.println("prevented a divide by zero error!!!");
         Logger.recordOutput("RealOutputs/Spindexer/balls", numBallsCounted);
-        Logger.recordOutput("RealOutputs/Spindexer/bps3/filter", bpsFilter.calculate(isBall));
-        Logger.recordOutput("RealOutputs/Spindexer/bps3/list", laserCanMeasurementHistory.size()/3);
+        Logger.recordOutput("RealOutputs/Spindexer/bps3", bpsFilter.lastValue()); // must do this first to prevent a divide by 0 zero error
+
+        if (lastLaserCanMeasurementMM != 0
+                && sensorInputs.distanceMM <= (double) 1) { // could have issues skipping balls if ball goes fully through without getting counted
+            numBallsCounted++;
+            timeStampLast = Timer.getTimestamp();
+        }
+
     }
 
     @Override
@@ -61,7 +59,7 @@ public class Spindexer extends SubsystemBase {
 
         sensorIO.updateInputs(sensorInputs);
         io.updateInputs(inputs);
-        calculateBPS(1);
+        calculateBPS();
 
         Logger.processInputs("Spindexer", inputs);
         Logger.processInputs("Spindexer/Sensor", sensorInputs);
