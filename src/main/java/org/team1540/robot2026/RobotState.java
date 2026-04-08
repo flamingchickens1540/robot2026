@@ -122,7 +122,7 @@ public class RobotState {
         hubTOFMap.put(1.439, 0.8991000919);
         hubTOFMap.put(5.550, 1.324787032);
         hubTOFMap.put(4.155, 1.188565533);
-        hubTOFMap.put(6.35, 1.366890583);
+        hubTOFMap.put(6.350, 1.366890583);
 
         shuffleHoodAngleMap.put(2.412, Rotation2d.fromDegrees(30));
         shuffleHoodAngleMap.put(4.466, Rotation2d.fromDegrees(35));
