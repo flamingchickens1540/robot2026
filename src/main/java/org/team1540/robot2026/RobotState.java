@@ -103,19 +103,19 @@ public class RobotState {
         SmartDashboard.putData(field);
 
         // Set up interpolations
-        hubHoodAngleMap.put(3.169, Rotation2d.fromDegrees(23.4));
-        hubHoodAngleMap.put(2.543, Rotation2d.fromDegrees(21.1));
-        hubHoodAngleMap.put(1.421, Rotation2d.fromDegrees(15));
-        hubHoodAngleMap.put(5.540, Rotation2d.fromDegrees(29));
+        hubHoodAngleMap.put(1.439, Rotation2d.fromDegrees(15.0));
+        hubHoodAngleMap.put(2.540, Rotation2d.fromDegrees(21.1));
+        hubHoodAngleMap.put(3.175, Rotation2d.fromDegrees(23.4));
         hubHoodAngleMap.put(4.155, Rotation2d.fromDegrees(26.5));
-        hubHoodAngleMap.put(6.455, Rotation2d.fromDegrees(29.0));
+        hubHoodAngleMap.put(5.550, Rotation2d.fromDegrees(29.0));
+        hubHoodAngleMap.put(6.350, Rotation2d.fromDegrees(31.0));
 
-        hubShooterSpeedMap.put(3.169, 2056.0);
-        hubShooterSpeedMap.put(2.543, 1923.0);
-        hubShooterSpeedMap.put(1.421, 1678.0);
-        hubShooterSpeedMap.put(5.540, 2481.0);
-        hubShooterSpeedMap.put(4.155, 2154.0);
-        hubShooterSpeedMap.put(6.455, 2811.0);
+        hubShooterSpeedMap.put(1.439, 1778.0);
+        hubShooterSpeedMap.put(2.540, 2046.0);
+        hubShooterSpeedMap.put(3.175, 2154.0);
+        hubShooterSpeedMap.put(4.155, 2300.0);
+        hubShooterSpeedMap.put(5.550, 2670.0);
+        hubShooterSpeedMap.put(6.350, 3050.0);
 
         hubTOFMap.put(3.169, 1.098457062);
         hubTOFMap.put(2.543, 1.028185787);
