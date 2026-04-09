@@ -175,7 +175,9 @@ public class RobotContainer {
         driver.shoot.toggleOnTrue(shootCmd);
 
         // Misc controls
-        driver.outtake.whileTrue(intake.commandRunIntake(-0.67).withName("OuttakeCommand"));
+        driver.outtake.whileTrue(intake.commandRunIntake(-0.67)
+                .alongWith(spindexer.runCommand(() -> 0.0, () -> -0.67, () -> -0.67))
+                .withName("OuttakeCommand"));
         driver.stowIntake.onTrue(
                 intake.commandToSetpoint(Intake.IntakeState.STOW).withName("StowIntakeCommand"));
         driver.stowHood.onTrue(
@@ -262,10 +264,10 @@ public class RobotContainer {
 
         // Shooter trim controls
         copilot.trimShooterUp.onTrue(
-                Commands.runOnce(() -> RobotState.getInstance().incrementShooterRPMOffset(20))
+                Commands.runOnce(() -> RobotState.getInstance().incrementShooterRPMOffset(10))
                         .ignoringDisable(true));
         copilot.trimShooterDown.onTrue(
-                Commands.runOnce(() -> RobotState.getInstance().incrementShooterRPMOffset(-20))
+                Commands.runOnce(() -> RobotState.getInstance().incrementShooterRPMOffset(-10))
                         .ignoringDisable(true));
 
         // Shooter tuning bindings
@@ -317,6 +319,7 @@ public class RobotContainer {
         autoSelector.addAuto("Configured Auto", autoConfigurator::getSelectedAuto);
         autoSelector.addAuto("Zero Mechanisms", autoPresets::zeroMechanisms);
         autoSelector.addAuto("Shoot Preload", autoPresets::shootPreload);
+        autoSelector.addAuto("Left Bump Depot", autoPresets::leftBumpDepot);
 
         autoSelector.addAuto("Left Trench 1 Sweep", () -> autoPresets.singleSweep(StartingSide.LEFT, false));
         autoSelector.addAuto("Left Trench 1 Sweep Sprint", () -> autoPresets.singleSweep(StartingSide.LEFT, true));

@@ -66,7 +66,7 @@ public class AutoConfigurator {
 
         SweepPath(String trajectoryName, SweepType type) {
             this.trajectoryName = trajectoryName;
-            firstSweepOnly = type == SweepType.PLOW;
+            firstSweepOnly = false;
             bump = toString().endsWith("BUMP");
             rotatedEnd = type == SweepType.HOOK || bump;
         }

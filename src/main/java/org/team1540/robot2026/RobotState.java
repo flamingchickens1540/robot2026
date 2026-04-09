@@ -83,7 +83,7 @@ public class RobotState {
     private final InterpolatingDoubleTreeMap shuffleTOFMap = new InterpolatingDoubleTreeMap();
 
     @AutoLogOutput(key = "Aiming/ShooterRPMOffset")
-    private double shooterRPMOffset = 0.0;
+    private double shooterRPMOffset = 30.0;
 
     @AutoLogOutput(key = "Aiming/Hub/LastParameters")
     private AimingParameters lastHubAimingParameters;
@@ -110,19 +110,41 @@ public class RobotState {
         hubHoodAngleMap.put(4.155, Rotation2d.fromDegrees(26.5));
         hubHoodAngleMap.put(6.455, Rotation2d.fromDegrees(29.0));
 
-        hubShooterSpeedMap.put(3.175, 2154.0);
-        hubShooterSpeedMap.put(2.540, 2046.0);
-        hubShooterSpeedMap.put(1.439, 1778.0);
-        hubShooterSpeedMap.put(5.550, 2670.0);
-        hubShooterSpeedMap.put(4.155, 2300.0);
-        hubShooterSpeedMap.put(6.350, 3050.0);
+        hubShooterSpeedMap.put(3.169, 2056.0);
+        hubShooterSpeedMap.put(2.543, 1923.0);
+        hubShooterSpeedMap.put(1.421, 1678.0);
+        hubShooterSpeedMap.put(5.540, 2481.0);
+        hubShooterSpeedMap.put(4.155, 2154.0);
+        hubShooterSpeedMap.put(6.455, 2811.0);
 
-        hubTOFMap.put(3.175, 1.099743391);
-        hubTOFMap.put(2.540, 1.027414461);
-        hubTOFMap.put(1.439, 0.8991000919);
-        hubTOFMap.put(5.550, 1.324787032);
+        hubTOFMap.put(3.169, 1.098457062);
+        hubTOFMap.put(2.543, 1.028185787);
+        hubTOFMap.put(1.421, 0.8914489253);
+        hubTOFMap.put(5.540, 1.32339774);
         hubTOFMap.put(4.155, 1.188565533);
-        hubTOFMap.put(6.350, 1.366890583);
+        hubTOFMap.put(6.455, 1.444998072);
+
+        // Worn wheel tunings
+        //        hubHoodAngleMap.put(3.169, Rotation2d.fromDegrees(23.4));
+        //        hubHoodAngleMap.put(2.543, Rotation2d.fromDegrees(21.1));
+        //        hubHoodAngleMap.put(1.421, Rotation2d.fromDegrees(15));
+        //        hubHoodAngleMap.put(5.540, Rotation2d.fromDegrees(29));
+        //        hubHoodAngleMap.put(4.155, Rotation2d.fromDegrees(26.5));
+        //        hubHoodAngleMap.put(6.455, Rotation2d.fromDegrees(29.0));
+        //
+        //        hubShooterSpeedMap.put(3.175, 2154.0);
+        //        hubShooterSpeedMap.put(2.540, 2046.0);
+        //        hubShooterSpeedMap.put(1.439, 1778.0);
+        //        hubShooterSpeedMap.put(5.550, 2670.0);
+        //        hubShooterSpeedMap.put(4.155, 2300.0);
+        //        hubShooterSpeedMap.put(6.350, 3050.0);
+        //
+        //        hubTOFMap.put(3.175, 1.099743391);
+        //        hubTOFMap.put(2.540, 1.027414461);
+        //        hubTOFMap.put(1.439, 0.8991000919);
+        //        hubTOFMap.put(5.550, 1.324787032);
+        //        hubTOFMap.put(4.155, 1.188565533);
+        //        hubTOFMap.put(6.350, 1.366890583);
 
         shuffleHoodAngleMap.put(2.412, Rotation2d.fromDegrees(30));
         shuffleHoodAngleMap.put(4.466, Rotation2d.fromDegrees(35));

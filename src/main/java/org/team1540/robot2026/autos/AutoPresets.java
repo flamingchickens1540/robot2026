@@ -108,6 +108,35 @@ public class AutoPresets {
                         .withName("ShootPreload"));
     }
 
+    public AutoRoutineData leftBumpDepot() {
+        final String trajName = "LeftBumpDepot";
+
+        AutoRoutine routine = autoFactory.newRoutine("LeftBumpDepot");
+
+        AutoTrajectory traj = routine.trajectory(trajName);
+
+        resetPoseInSim(routine, traj);
+
+        routine.active().onTrue(traj.cmd());
+        routine.active().onTrue(intake.zeroWhileRunningCommand());
+        routine.active()
+                .onTrue(hood.zeroCommand()
+                        .withTimeout(1.0)
+                        .andThen(ShootingCommands.shooterAimCommand(turret, shooter, hood)
+                                .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer))));
+
+        traj.atTime("StartIntake").onTrue(intake.commandRunDepotIntake(1.0));
+        traj.atTime("StopIntake").onTrue(intake.jiggleCommand());
+
+        return new AutoRoutineData(
+                "CenterDepot",
+                StartingSide.NONE,
+                traj.getInitialPose(),
+                List.of(),
+                Arrays.asList(traj.getRawTrajectory().getPoses()),
+                routine.cmd());
+    }
+
     public AutoRoutineData singleSweep(StartingSide startingSide, boolean sprint) {
         final String trajName = "SingleSweep";
 
@@ -137,7 +166,7 @@ public class AutoPresets {
         return new AutoRoutineData(
                 name,
                 startingSide,
-                sprintTraj.getInitialPose(),
+                traj.getInitialPose(),
                 List.of(SweepPath.CLOSE_SWEEP),
                 Stream.of(traj, sprintTraj)
                         .collect(
