@@ -1,7 +1,9 @@
 package org.team1540.robot2026.subsystems.spindexer;
 
+import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -15,23 +17,53 @@ public class Spindexer extends SubsystemBase {
     private static boolean hasInstance = false;
 
     private final SpindexerIO io;
+    private final SpindexerSensorIO sensorIO;
     private final SpindexerIOInputsAutoLogged inputs = new SpindexerIOInputsAutoLogged();
+    private final SpindexerSensorIOInputsAutoLogged sensorInputs = new SpindexerSensorIOInputsAutoLogged();
 
     private final Alert spinMotorDisconnectedAlert = new Alert("Spindexer motor disconnected", Alert.AlertType.kError);
     private final Alert feederMotorDisconnectedAlert = new Alert("Feeder motor disconnected", Alert.AlertType.kError);
 
-    private Spindexer(SpindexerIO io) {
+    private int numBallsCounted = 0;
+    private double lastLaserCanMeasurementMM;
+    private double timeStampLast = Double.MAX_VALUE;
+    private final LinearFilter bpsFilter = LinearFilter.movingAverage(3);
+
+    private Spindexer(SpindexerIO io, SpindexerSensorIO sensorIO) {
         if (hasInstance) throw new IllegalStateException("Instance of spindexer already exists");
         hasInstance = true;
         this.io = io;
+        this.sensorIO = sensorIO;
+    }
+
+    private void calculateBPS() {
+
+
+        if (timeStampLast - Timer.getTimestamp() != 0) { // just to be extra careful
+            bpsFilter.calculate(1 / (timeStampLast - Timer.getTimestamp()));
+        } else System.out.println("prevented a divide by zero error!!!");
+        Logger.recordOutput("RealOutputs/Spindexer/balls", numBallsCounted);
+        Logger.recordOutput("RealOutputs/Spindexer/bps3", bpsFilter.lastValue()); // must do this first to prevent a divide by 0 zero error
+
+        if (!(lastLaserCanMeasurementMM <= (double) 1)
+                && sensorInputs.distanceMM <= (double) 1) { // could have issues skipping balls if ball goes fully through without getting counted
+            numBallsCounted++;
+            timeStampLast = Timer.getTimestamp();
+        }
+        lastLaserCanMeasurementMM = sensorInputs.distanceMM;
+
     }
 
     @Override
     public void periodic() {
         LoggedTracer.reset();
 
+        sensorIO.updateInputs(sensorInputs);
         io.updateInputs(inputs);
+        calculateBPS();
+
         Logger.processInputs("Spindexer", inputs);
+        Logger.processInputs("Spindexer/Sensor", sensorInputs);
 
         if (DriverStation.isDisabled()) stop();
 
@@ -64,17 +96,17 @@ public class Spindexer extends SubsystemBase {
     }
 
     public static Spindexer createReal() {
-        return new Spindexer(new SpindexerIOTalonFX());
+        return new Spindexer(new SpindexerIOTalonFX(), new SpindexerSensorIOReal());
     }
 
     public static Spindexer createDummy() {
-        return new Spindexer(new SpindexerIO() {});
+        return new Spindexer(new SpindexerIO() {}, new SpindexerSensorIO() {});
     }
 
     public static Spindexer createSim() {
         if (Constants.CURRENT_MODE == Constants.Mode.REAL) {
             DriverStation.reportWarning("Using simulated spindexer on real robot", false);
         }
-        return new Spindexer(new SpindexerIOSim());
+        return new Spindexer(new SpindexerIOSim(), new SpindexerSensorIO() {});
     }
 }
