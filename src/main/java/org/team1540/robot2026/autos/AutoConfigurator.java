@@ -41,7 +41,8 @@ public class AutoConfigurator {
         NONE,
         SWEEP,
         HOOK,
-        PLOW
+        PLOW,
+        STEAL
     }
 
     public enum SweepPath {
@@ -52,16 +53,22 @@ public class AutoConfigurator {
         FAR_HOOK("FarHook", SweepType.HOOK),
         CLOSE_PLOW("ClosePlow", SweepType.PLOW),
         CENTER_PLOW("CenterPlow", SweepType.PLOW),
-        OPPOSING_PLOW("OpposingPlow", SweepType.PLOW);
+        OPPOSING_PLOW("OpposingPlow", SweepType.PLOW),
+        CLOSE_PLOW_BUMP("ClosePlowBump", SweepType.PLOW),
+        CENTER_PLOW_BUMP("CenterPlowBump", SweepType.PLOW),
+        OPPOSING_PLOW_BUMP("OpposingPlowBump", SweepType.PLOW),
+        OPPOSING_STEAL("OpposingSteal", SweepType.STEAL);
 
         public final String trajectoryName;
         public final boolean firstSweepOnly; // Can this path only be selected as the first sweep
         public final boolean rotatedEnd; // Does this path end with the robot faced away from the neutral zone
+        public final boolean bump;
 
         SweepPath(String trajectoryName, SweepType type) {
             this.trajectoryName = trajectoryName;
             firstSweepOnly = type == SweepType.PLOW;
-            rotatedEnd = type == SweepType.HOOK;
+            bump = toString().endsWith("BUMP");
+            rotatedEnd = type == SweepType.HOOK || bump;
         }
     }
 
@@ -96,9 +103,7 @@ public class AutoConfigurator {
             new LoggedDashboardChooser<>("Auto/Configurator/End Action");
 
     private final LoggedNetworkNumber shootTime =
-            new LoggedNetworkNumber("SmartDashboard/Auto/Configurator/Shoot Time", 4.5);
-    private final LoggedNetworkNumber intakeRaiseTime =
-            new LoggedNetworkNumber("SmartDashboard/Auto/Configurator/Intake Raise Time", 2.0);
+            new LoggedNetworkNumber("SmartDashboard/Auto/Configurator/Shoot Time", 6.0);
     private final LoggedNetworkNumber startingDelay =
             new LoggedNetworkNumber("SmartDashboard/Auto/Configurator/Starting Delay", 0.0);
 
@@ -188,7 +193,7 @@ public class AutoConfigurator {
                 sweep1,
                 startingSide,
                 sweep2 == SweepPath.NONE && endAction != EndAction.SPRINT,
-                endAction != EndAction.DEPOT,
+                sweep2 != SweepPath.NONE || endAction != EndAction.DEPOT,
                 nextTrigger,
                 trajectories);
         nextTrigger = addSweepRoutine(
@@ -209,13 +214,17 @@ public class AutoConfigurator {
         } else if (endAction == EndAction.DEPOT && startingSide == StartingSide.LEFT) {
             SweepPath lastSweep = sweep2 != SweepPath.NONE ? sweep2 : sweep1;
 
-            AutoTrajectory depotTraj = routine.trajectory((lastSweep.rotatedEnd ? "" : "Rotate") + "DepotIntake");
+            String trajName = "DepotIntake";
+            if (!lastSweep.rotatedEnd) trajName = "Rotate" + trajName;
+            else if (lastSweep.bump) trajName = "Bump" + trajName;
+
+            AutoTrajectory depotTraj = routine.trajectory(trajName);
             if (startingSide.mirrored) depotTraj = depotTraj.mirrorY();
             trajectories.add(depotTraj);
 
             nextTrigger.onTrue(depotTraj.spawnCmd().alongWith(intake.commandRunIntake(1.0)));
             depotTraj.atTime("Intake").onTrue(intake.commandRunDepotIntake(1.0).withName("AutoDepotIntakeCommand"));
-            depotTraj.atTime("StopIntake").onTrue(intake.slowTiltCommand(2.0));
+            depotTraj.atTime("StopIntake").onTrue(intake.jiggleCommand());
         }
 
         Optional<Pose2d> startingPose = trajectories.isEmpty()
@@ -282,14 +291,14 @@ public class AutoConfigurator {
 
         // Shoot after sweep
         traj.done()
-                .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
-                        .alongWith(
-                                FeedingCommands.feedCommand(turret, hood, spindexer),
-                                Commands.waitSeconds(Math.max(0.0, shootTime.get() - intakeRaiseTime.get()))
-                                        .andThen(intake.slowTiltCommand(intakeRaiseTime.get()))
-                                        .asProxy())
-                        .until(doneTrigger)
-                        .withName("AutoShootCommand"));
+                .onTrue(Commands.waitSeconds(0.5)
+                        .onlyIf(() -> sweep.bump)
+                        .andThen(ShootingCommands.hubAimCommand(turret, shooter, hood)
+                                .alongWith(
+                                        FeedingCommands.feedCommand(turret, hood, spindexer),
+                                        intake.jiggleCommand().asProxy())
+                                .until(doneTrigger)
+                                .withName("AutoShootCommand")));
 
         return shootIndefinitely ? traj.done() : doneTrigger;
     }

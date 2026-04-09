@@ -83,7 +83,7 @@ public class RobotState {
     private final InterpolatingDoubleTreeMap shuffleTOFMap = new InterpolatingDoubleTreeMap();
 
     @AutoLogOutput(key = "Aiming/ShooterRPMOffset")
-    private double shooterRPMOffset = 20.0;
+    private double shooterRPMOffset = 0.0;
 
     @AutoLogOutput(key = "Aiming/Hub/LastParameters")
     private AimingParameters lastHubAimingParameters;
@@ -156,7 +156,6 @@ public class RobotState {
                             > 0.5);
             autoStartRotationAlert.set(selectedAuto != null
                     && selectedAuto.startingPose().isPresent()
-                    && !autoStartRotationAlert.get()
                     && Math.abs(getEstimatedPose()
                                     .getRotation()
                                     .minus(AllianceFlipUtil.apply(

@@ -7,19 +7,33 @@
    "SOTMAngularVelocity":{
     "dimension":"AngVel",
     "var":{
-     "exp":"90 deg / s",
-     "val":1.5707963267948966
+     "exp":"67 deg / s",
+     "val":1.1693705988362009
     }
    },
    "SOTMVelocity":{
     "dimension":"LinVel",
     "var":{
-     "exp":"1.18 m / s",
-     "val":1.18
+     "exp":"0.8 m / s",
+     "val":0.8
     }
    }
   },
   "poses":{
+   "BumpEnd":{
+    "x":{
+     "exp":"2.6984198093414307 m",
+     "val":2.6984198093414307
+    },
+    "y":{
+     "exp":"5.613855361938477 m",
+     "val":5.613855361938477
+    },
+    "heading":{
+     "exp":"-90 deg",
+     "val":-1.5707963267948966
+    }
+   },
    "RotatedTrenchStart":{
     "x":{
      "exp":"4.43 m",
