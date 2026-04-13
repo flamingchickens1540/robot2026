@@ -53,7 +53,7 @@ public class LoggedTunableNumber implements DoubleSupplier {
         if (!hasDefault) {
             hasDefault = true;
             this.defaultValue = defaultValue;
-            if (Constants.isTuningMode()) {
+            if (Constants.TUNING_MODE) {
                 dashboardNumber = new LoggedNetworkNumber(key, defaultValue);
             }
         }
@@ -68,7 +68,7 @@ public class LoggedTunableNumber implements DoubleSupplier {
         if (!hasDefault) {
             return 0.0;
         } else {
-            return Constants.isTuningMode() ? dashboardNumber.get() : defaultValue;
+            return Constants.TUNING_MODE ? dashboardNumber.get() : defaultValue;
         }
     }
 
@@ -81,6 +81,10 @@ public class LoggedTunableNumber implements DoubleSupplier {
      *     otherwise.
      */
     public boolean hasChanged(int id) {
+        if (!Constants.TUNING_MODE) {
+            return false;
+        }
+
         double currentValue = get();
         Double lastValue = lastHasChangedValues.get(id);
         if (lastValue == null || currentValue != lastValue) {

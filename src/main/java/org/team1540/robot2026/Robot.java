@@ -1,5 +1,6 @@
 package org.team1540.robot2026;
 
+import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.math.MathShared;
 import edu.wpi.first.math.MathSharedStore;
 import edu.wpi.first.math.MathUsageId;
@@ -39,7 +40,7 @@ public class Robot extends LoggedRobot {
                     case 1 -> "Uncommitted changes";
                     default -> "Unknown";
                 });
-        Logger.recordMetadata("TuningMode", Constants.isTuningMode() ? "on" : "off");
+        Logger.recordMetadata("TuningMode", Constants.TUNING_MODE ? "on" : "off");
 
         // Set up data receivers & replay source
         switch (Constants.CURRENT_MODE) {
@@ -78,6 +79,9 @@ public class Robot extends LoggedRobot {
 
         // Start AdvantageKit logger
         Logger.start();
+
+        // Disable automatic hoot logging
+        SignalLogger.enableAutoLogging(false);
 
         // Silence Rotation2d warnings
         MathShared mathShared = MathSharedStore.getMathShared();

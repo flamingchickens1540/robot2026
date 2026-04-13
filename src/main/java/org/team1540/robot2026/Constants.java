@@ -1,7 +1,6 @@
 package org.team1540.robot2026;
 
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.DriverStation;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
@@ -15,11 +14,7 @@ public final class Constants {
     private static final Mode SIM_MODE = Mode.SIM;
     public static final Mode CURRENT_MODE = Robot.isReal() ? Mode.REAL : SIM_MODE;
 
-    public static final boolean TUNING_MODE = true;
-
-    public static boolean isTuningMode() {
-        return !DriverStation.isFMSAttached() && TUNING_MODE;
-    }
+    public static final boolean TUNING_MODE = false;
 
     public enum Mode {
         /** Running on a real robot. */

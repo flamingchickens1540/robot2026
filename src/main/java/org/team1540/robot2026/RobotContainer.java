@@ -271,16 +271,11 @@ public class RobotContainer {
                         .ignoringDisable(true));
 
         // Shooter tuning bindings
-        if (Constants.isTuningMode()) {
-            copilot.tuneShooter
-                    .and(Constants::isTuningMode)
-                    .toggleOnTrue(ShootingCommands.tuneShooterCommand(turret, shooter, hood)
-                            .until(() -> !Constants.isTuningMode())
-                            .withName("TuneShooterCommand"));
-            copilot.tuningFeed
-                    .and(Constants::isTuningMode)
-                    .whileTrue(
-                            FeedingCommands.feedCommand(turret, hood, spindexer).alongWith(intake.jiggleCommand()));
+        if (Constants.TUNING_MODE) {
+            copilot.tuneShooter.toggleOnTrue(
+                    ShootingCommands.tuneShooterCommand(turret, shooter, hood).withName("TuneShooterCommand"));
+            copilot.tuningFeed.whileTrue(
+                    FeedingCommands.feedCommand(turret, hood, spindexer).alongWith(intake.jiggleCommand()));
         }
 
         // LED bindings
@@ -341,7 +336,7 @@ public class RobotContainer {
                 "Right Trench 2 Sweep Hook Sprint", () -> autoPresets.doubleSweep(StartingSide.RIGHT, true, true));
 
         // Characterization routines
-        if (Constants.isTuningMode()) {
+        if (Constants.TUNING_MODE) {
             autoSelector.addAuto("Test", autoPresets::testAuto);
             autoSelector.addCmd(
                     "Drive FF Characterization",
