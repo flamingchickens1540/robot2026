@@ -40,7 +40,7 @@ public class AprilTagVision extends SubsystemBase {
         this.disconnectedAlerts = new Alert[visionIOs.length];
         for (int i = 0; i < cameraInputs.length; i++) {
             cameraInputs[i] = new AprilTagVisionIOInputsAutoLogged();
-            disconnectedAlerts[i] = new Alert(visionIOs[i].name + "camera is disconnected.", Alert.AlertType.kError);
+            disconnectedAlerts[i] = new Alert(visionIOs[i].name + " camera is disconnected.", Alert.AlertType.kWarning);
         }
     }
 
