@@ -58,6 +58,7 @@ public class RobotContainer {
 
     private final RobotState robotState = RobotState.getInstance();
 
+    final AutoFactory autoFactory;
     private final AutoPresets autoPresets;
     private final AutoConfigurator autoConfigurator;
     private final AutoSelector autoSelector;
@@ -109,7 +110,7 @@ public class RobotContainer {
             }
         }
 
-        AutoFactory autoFactory = new AutoFactory(
+        autoFactory = new AutoFactory(
                 RobotState.getInstance()::getEstimatedPose,
                 RobotState.getInstance()::resetPose,
                 drivetrain::followTrajectory,

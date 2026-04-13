@@ -125,6 +125,14 @@ public class Robot extends LoggedRobot {
         // Aiming calculation warmup
         RobotState.getInstance().getHubAimingParameters();
         RobotState.getInstance().getShuffleAimingParameters();
+
+        // Choreo warmup
+        CommandScheduler.getInstance()
+                .schedule(robotContainer
+                        .autoFactory
+                        .trajectoryCmd("Sprint")
+                        .ignoringDisable(true)
+                        .until(this::isEnabled));
     }
 
     /** This function is called periodically during all modes. */
