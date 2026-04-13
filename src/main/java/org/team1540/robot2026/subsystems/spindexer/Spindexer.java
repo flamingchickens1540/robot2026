@@ -19,6 +19,8 @@ public class Spindexer extends SubsystemBase {
 
     private final Alert spinMotorDisconnectedAlert = new Alert("Spindexer motor disconnected", Alert.AlertType.kError);
     private final Alert feederMotorDisconnectedAlert = new Alert("Feeder motor disconnected", Alert.AlertType.kError);
+    private final Alert feederMotor2DisconnectedAlert =
+            new Alert("Hopper feeder motor disconnected", Alert.AlertType.kError);
 
     private Spindexer(SpindexerIO io) {
         if (hasInstance) throw new IllegalStateException("Instance of spindexer already exists");
@@ -36,11 +38,13 @@ public class Spindexer extends SubsystemBase {
         if (DriverStation.isDisabled()) stop();
 
         if (Constants.CURRENT_MODE == Constants.Mode.SIM) {
-            SimState.getInstance().addSpindexerData(inputs.spinAppliedVolts, inputs.feederAppliedVolts);
+            SimState.getInstance()
+                    .addSpindexerData(inputs.spinAppliedVolts, inputs.feeder1AppliedVolts, inputs.feeder2AppliedVolts);
         }
 
         spinMotorDisconnectedAlert.set(!inputs.spinMotorConnected);
         feederMotorDisconnectedAlert.set(!inputs.feederMotorConnected);
+        feederMotor2DisconnectedAlert.set(!inputs.feeder2MotorConnected);
 
         Command activeCmd = CommandScheduler.getInstance().requiring(this);
         Logger.recordOutput(
@@ -50,16 +54,19 @@ public class Spindexer extends SubsystemBase {
         LoggedTracer.record("Spindexer");
     }
 
-    public void setMotorSpeeds(double spinPercent, double feederPercent) {
-        io.setMotorVoltages(spinPercent * 12.0, feederPercent * 12.0);
+    public void setMotorSpeeds(double spinPercent, double feederPercent, double feeder2Percent) {
+        io.setMotorVoltages(spinPercent * 12.0, feederPercent * 12.0, feeder2Percent * 12.0);
     }
 
     public void stop() {
-        setMotorSpeeds(0.0, 0.0);
+        setMotorSpeeds(0.0, 0.0, 0.0);
     }
 
-    public Command runCommand(DoubleSupplier spinPercent, DoubleSupplier feederPercent) {
-        return runEnd(() -> setMotorSpeeds(spinPercent.getAsDouble(), feederPercent.getAsDouble()), this::stop)
+    public Command runCommand(DoubleSupplier spinPercent, DoubleSupplier feederPercent, DoubleSupplier feeder2Percent) {
+        return runEnd(
+                        () -> setMotorSpeeds(
+                                spinPercent.getAsDouble(), feederPercent.getAsDouble(), feeder2Percent.getAsDouble()),
+                        this::stop)
                 .withName("SpindexerRunCommand");
     }
 

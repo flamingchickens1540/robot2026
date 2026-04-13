@@ -3,12 +3,83 @@
  "version":2,
  "type":"Swerve",
  "variables":{
-  "expressions":{},
+  "expressions":{
+   "SOTMAngularVelocity":{
+    "dimension":"AngVel",
+    "var":{
+     "exp":"67 deg / s",
+     "val":1.1693705988362009
+    }
+   },
+   "SOTMVelocity":{
+    "dimension":"LinVel",
+    "var":{
+     "exp":"0.8 m / s",
+     "val":0.8
+    }
+   }
+  },
   "poses":{
-   "DepotStart":{
+   "BumpEnd":{
     "x":{
-     "exp":"3.5 m",
-     "val":3.5
+     "exp":"2.6984198093414307 m",
+     "val":2.6984198093414307
+    },
+    "y":{
+     "exp":"5.613855361938477 m",
+     "val":5.613855361938477
+    },
+    "heading":{
+     "exp":"-90 deg",
+     "val":-1.5707963267948966
+    }
+   },
+   "RotatedTrenchStart":{
+    "x":{
+     "exp":"4.43 m",
+     "val":4.43
+    },
+    "y":{
+     "exp":"7.59 m",
+     "val":7.59
+    },
+    "heading":{
+     "exp":"-90 deg",
+     "val":-1.5707963267948966
+    }
+   },
+   "Shoot":{
+    "x":{
+     "exp":"4 m",
+     "val":4.0
+    },
+    "y":{
+     "exp":"7.4 m",
+     "val":7.4
+    },
+    "heading":{
+     "exp":"0 rad",
+     "val":0.0
+    }
+   },
+   "ShootRotated":{
+    "x":{
+     "exp":"Shoot.x",
+     "val":4.0
+    },
+    "y":{
+     "exp":"Shoot.y",
+     "val":7.4
+    },
+    "heading":{
+     "exp":"Shoot.heading + 180 deg",
+     "val":3.141592653589793
+    }
+   },
+   "TrenchStart":{
+    "x":{
+     "exp":"4.5 m",
+     "val":4.5
     },
     "y":{
      "exp":"7.67 m",
@@ -63,8 +134,8 @@
    "val":605.8037833672317
   },
   "tmax":{
-   "exp":"0.7 N * m",
-   "val":0.7
+   "exp":"0.75 N * m",
+   "val":0.75
   },
   "cof":{
    "exp":"1",

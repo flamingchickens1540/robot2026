@@ -93,13 +93,12 @@ public class TurretIOTalonFX implements TurretIO {
     }
 
     public void updateInputs(TurretIO.TurretIOInputs inputs) {
-        StatusCode Status = BaseStatusSignal.refreshAll(
+        StatusCode motorStatus = BaseStatusSignal.refreshAll(
                 position, velocity,
                 appliedVoltage, motorSupplyCurrent,
-                motorTemp, motorStatorCurrent,
-                smallCANcoderPosition, bigCANcoderPosition);
+                motorTemp, motorStatorCurrent);
 
-        inputs.connected = Status.isOK();
+        inputs.connected = motorStatus.isOK();
 
         inputs.position = Rotation2d.fromRotations(position.getValueAsDouble());
         inputs.positionTimestamp =
@@ -111,8 +110,9 @@ public class TurretIOTalonFX implements TurretIO {
         inputs.tempCelsius = motorTemp.getValueAsDouble();
         inputs.statorCurrentAmps = motorStatorCurrent.getValueAsDouble();
 
-        inputs.smallEncoderConnected = smallCANcoder.isConnected();
-        inputs.bigEncoderConnected = smallCANcoder.isConnected();
+        inputs.smallEncoderConnected =
+                smallCANcoderPosition.refresh().getStatus().isOK();
+        inputs.bigEncoderConnected = bigCANcoderPosition.refresh().getStatus().isOK();
         inputs.smallEncoderPosition =
                 Rotation2d.fromRotations(smallCANcoder.getAbsolutePosition().getValueAsDouble());
         inputs.bigEncoderPosition =

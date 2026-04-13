@@ -1,6 +1,5 @@
 package org.team1540.robot2026;
 
-import au.grapplerobotics.CanBridge;
 import edu.wpi.first.math.MathShared;
 import edu.wpi.first.math.MathSharedStore;
 import edu.wpi.first.math.MathUsageId;
@@ -27,9 +26,6 @@ public class Robot extends LoggedRobot {
     public Robot() {
         super(Constants.LOOP_PERIOD_SECS);
 
-        if (Constants.isTuningMode()) {
-            CanBridge.runTCP();
-        }
         // Record metadata
         Logger.recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
         Logger.recordMetadata("BuildDate", BuildConstants.BUILD_DATE);
@@ -116,7 +112,7 @@ public class Robot extends LoggedRobot {
                 .onCommandInterrupt(cmd -> Logger.recordOutput(
                         "Commands/" + cmd.getName() + "_" + Integer.toHexString(cmd.hashCode()), false));
 
-        RobotController.setBrownoutVoltage(6.5);
+        RobotController.setBrownoutVoltage(6.0);
 
         // Instantiate our RobotContainer. This will perform all our button bindings,
         // and put our autonomous chooser on the dashboard.

@@ -32,6 +32,7 @@ import org.team1540.robot2026.generated.TunerConstants;
 import org.team1540.robot2026.subsystems.drive.DrivetrainConstants;
 import org.team1540.robot2026.subsystems.hood.HoodConstants;
 import org.team1540.robot2026.subsystems.intake.IntakeConstants;
+import org.team1540.robot2026.util.AllianceFlipUtil;
 import org.team1540.robot2026.util.sim.CustomRebuiltArena;
 
 public class SimState {
@@ -62,14 +63,15 @@ public class SimState {
     private double intakeVoltage = 0.0;
 
     private double spinVoltage = 0.0;
-    private double feederVoltage = 0.0;
+    private double feeder1Voltage = 0.0;
+    private double feeder2Voltage = 0.0;
 
     private double shooterRPM = 0.0;
 
     private final Random rng = new Random(); // RNG for bps
 
     private final LoggedNetworkBoolean efficiencyMode =
-            new LoggedNetworkBoolean("SmartDashboard/Sim/Performance Mode", true);
+            new LoggedNetworkBoolean("SmartDashboard/Sim/Performance Mode", false);
 
     private SimState() {
         if (Constants.CURRENT_MODE != Constants.Mode.SIM)
@@ -133,6 +135,12 @@ public class SimState {
         SimulatedArena.getInstance().simulationPeriodic();
     }
 
+    public void resetForAuto(Pose2d initialBluePose) {
+        SimulatedArena.getInstance().resetFieldForAuto();
+        intakeSim.setGamePiecesCount(8);
+        if (initialBluePose != null) RobotState.getInstance().resetPose(AllianceFlipUtil.apply(initialBluePose));
+    }
+
     public void addCurrentDraw(DoubleSupplier statorCurrentAmps, DoubleSupplier appliedVoltage) {
         SimulatedBattery.addElectricalAppliances(() -> Amps.of(statorCurrentAmps.getAsDouble()
                 * appliedVoltage.getAsDouble()
@@ -148,9 +156,10 @@ public class SimState {
         intakeVoltage = voltage;
     }
 
-    public void addSpindexerData(double spinVoltage, double feederVoltage) {
+    public void addSpindexerData(double spinVoltage, double feeder1Voltage, double feeder2Voltage) {
         this.spinVoltage = spinVoltage;
-        this.feederVoltage = feederVoltage;
+        this.feeder1Voltage = feeder1Voltage;
+        this.feeder2Voltage = feeder2Voltage;
     }
 
     public void addShooterData(double leftRPM, double rightRPM) {
@@ -169,7 +178,9 @@ public class SimState {
 
     @AutoLogOutput(key = "SimState/SpindexerRunning")
     public boolean isSpindexerRunning() {
-        return spinVoltage >= SPINDEXER_VOLTAGE_THRESH && feederVoltage >= FEEDER_VOLTAGE_THRESH;
+        return spinVoltage >= SPINDEXER_VOLTAGE_THRESH
+                && feeder1Voltage >= FEEDER_VOLTAGE_THRESH
+                && feeder2Voltage >= FEEDER_VOLTAGE_THRESH;
     }
 
     public SwerveDriveSimulation getDriveSim() {

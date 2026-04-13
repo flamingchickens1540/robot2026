@@ -18,6 +18,8 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -27,6 +29,7 @@ import java.util.function.DoubleUnaryOperator;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.AutoLogOutputManager;
 import org.littletonrobotics.junction.Logger;
+import org.team1540.robot2026.autos.AutoRoutineData;
 import org.team1540.robot2026.subsystems.drive.DrivetrainConstants;
 import org.team1540.robot2026.subsystems.hood.HoodConstants;
 import org.team1540.robot2026.subsystems.vision.AprilTagVisionIO;
@@ -80,13 +83,20 @@ public class RobotState {
     private final InterpolatingDoubleTreeMap shuffleTOFMap = new InterpolatingDoubleTreeMap();
 
     @AutoLogOutput(key = "Aiming/ShooterRPMOffset")
-    private double shooterRPMOffset = 20.0;
+    private double shooterRPMOffset = 30.0;
 
     @AutoLogOutput(key = "Aiming/Hub/LastParameters")
     private AimingParameters lastHubAimingParameters;
 
     @AutoLogOutput(key = "Aiming/Shuffle/LastParameters")
     private AimingParameters lastShuffleAimingParameters;
+
+    private AutoRoutineData selectedAuto;
+
+    private final Alert autoStartPositionAlert =
+            new Alert("Robot is not near the selected auto's starting position", Alert.AlertType.kWarning);
+    private final Alert autoStartRotationAlert =
+            new Alert("Robot is not facing the correct direction for the selected auto", Alert.AlertType.kWarning);
 
     private RobotState() {
         poseResetTimer.start();
@@ -114,6 +124,28 @@ public class RobotState {
         hubTOFMap.put(4.155, 1.188565533);
         hubTOFMap.put(6.455, 1.444998072);
 
+        // Worn wheel tunings
+        //        hubHoodAngleMap.put(3.169, Rotation2d.fromDegrees(23.4));
+        //        hubHoodAngleMap.put(2.543, Rotation2d.fromDegrees(21.1));
+        //        hubHoodAngleMap.put(1.421, Rotation2d.fromDegrees(15));
+        //        hubHoodAngleMap.put(5.540, Rotation2d.fromDegrees(29));
+        //        hubHoodAngleMap.put(4.155, Rotation2d.fromDegrees(26.5));
+        //        hubHoodAngleMap.put(6.455, Rotation2d.fromDegrees(29.0));
+        //
+        //        hubShooterSpeedMap.put(3.175, 2154.0);
+        //        hubShooterSpeedMap.put(2.540, 2046.0);
+        //        hubShooterSpeedMap.put(1.439, 1778.0);
+        //        hubShooterSpeedMap.put(5.550, 2670.0);
+        //        hubShooterSpeedMap.put(4.155, 2300.0);
+        //        hubShooterSpeedMap.put(6.350, 3050.0);
+        //
+        //        hubTOFMap.put(3.175, 1.099743391);
+        //        hubTOFMap.put(2.540, 1.027414461);
+        //        hubTOFMap.put(1.439, 0.8991000919);
+        //        hubTOFMap.put(5.550, 1.324787032);
+        //        hubTOFMap.put(4.155, 1.188565533);
+        //        hubTOFMap.put(6.350, 1.366890583);
+
         shuffleHoodAngleMap.put(2.412, Rotation2d.fromDegrees(30));
         shuffleHoodAngleMap.put(4.466, Rotation2d.fromDegrees(35));
         shuffleHoodAngleMap.put(7.590, Rotation2d.fromDegrees(40));
@@ -134,6 +166,31 @@ public class RobotState {
     public void periodic() {
         SmartDashboard.putString("Aiming/Shooter RPM Offset", String.format("%.1f", shooterRPMOffset));
         clearAimingParameters();
+
+        if (DriverStation.isAutonomous() && DriverStation.isDisabled()) {
+            autoStartPositionAlert.set(selectedAuto != null
+                    && selectedAuto.startingPose().isPresent()
+                    && getEstimatedPose()
+                                    .getTranslation()
+                                    .getDistance(AllianceFlipUtil.apply(
+                                                    selectedAuto.startingPose().get())
+                                            .getTranslation())
+                            > 0.5);
+            autoStartRotationAlert.set(selectedAuto != null
+                    && selectedAuto.startingPose().isPresent()
+                    && Math.abs(getEstimatedPose()
+                                    .getRotation()
+                                    .minus(AllianceFlipUtil.apply(
+                                                    selectedAuto.startingPose().get())
+                                            .getRotation())
+                                    .getDegrees())
+                            > 10.0);
+            field.getObject("trajectory").setPoses(AllianceFlipUtil.apply(selectedAuto.trajectoryPoints()));
+        } else {
+            autoStartPositionAlert.set(false);
+            autoStartRotationAlert.set(false);
+            field.getObject("trajectory").setPoses();
+        }
     }
 
     public SwerveDriveKinematics getKinematics() {
@@ -203,14 +260,16 @@ public class RobotState {
 
     public void setActiveTrajectory(Pose2d... trajectory) {
         activeTrajectory = trajectory;
-        field.getObject("trajectory").setPoses(trajectory);
         Logger.recordOutput("Odometry/Trajectory/Current", trajectory);
     }
 
     public void clearActiveTrajectory() {
         activeTrajectory = null;
-        field.getObject("trajectory").setPoses();
         Logger.recordOutput("Odometry/Trajectory/Current", new Pose2d[0]);
+    }
+
+    public void setSelectedAuto(AutoRoutineData auto) {
+        selectedAuto = auto;
     }
 
     public void setTrajectoryTarget(Pose2d target) {
@@ -348,6 +407,12 @@ public class RobotState {
             timeOfFlight = tofMap.applyAsDouble(lookaheadDistance);
         }
 
+        double turretVelocityFFRadPerSec = -target.minus(lookaheadPose.getTranslation())
+                                .rotateBy(Rotation2d.kCCW_90deg)
+                                .dot(turretVelocity)
+                        / (lookaheadDistance * lookaheadDistance)
+                - getRobotVelocity().omegaRadiansPerSecond;
+
         Logger.recordOutput(
                 "Aiming/" + loggingKey + "/CompensatedTurretPose",
                 lookaheadPose.rotateAround(lookaheadPose.getTranslation(), getFieldRelativeTurretAngle()));
@@ -358,10 +423,12 @@ public class RobotState {
                 "Aiming/" + loggingKey + "/CompensatedTarget",
                 target.plus(turretPose.getTranslation().minus(lookaheadPose.getTranslation())));
         Logger.recordOutput("Aiming/" + loggingKey + "/CompensatedTargetDistanceMeters", lookaheadDistance);
+        Logger.recordOutput(
+                "Aiming/" + loggingKey + "/TurretVelocityFFRPS", Units.radiansToRotations(turretVelocityFFRadPerSec));
 
         return new AimingParameters(
                 target.minus(lookaheadPose.getTranslation()).getAngle(),
-                -getRobotVelocity().omegaRadiansPerSecond,
+                turretVelocityFFRadPerSec,
                 hoodAngleMap.apply(lookaheadDistance),
                 shooterSpeedMap.applyAsDouble(lookaheadDistance) + shooterRPMOffset);
     }

@@ -3,6 +3,7 @@ package org.team1540.robot2026;
 import static edu.wpi.first.units.Units.Hertz;
 import static edu.wpi.first.units.Units.Seconds;
 
+import choreo.auto.AutoFactory;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -15,14 +16,16 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.AutoLogOutput;
-import org.team1540.robot2026.autos.Autos;
+import org.team1540.robot2026.autos.AutoConfigurator;
+import org.team1540.robot2026.autos.AutoConfigurator.StartingSide;
+import org.team1540.robot2026.autos.AutoPresets;
+import org.team1540.robot2026.autos.AutoSelector;
 import org.team1540.robot2026.commands.CharacterizationCommands;
 import org.team1540.robot2026.commands.FeedingCommands;
 import org.team1540.robot2026.commands.ShootingCommands;
 import org.team1540.robot2026.controls.CopilotControls;
 import org.team1540.robot2026.controls.DriverControls;
 import org.team1540.robot2026.subsystems.climber.Climber;
-import org.team1540.robot2026.subsystems.climber.ClimberConstants;
 import org.team1540.robot2026.subsystems.drive.Drivetrain;
 import org.team1540.robot2026.subsystems.hood.Hood;
 import org.team1540.robot2026.subsystems.hood.HoodConstants;
@@ -33,10 +36,10 @@ import org.team1540.robot2026.subsystems.shooter.Shooter;
 import org.team1540.robot2026.subsystems.spindexer.Spindexer;
 import org.team1540.robot2026.subsystems.turret.Turret;
 import org.team1540.robot2026.subsystems.vision.AprilTagVision;
+import org.team1540.robot2026.util.AllianceFlipUtil;
 import org.team1540.robot2026.util.HubShiftUtil;
 import org.team1540.robot2026.util.LoggedTracer;
 import org.team1540.robot2026.util.MatchTriggers;
-import org.team1540.robot2026.util.auto.LoggedAutoChooser;
 import org.team1540.robot2026.util.hid.JoystickUtil;
 
 public class RobotContainer {
@@ -53,11 +56,11 @@ public class RobotContainer {
     final AprilTagVision vision;
     final LEDs leds = new LEDs();
 
-    private final LoggedAutoChooser autoChooser = new LoggedAutoChooser("Auto Chooser");
-
     private final RobotState robotState = RobotState.getInstance();
 
-    private final Autos autos;
+    private final AutoPresets autoPresets;
+    private final AutoConfigurator autoConfigurator;
+    private final AutoSelector autoSelector;
 
     @AutoLogOutput(key = "Turret/LockedMode")
     private boolean turretLockedMode = false;
@@ -66,7 +69,9 @@ public class RobotContainer {
     private final Alert turretManualAlert = new Alert("Turret is under manual control", Alert.AlertType.kWarning);
     private final Alert intakeManualAlert = new Alert("Intake is under manual control", Alert.AlertType.kWarning);
 
-    /** The container for the robot. Contains subsystems, IO devices, and commands. */
+    /**
+     * The container for the robot. Contains subsystems, IO devices, and commands.
+     */
     public RobotContainer() {
         switch (Constants.CURRENT_MODE) {
             case REAL -> {
@@ -104,7 +109,24 @@ public class RobotContainer {
             }
         }
 
-        autos = new Autos(drivetrain, intake, spindexer, turret, hood, shooter, climber);
+        AutoFactory autoFactory = new AutoFactory(
+                RobotState.getInstance()::getEstimatedPose,
+                RobotState.getInstance()::resetPose,
+                drivetrain::followTrajectory,
+                true,
+                drivetrain,
+                (trajectory, starting) -> {
+                    if (starting) {
+                        RobotState.getInstance()
+                                .setActiveTrajectory(
+                                        (AllianceFlipUtil.shouldFlip() ? trajectory.flipped() : trajectory).getPoses());
+                    } else {
+                        RobotState.getInstance().clearActiveTrajectory();
+                    }
+                });
+        autoPresets = new AutoPresets(autoFactory, drivetrain, intake, spindexer, turret, hood, shooter);
+        autoConfigurator = new AutoConfigurator(autoFactory, drivetrain, intake, spindexer, turret, hood, shooter);
+        autoSelector = new AutoSelector(autoConfigurator);
 
         configureButtonBindings();
         configureAutoRoutines();
@@ -153,7 +175,9 @@ public class RobotContainer {
         driver.shoot.toggleOnTrue(shootCmd);
 
         // Misc controls
-        driver.outtake.whileTrue(intake.commandRunIntake(-0.67).withName("OuttakeCommand"));
+        driver.outtake.whileTrue(intake.commandRunIntake(-0.67)
+                .alongWith(spindexer.runCommand(() -> 0.0, () -> -0.67, () -> -0.67))
+                .withName("OuttakeCommand"));
         driver.stowIntake.onTrue(
                 intake.commandToSetpoint(Intake.IntakeState.STOW).withName("StowIntakeCommand"));
         driver.stowHood.onTrue(
@@ -213,7 +237,7 @@ public class RobotContainer {
 
         // Misc mechanism controls
         copilot.reverseSpindexer.whileTrue(
-                spindexer.runCommand(() -> -0.67, () -> -0.67).withName("SpindexerReverseCommand"));
+                spindexer.runCommand(() -> -0.67, () -> -0.67, () -> 0.67).withName("SpindexerReverseCommand"));
         copilot.stowHood.onTrue(
                 hood.setpointCommand(() -> HoodConstants.MIN_ANGLE).withName("StowHoodCommand"));
         copilot.lockTurret.toggleOnTrue(turret.run(turret::stop)
@@ -240,10 +264,10 @@ public class RobotContainer {
 
         // Shooter trim controls
         copilot.trimShooterUp.onTrue(
-                Commands.runOnce(() -> RobotState.getInstance().incrementShooterRPMOffset(20))
+                Commands.runOnce(() -> RobotState.getInstance().incrementShooterRPMOffset(10))
                         .ignoringDisable(true));
         copilot.trimShooterDown.onTrue(
-                Commands.runOnce(() -> RobotState.getInstance().incrementShooterRPMOffset(-20))
+                Commands.runOnce(() -> RobotState.getInstance().incrementShooterRPMOffset(-10))
                         .ignoringDisable(true));
 
         // Shooter tuning bindings
@@ -292,58 +316,52 @@ public class RobotContainer {
     }
 
     private void configureAutoRoutines() {
-        autoChooser.addCmd("Shoot Preload", () -> hood.zeroCommand()
-                .alongWith(intake.zeroCommand())
-                .withTimeout(1.0)
-                .andThen(ShootingCommands.hubAimCommand(turret, shooter, hood)
-                        .withDeadline(Commands.waitUntil(
-                                        () -> turret.atSetpoint() && shooter.atSetpoint() && hood.atSetpoint())
-                                .withTimeout(1.0)
-                                .andThen(spindexer
-                                        .runCommand(() -> 1.0, () -> 1.0)
-                                        .withTimeout(5.0)))));
-        autoChooser.addRoutine("Left Trench 1 Sweep", autos::leftTrench1Sweep);
-        autoChooser.addRoutine("Left Trench 2 Sweep", () -> autos.leftTrench2Sweep(false, false));
-        autoChooser.addRoutine("Left Trench 2 Sweep Sprint", () -> autos.leftTrench2Sweep(false, true));
-        autoChooser.addRoutine("Left Trench 2 Sweep Hook", () -> autos.leftTrench2Sweep(true, false));
-        autoChooser.addRoutine("Left Trench 2 Sweep Hook Sprint", () -> autos.leftTrench2Sweep(true, true));
-        autoChooser.addRoutine("Left Trench 2 Sweep Depot", autos::leftTrench2SweepDepot);
-        autoChooser.addRoutine("Left Trench Team 2056 from Stoney Creek, Ontario", () -> autos.leftTrenchFar2SweepSprint(true));
-        autoChooser.addRoutine("Right Trench 1 Sweep", autos::rightTrench1Sweep);
-        autoChooser.addRoutine("Right Trench 2 Sweep", () -> autos.rightTrench2Sweep(false, false));
-        autoChooser.addRoutine("Right Trench 2 Sweep Sprint", () -> autos.rightTrench2Sweep(true, false));
-        autoChooser.addRoutine("Right Trench 2 Sweep Hook", () -> autos.rightTrench2Sweep(false, true));
-        autoChooser.addRoutine("Right Trench 2 Sweep Hook Sprint", () -> autos.rightTrench2Sweep(true, true));
-        autoChooser.addRoutine("Right Trench Team 2056 from Stoney Creek, Ontario", () -> autos.rightTrenchFar2SweepSprint(true));
+        autoSelector.addAuto("Configured Auto", autoConfigurator::getSelectedAuto);
+        autoSelector.addAuto("Zero Mechanisms", autoPresets::zeroMechanisms);
+        autoSelector.addAuto("Shoot Preload", autoPresets::shootPreload);
+        autoSelector.addAuto("Left Bump Depot", autoPresets::leftBumpDepot);
+
+        autoSelector.addAuto("Left Trench 1 Sweep", () -> autoPresets.singleSweep(StartingSide.LEFT, false));
+        autoSelector.addAuto("Left Trench 1 Sweep Sprint", () -> autoPresets.singleSweep(StartingSide.LEFT, true));
+        autoSelector.addAuto("Right Trench 1 Sweep", () -> autoPresets.singleSweep(StartingSide.RIGHT, false));
+        autoSelector.addAuto("Right Trench 1 Sweep Sprint", () -> autoPresets.singleSweep(StartingSide.RIGHT, true));
+
+        autoSelector.addAuto("Left Trench 2 Sweep", () -> autoPresets.doubleSweep(StartingSide.LEFT, false, false));
+        autoSelector.addAuto(
+                "Left Trench 2 Sweep Sprint", () -> autoPresets.doubleSweep(StartingSide.LEFT, false, true));
+        autoSelector.addAuto("Left Trench 2 Sweep Hook", () -> autoPresets.doubleSweep(StartingSide.LEFT, true, false));
+        autoSelector.addAuto(
+                "Left Trench 2 Sweep Hook Sprint", () -> autoPresets.doubleSweep(StartingSide.LEFT, true, true));
+        autoSelector.addAuto("Right Trench 2 Sweep", () -> autoPresets.doubleSweep(StartingSide.RIGHT, false, false));
+        autoSelector.addAuto(
+                "Right Trench 2 Sweep Sprint", () -> autoPresets.doubleSweep(StartingSide.RIGHT, false, true));
+        autoSelector.addAuto(
+                "Right Trench 2 Sweep Hook", () -> autoPresets.doubleSweep(StartingSide.RIGHT, true, false));
+        autoSelector.addAuto(
+                "Right Trench 2 Sweep Hook Sprint", () -> autoPresets.doubleSweep(StartingSide.RIGHT, true, true));
 
         // Characterization routines
         if (Constants.isTuningMode()) {
-            autoChooser.addRoutine("Test", autos::testPath);
-            autoChooser.addCmd(
+            autoSelector.addAuto("Test", autoPresets::testAuto);
+            autoSelector.addCmd(
                     "Drive FF Characterization",
                     () -> CharacterizationCommands.feedforward(
                             drivetrain::runCharacterization, drivetrain::getFFCharacterizationVelocity, drivetrain));
-            autoChooser.addCmd(
+            autoSelector.addCmd(
                     "Drive Wheel Radius Characterization",
                     () -> CharacterizationCommands.wheelRadius(
                             input -> drivetrain.runVelocity(new ChassisSpeeds(0.0, 0.0, input)),
                             () -> RobotState.getInstance().getRobotHeading().getRadians(),
                             drivetrain::getWheelRadiusCharacterizationPositions,
                             drivetrain));
-            autoChooser.addCmd(
+            autoSelector.addCmd(
                     "Intake FF Characterization",
                     () -> CharacterizationCommands.feedforward(
                             intake::setPivotVoltage, intake::getPivotVelocityRPS, intake));
-            autoChooser.addCmd(
+            autoSelector.addCmd(
                     "Shooter FF Characterization",
                     () -> CharacterizationCommands.feedforward(
                             shooter::setVoltage, () -> shooter.getVelocityRPM() / 60, shooter));
-            autoChooser.addCmd(
-                    "Climber FF Characterization",
-                    () -> CharacterizationCommands.feedforward(
-                            climber::setVoltage,
-                            () -> climber.getVelocityMPS() / 2 * Math.PI * ClimberConstants.SPROCKET_RADIUS_M,
-                            climber));
         }
     }
 
@@ -364,7 +382,6 @@ public class RobotContainer {
     }
 
     private void configurePeriodicCallbacks() {
-        addPeriodicCallback(autoChooser::update, "AutoChooserUpdate");
         addPeriodicCallback(robotState::periodic, "RobotStatePeriodic");
         addPeriodicCallback(HubShiftUtil::periodic, "HubShiftPeriodic");
         addPeriodicCallback(MechanismVisualizer::periodic, "MechanismVisualizerPeriodic");
@@ -390,6 +407,6 @@ public class RobotContainer {
      * @return the command to run in autonomous
      */
     public Command getAutonomousCommand() {
-        return autoChooser.selectedCommand();
+        return autoSelector.getSelectedAuto().command();
     }
 }

@@ -49,16 +49,24 @@ public class SpindexerIOSim implements SpindexerIO {
                 / SimulatedBattery.getBatteryVoltage().in(Volts);
 
         inputs.feederMotorConnected = true;
-        inputs.feederVelocityRPS = feederSim.getAngularVelocityRPM() / 60.0;
-        inputs.feederAppliedVolts = feederAppliedVolts;
-        inputs.feederStatorCurrentAmps = feederSim.getCurrentDrawAmps();
-        inputs.feederSupplyCurrentAmps = feederSim.getCurrentDrawAmps()
+        inputs.feeder1VelocityRPS = feederSim.getAngularVelocityRPM() / 60.0;
+        inputs.feeder1AppliedVolts = feederAppliedVolts;
+        inputs.feeder1StatorCurrentAmps = feederSim.getCurrentDrawAmps();
+        inputs.feeder1SupplyCurrentAmps = feederSim.getCurrentDrawAmps()
+                * feederAppliedVolts
+                / SimulatedBattery.getBatteryVoltage().in(Volts);
+
+        inputs.feeder2MotorConnected = true;
+        inputs.feeder2VelocityRPS = feederSim.getAngularVelocityRPM() / 60.0;
+        inputs.feeder2AppliedVolts = feederAppliedVolts;
+        inputs.feeder2StatorCurrentAmps = feederSim.getCurrentDrawAmps();
+        inputs.feeder2SupplyCurrentAmps = feederSim.getCurrentDrawAmps()
                 * feederAppliedVolts
                 / SimulatedBattery.getBatteryVoltage().in(Volts);
     }
 
     @Override
-    public void setMotorVoltages(double spinVolts, double feederVolts) {
+    public void setMotorVoltages(double spinVolts, double feederVolts, double v) {
         spinRequestedVolts = spinVolts;
         feederRequestedVolts = feederVolts;
     }
