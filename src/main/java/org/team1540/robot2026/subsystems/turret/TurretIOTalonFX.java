@@ -79,7 +79,8 @@ public class TurretIOTalonFX implements TurretIO {
         configEncoder.MagnetSensor.MagnetOffset = BIG_ENCODER_MAGNET_SENSOR_OFFSET;
         bigCANcoder.getConfigurator().apply(configEncoder);
 
-        BaseStatusSignal.setUpdateFrequencyForAll(250, position, velocity); // Higher update rate since these are used for vision pose estimation
+        BaseStatusSignal.setUpdateFrequencyForAll(
+                250, position, velocity); // Higher update rate since these are used for vision pose estimation
         BaseStatusSignal.setUpdateFrequencyForAll(
                 50,
                 appliedVoltage,

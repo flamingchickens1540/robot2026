@@ -42,13 +42,15 @@ public class ModuleIOTalonFX implements ModuleIO {
     private final VoltageOut driveVoltageReq = new VoltageOut(0).withUpdateFreqHz(0);
     private final VelocityVoltage driveVelocityVoltageReq = new VelocityVoltage(0.0).withUpdateFreqHz(0);
     private final TorqueCurrentFOC driveTorqueReq = new TorqueCurrentFOC(0).withUpdateFreqHz(0);
-    private final VelocityTorqueCurrentFOC driveVelocityTorqueReq = new VelocityTorqueCurrentFOC(0.0).withUpdateFreqHz(0);
+    private final VelocityTorqueCurrentFOC driveVelocityTorqueReq =
+            new VelocityTorqueCurrentFOC(0.0).withUpdateFreqHz(0);
 
     // Turn motor control requests
     private final VoltageOut turnVoltageReq = new VoltageOut(0).withUpdateFreqHz(0);
     private final TorqueCurrentFOC turnTorqueReq = new TorqueCurrentFOC(0).withUpdateFreqHz(0);
     private final PositionVoltage turnPositionVoltageReq = new PositionVoltage(0.0).withUpdateFreqHz(0);
-    private final PositionTorqueCurrentFOC turnPositionTorqueReq = new PositionTorqueCurrentFOC(0.0).withUpdateFreqHz(0);
+    private final PositionTorqueCurrentFOC turnPositionTorqueReq =
+            new PositionTorqueCurrentFOC(0.0).withUpdateFreqHz(0);
 
     // Timestamp inputs from Phoenix thread
     private final Queue<Double> timestampQueue;
