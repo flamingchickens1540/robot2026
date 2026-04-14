@@ -22,7 +22,7 @@ import org.team1540.robot2026.util.PhoenixUtil;
 
 public class TurretIOTalonFX implements TurretIO {
     // Motion Magic
-    private final MotionMagicVoltage profiledPositionControl = new MotionMagicVoltage(0.0).withEnableFOC(true);
+    private final MotionMagicVoltage profiledPositionControl = new MotionMagicVoltage(0.0).withUpdateFreqHz(0);
 
     //  Motor
     private final TalonFX motor = new TalonFX(DRIVE_ID);
@@ -79,10 +79,9 @@ public class TurretIOTalonFX implements TurretIO {
         configEncoder.MagnetSensor.MagnetOffset = BIG_ENCODER_MAGNET_SENSOR_OFFSET;
         bigCANcoder.getConfigurator().apply(configEncoder);
 
+        BaseStatusSignal.setUpdateFrequencyForAll(250, position, velocity); // Higher update rate since these are used for vision pose estimation
         BaseStatusSignal.setUpdateFrequencyForAll(
                 50,
-                position,
-                velocity,
                 appliedVoltage,
                 motorSupplyCurrent,
                 motorTemp,

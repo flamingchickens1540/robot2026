@@ -33,8 +33,8 @@ public class ShooterIOTalonFX implements ShooterIO {
     private final StatusSignal<Temperature> rightTemperature = rightMotor.getDeviceTemp();
 
     private final VelocityVoltage velocityCtrlReq =
-            new VelocityVoltage(0).withEnableFOC(true).withSlot(0);
-    private final VoltageOut voltageCtrlReq = new VoltageOut(0).withEnableFOC(true);
+            new VelocityVoltage(0).withEnableFOC(true).withSlot(0).withUpdateFreqHz(0);
+    private final VoltageOut voltageCtrlReq = new VoltageOut(0).withEnableFOC(true).withUpdateFreqHz(0);
 
     public ShooterIOTalonFX() {
         TalonFXConfiguration config = new TalonFXConfiguration();
@@ -53,6 +53,8 @@ public class ShooterIOTalonFX implements ShooterIO {
 
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         leftMotor.getConfigurator().apply(config);
+
+        rightAppliedVoltage.setUpdateFrequency(100); // Leader motor voltage updates faster for better follower tracking
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 50,
