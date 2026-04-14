@@ -6,12 +6,13 @@ import org.littletonrobotics.junction.AutoLog;
 public interface IntakeIO {
     @AutoLog
     class IntakeInputs {
-        public double spinMotorVelocityRPS = 0;
-        public double spinMotorAppliedVolts = 0;
-        public double spinSupplyCurrentAmps = 0;
-        public double spinStatorCurrentAmps = 0;
-        public double spinMotorTemp = 0;
-        public boolean spinConnected = true;
+        public boolean leftSpinConnected = true;
+        public boolean rightSpinConnected = true;
+        public double[] spinMotorVelocityRPS = {};
+        public double[] spinMotorAppliedVolts = {};
+        public double[] spinSupplyCurrentAmps = {};
+        public double[] spinStatorCurrentAmps = {};
+        public double[] spinMotorTemp = {};
 
         public boolean pivotConnected = true;
         public Rotation2d pivotPosition = Rotation2d.kZero;

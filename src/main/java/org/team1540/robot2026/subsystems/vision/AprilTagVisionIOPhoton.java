@@ -1,7 +1,6 @@
 package org.team1540.robot2026.subsystems.vision;
 
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import java.util.*;
 import org.photonvision.EstimatedRobotPose;
@@ -17,7 +16,8 @@ public class AprilTagVisionIOPhoton extends AprilTagVisionIO {
 
     protected final PhotonPoseEstimator poseEstimator;
 
-    private final Set<Integer> lastSeenTagIDs = new HashSet<>();
+    private final List<PoseObservation> poseObservations = new ArrayList<>();
+    private final Set<Integer> seenTagIDs = new HashSet<>();
 
     public AprilTagVisionIOPhoton(String cameraName, Transform3d cameraTransformMeters) {
         super(cameraName);
@@ -31,9 +31,8 @@ public class AprilTagVisionIOPhoton extends AprilTagVisionIO {
     public void updateInputs(AprilTagVisionIOInputs inputs) {
         inputs.connected = camera.isConnected();
 
-        List<PoseObservation> poseObservations = new ArrayList<>();
-        List<SingleTagObservation> singleTagObservations = new ArrayList<>();
-        lastSeenTagIDs.clear();
+        poseObservations.clear();
+        seenTagIDs.clear();
         for (PhotonPipelineResult result : camera.getAllUnreadResults()) {
             Optional<EstimatedRobotPose> poseEstimatorResult = result.targets.size() > 1
                     ? poseEstimator.estimateCoprocMultiTagPose(result)
@@ -57,20 +56,10 @@ public class AprilTagVisionIOPhoton extends AprilTagVisionIO {
                         totalAmbiguity / poseEstimatorResult.get().targetsUsed.size()));
             }
 
-            for (PhotonTrackedTarget target : result.getTargets()) {
-                singleTagObservations.add(new SingleTagObservation(
-                        target.fiducialId,
-                        cameraTransformMeters,
-                        Rotation2d.fromDegrees(target.getYaw()),
-                        Rotation2d.fromDegrees(target.getPitch()),
-                        target.getBestCameraToTarget().getTranslation().getNorm(),
-                        result.getTimestampSeconds()));
-                lastSeenTagIDs.add(target.fiducialId);
-            }
+            result.getTargets().forEach(target -> seenTagIDs.add(target.fiducialId));
         }
 
-        inputs.seenTagIDs = lastSeenTagIDs.stream().mapToInt(Integer::intValue).toArray();
+        inputs.seenTagIDs = seenTagIDs.stream().mapToInt(Integer::intValue).toArray();
         inputs.poseObservations = poseObservations.toArray(new PoseObservation[0]);
-        inputs.singleTagObservations = singleTagObservations.toArray(new SingleTagObservation[0]);
     }
 }

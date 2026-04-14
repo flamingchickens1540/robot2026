@@ -25,9 +25,10 @@ public class HoodIOTalonFX implements HoodIO {
     private final StatusSignal<Current> statorCurrent = motor.getStatorCurrent();
     private final StatusSignal<Temperature> temp = motor.getDeviceTemp();
 
-    private final VoltageOut voltageCtrlReq = new VoltageOut(0).withEnableFOC(true);
+    private final VoltageOut voltageCtrlReq =
+            new VoltageOut(0).withEnableFOC(true).withUpdateFreqHz(0);
     private final MotionMagicVoltage positionCtrlReq =
-            new MotionMagicVoltage(0).withEnableFOC(true).withSlot(0);
+            new MotionMagicVoltage(0).withEnableFOC(true).withSlot(0).withUpdateFreqHz(0);
 
     public HoodIOTalonFX() {
         motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;

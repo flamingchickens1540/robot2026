@@ -32,6 +32,7 @@ public class FeedingCommands {
         return spindexer
                 .runCommand(
                         () -> shouldFeed(turret, hood, override) ? 1.0 : 0.0,
+                        () -> shouldFeed(turret, hood, override) ? 1.0 : 0.0,
                         () -> shouldFeed(turret, hood, override) ? 1.0 : 0.0)
                 .alongWith(Commands.run(() -> {
                     boolean shouldFeed = shouldFeed(turret, hood, override);

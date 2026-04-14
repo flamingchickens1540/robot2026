@@ -3,18 +3,17 @@ package org.team1540.robot2026.subsystems.drive;
 import static org.team1540.robot2026.subsystems.drive.DrivetrainConstants.*;
 
 import choreo.trajectory.SwerveSample;
+import com.pathplanner.lib.util.DriveFeedforwards;
+import com.pathplanner.lib.util.swerve.SwerveSetpoint;
+import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveModulePosition;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.kinematics.*;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.*;
 import java.util.Arrays;
 import java.util.concurrent.locks.Lock;
@@ -30,21 +29,21 @@ import org.team1540.robot2026.RobotState;
 import org.team1540.robot2026.SimState;
 import org.team1540.robot2026.generated.TunerConstants;
 import org.team1540.robot2026.util.AllianceFlipUtil;
-import org.team1540.robot2026.util.LoggedTracer;
-import org.team1540.robot2026.util.LoggedTunableNumber;
-import org.team1540.robot2026.util.hid.EnvisionController;
+import org.team1540.robot2026.util.Container;
 import org.team1540.robot2026.util.hid.JoystickUtil;
+import org.team1540.robot2026.util.logging.LoggedTracer;
+import org.team1540.robot2026.util.logging.LoggedTunableNumber;
 import org.team1540.robot2026.util.swerve.TrajectoryController;
 
 public class Drivetrain extends SubsystemBase {
     private static boolean hasInstance = false;
     static final Lock odometryLock = new ReentrantLock();
 
-    private static final LoggedTunableNumber translationKP = new LoggedTunableNumber("Drivetrain/Translation/kP", 6.0);
+    private static final LoggedTunableNumber translationKP = new LoggedTunableNumber("Drivetrain/Translation/kP", 6.7);
     private static final LoggedTunableNumber translationKI = new LoggedTunableNumber("Drivetrain/Translation/kI", 0.0);
     private static final LoggedTunableNumber translationKD = new LoggedTunableNumber("Drivetrain/Translation/kD", 0.0);
 
-    private static final LoggedTunableNumber rotationKP = new LoggedTunableNumber("Drivetrain/Rotation/kP", 3.3);
+    private static final LoggedTunableNumber rotationKP = new LoggedTunableNumber("Drivetrain/Rotation/kP", 4.0);
     private static final LoggedTunableNumber rotationKI = new LoggedTunableNumber("Drivetrain/Rotation/kI", 0.0);
     private static final LoggedTunableNumber rotationKD = new LoggedTunableNumber("Drivetrain/Rotation/kD", 0.0);
 
@@ -61,6 +60,10 @@ public class Drivetrain extends SubsystemBase {
     private final SwerveDriveKinematics kinematics = RobotState.getInstance().getKinematics();
     private SwerveModulePosition[] lastModulePositions = new SwerveModulePosition[4];
     private double lastOdometryUpdateTimeSecs = 0.0;
+
+    private SwerveSetpoint lastSetpoint;
+    private final SwerveSetpointGenerator setpointGenerator =
+            new SwerveSetpointGenerator(ROBOT_CONFIG, MAX_STEER_SPEED_RAD_PER_SEC);
 
     private final ProfiledPIDController headingController = new ProfiledPIDController(
             rotationKP.get(),
@@ -94,6 +97,11 @@ public class Drivetrain extends SubsystemBase {
 
         headingController.setTolerance(Math.toRadians(1.0));
         headingController.enableContinuousInput(-Math.PI, Math.PI);
+
+        lastSetpoint = new SwerveSetpoint(
+                new ChassisSpeeds(),
+                getModuleStates(),
+                new DriveFeedforwards(new double[4], new double[4], new double[4], new double[4], new double[4]));
 
         OdometryThread.getInstance().start();
     }
@@ -208,14 +216,59 @@ public class Drivetrain extends SubsystemBase {
 
     /** Runs the drivetrain at the given velocity */
     public void runVelocity(ChassisSpeeds velocity) {
-        SwerveModuleState[] setpoints =
-                kinematics.toSwerveModuleStates(ChassisSpeeds.discretize(velocity, Constants.LOOP_PERIOD_SECS));
-        SwerveDriveKinematics.desaturateWheelSpeeds(
-                setpoints, MAX_LINEAR_SPEED_MPS); // Ensure wheel speeds are physically reachable
-        for (int i = 0; i < 4; i++) {
-            modules[i].runSetpoint(setpoints[i]);
+        runVelocity(velocity, false);
+    }
+
+    /** Runs the drivetrain at the given velocity */
+    public void runVelocity(ChassisSpeeds velocity, boolean optimizeSetpoints) {
+        SwerveModuleState[] moduleSetpoints;
+        if (!optimizeSetpoints) {
+            moduleSetpoints =
+                    kinematics.toSwerveModuleStates(ChassisSpeeds.discretize(velocity, Constants.LOOP_PERIOD_SECS));
+            lastSetpoint = new SwerveSetpoint(velocity, moduleSetpoints, lastSetpoint.feedforwards());
+        } else {
+            SwerveSetpoint setpoint =
+                    setpointGenerator.generateSetpoint(lastSetpoint, velocity, Constants.LOOP_PERIOD_SECS);
+            moduleSetpoints = setpoint.moduleStates();
+            lastSetpoint = setpoint;
         }
-        Logger.recordOutput("Drivetrain/SwerveStates/Setpoints", setpoints);
+
+        SwerveDriveKinematics.desaturateWheelSpeeds(
+                moduleSetpoints, MAX_LINEAR_SPEED_MPS); // Ensure wheel speeds are physically reachable
+        for (int i = 0; i < 4; i++) {
+            modules[i].runSetpoint(moduleSetpoints[i]);
+        }
+        Logger.recordOutput("Drivetrain/SwerveStates/Setpoints", moduleSetpoints);
+    }
+
+    @AutoLogOutput(key = "Drivetrain/SkidDetection/IsSkidding")
+    public boolean isSkidding() {
+        SwerveModuleState[] currentStates = getModuleStates();
+        double angularVelocity = kinematics.toChassisSpeeds(currentStates).omegaRadiansPerSecond;
+        SwerveModuleState[] statesForRotation =
+                kinematics.toSwerveModuleStates(new ChassisSpeeds(0, 0, angularVelocity));
+        double[] swerveModuleTranslationalMagnitudes = new double[currentStates.length];
+
+        for (int i = 0; i < currentStates.length; i++) {
+            Translation2d swerveStateVector = swerveStateToVelocityVector(currentStates[i]);
+            Translation2d rotationVector = swerveStateToVelocityVector(statesForRotation[i]);
+            Translation2d translationVector = swerveStateVector.minus(rotationVector);
+            swerveModuleTranslationalMagnitudes[i] = translationVector.getNorm();
+        }
+
+        double maximumTranslationalSpeed = 0;
+        double minimalTranslationalSpeed = Double.POSITIVE_INFINITY;
+        for (double translationalSpeed : swerveModuleTranslationalMagnitudes) {
+            maximumTranslationalSpeed = Math.max(maximumTranslationalSpeed, translationalSpeed);
+            minimalTranslationalSpeed = Math.min(minimalTranslationalSpeed, translationalSpeed);
+        }
+        double skidRatio = maximumTranslationalSpeed / minimalTranslationalSpeed;
+        Logger.recordOutput("Drivetrain/SkidDetection/SkidRatio", skidRatio);
+        return skidRatio > 3;
+    }
+
+    private Translation2d swerveStateToVelocityVector(SwerveModuleState swerveModuleState) {
+        return new Translation2d(swerveModuleState.speedMetersPerSecond, swerveModuleState.angle);
     }
 
     /** Runs the drivetrain such that it follows the given trajectory sample */
@@ -266,7 +319,9 @@ public class Drivetrain extends SubsystemBase {
         return states;
     }
 
-    /** Zeros the drivetrain's field orientation based on the robot's estimated heading */
+    /**
+     * Zeros the drivetrain's field orientation based on the robot's estimated heading
+     */
     public void zeroFieldOrientation() {
         fieldOrientationOffset = rawGyroRotation.minus(
                 AllianceFlipUtil.apply(RobotState.getInstance().getRobotHeading()));
@@ -281,12 +336,16 @@ public class Drivetrain extends SubsystemBase {
         for (Module module : modules) module.setBrakeMode(enabled);
     }
 
-    public Command percentDriveCommand(Supplier<Translation2d> translationPercent, DoubleSupplier omegaPercent) {
-        return percentDriveCommand(translationPercent, omegaPercent, () -> true);
+    public Command percentDriveCommand(
+            Supplier<Translation2d> translationPercent, DoubleSupplier omegaPercent, BooleanSupplier rateLimit) {
+        return percentDriveCommand(translationPercent, omegaPercent, rateLimit, () -> true);
     }
 
     public Command percentDriveCommand(
-            Supplier<Translation2d> translationPercent, DoubleSupplier omegaPercent, BooleanSupplier fieldRelative) {
+            Supplier<Translation2d> translationPercent,
+            DoubleSupplier omegaPercent,
+            BooleanSupplier rateLimit,
+            BooleanSupplier fieldRelative) {
         return run(() -> {
                     ChassisSpeeds velocity = new ChassisSpeeds(
                             translationPercent.get().getX() * MAX_LINEAR_SPEED_MPS,
@@ -296,43 +355,57 @@ public class Drivetrain extends SubsystemBase {
                         velocity = ChassisSpeeds.fromFieldRelativeSpeeds(
                                 velocity, rawGyroRotation.minus(fieldOrientationOffset));
                     }
-                    runVelocity(velocity);
+                    runVelocity(velocity, rateLimit.getAsBoolean());
                 })
                 .finallyDo(this::stop)
                 .withName("PercentDriveCommand");
     }
 
-    public Command teleopDriveCommand(XboxController controller) {
+    public Command teleopDriveCommand(
+            DoubleSupplier xPercent, DoubleSupplier yPercent, DoubleSupplier omegaPercent, BooleanSupplier rateLimit) {
         return percentDriveCommand(
                         () -> JoystickUtil.deadzonedJoystickTranslation(
-                                -controller.getLeftY(), -controller.getLeftX(), 0.1),
-                        () -> JoystickUtil.smartDeadzone(-controller.getRightX(), 0.1))
+                                xPercent.getAsDouble(), yPercent.getAsDouble(), 0.1),
+                        () -> JoystickUtil.smartDeadzone(omegaPercent.getAsDouble(), 0.1),
+                        rateLimit)
                 .withName("TeleopDriveCommand");
     }
 
-    public Command teleopDriveCommand(EnvisionController controller) {
+    public Command teleopDriveWithHeadingCommand(
+            DoubleSupplier xPercent,
+            DoubleSupplier yPercent,
+            DoubleSupplier omegaPercent,
+            BooleanSupplier rateLimit,
+            Supplier<Rotation2d> heading) {
         return percentDriveCommand(
                         () -> JoystickUtil.deadzonedJoystickTranslation(
-                                -controller.getLeftY(), -controller.getLeftX(), 0.1),
-                        () -> JoystickUtil.smartDeadzone(-controller.getRightX(), 0.1))
-                .withName("TeleopDriveCommand");
-    }
-
-    public Command teleopDriveWithHeadingCommand(EnvisionController controller, Supplier<Rotation2d> heading) {
-        return percentDriveCommand(
-                        () -> JoystickUtil.deadzonedJoystickTranslation(
-                                -controller.getLeftY(), -controller.getLeftX(), 0.1),
+                                xPercent.getAsDouble(), yPercent.getAsDouble(), 0.1),
                         () -> headingController.calculate(
                                         RobotState.getInstance()
                                                 .getRobotHeading()
                                                 .getRadians(),
                                         heading.get().getRadians())
-                                / MAX_ANGULAR_SPEED_RAD_PER_SEC)
+                                / MAX_ANGULAR_SPEED_RAD_PER_SEC,
+                        rateLimit)
                 .beforeStarting(() -> headingController.reset(
                         RobotState.getInstance().getRobotHeading().getRadians(),
                         RobotState.getInstance().getRobotVelocity().omegaRadiansPerSecond))
                 .alongWith(Commands.run(() -> Logger.recordOutput("Drivetrain/HeadingGoal", heading.get())))
-                .until(() -> Math.abs(controller.getRightX()) >= 0.1);
+                .until(() -> Math.abs(omegaPercent.getAsDouble()) >= 0.1);
+    }
+
+    public Command teleopDrivePointCommand(
+            DoubleSupplier xPercent, DoubleSupplier yPercent, DoubleSupplier omegaPercent, BooleanSupplier rateLimit) {
+        Container<Rotation2d> lastAngle = new Container<>(Rotation2d.kZero);
+        return teleopDriveWithHeadingCommand(xPercent, yPercent, omegaPercent, rateLimit, () -> {
+                    Translation2d stickTranslation = JoystickUtil.deadzonedJoystickTranslation(
+                            xPercent.getAsDouble(), yPercent.getAsDouble(), 0.1);
+                    if (stickTranslation.getNorm() > 0.001) {
+                        lastAngle.value = stickTranslation.getAngle().rotateBy(fieldOrientationOffset);
+                    }
+                    return lastAngle.value;
+                })
+                .beforeStarting(() -> lastAngle.value = RobotState.getInstance().getRobotHeading());
     }
 
     public static Drivetrain createReal() {

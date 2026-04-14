@@ -10,8 +10,9 @@ import java.util.Arrays;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.FieldConstants;
 import org.team1540.robot2026.RobotState;
+import org.team1540.robot2026.SimState;
 import org.team1540.robot2026.subsystems.vision.AprilTagVisionIO.PoseObservation;
-import org.team1540.robot2026.util.LoggedTracer;
+import org.team1540.robot2026.util.logging.LoggedTracer;
 
 public class AprilTagVision extends SubsystemBase {
     private final AprilTagVisionIO turretCameraIO;
@@ -39,7 +40,7 @@ public class AprilTagVision extends SubsystemBase {
         this.disconnectedAlerts = new Alert[visionIOs.length];
         for (int i = 0; i < cameraInputs.length; i++) {
             cameraInputs[i] = new AprilTagVisionIOInputsAutoLogged();
-            disconnectedAlerts[i] = new Alert(visionIOs[i].name + "camera is disconnected.", Alert.AlertType.kError);
+            disconnectedAlerts[i] = new Alert(visionIOs[i].name + " camera is disconnected.", Alert.AlertType.kWarning);
         }
     }
 
@@ -110,6 +111,20 @@ public class AprilTagVision extends SubsystemBase {
                 new AprilTagVisionIOPhoton(TURRET_CAMERA_NAME, TURRET_TO_CAMERA),
                 new AprilTagVisionIOPhoton(BL_CAMERA_NAME, ROBOT_TO_BL_CAMERA),
                 new AprilTagVisionIOPhoton(BR_CAMERA_NAME, ROBOT_TO_BR_CAMERA) {});
+    }
+
+    public static AprilTagVision createSim() {
+        return new AprilTagVision(
+                new AprilTagVisionIOPhotonSim(
+                        TURRET_CAMERA_NAME, TURRET_TO_CAMERA, SimState.getInstance()::getSimulatedTurretPose3d),
+                new AprilTagVisionIOPhotonSim(
+                        BL_CAMERA_NAME,
+                        ROBOT_TO_BL_CAMERA,
+                        () -> new Pose3d(SimState.getInstance().getSimulatedRobotPose())),
+                new AprilTagVisionIOPhotonSim(
+                        BR_CAMERA_NAME,
+                        ROBOT_TO_BR_CAMERA,
+                        () -> new Pose3d(SimState.getInstance().getSimulatedRobotPose())));
     }
 
     public static AprilTagVision createDummy() {

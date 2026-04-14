@@ -14,7 +14,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
-import org.team1540.robot2026.util.LoggedTracer;
+import org.team1540.robot2026.util.logging.LoggedTracer;
 
 public class LEDs extends SubsystemBase {
     private final AddressableLED ledStrip = new AddressableLED(LEDS_PWM_PORT);

@@ -22,7 +22,7 @@ import org.team1540.robot2026.util.PhoenixUtil;
 
 public class TurretIOTalonFX implements TurretIO {
     // Motion Magic
-    private final MotionMagicVoltage profiledPositionControl = new MotionMagicVoltage(0.0).withEnableFOC(true);
+    private final MotionMagicVoltage profiledPositionControl = new MotionMagicVoltage(0.0).withUpdateFreqHz(0);
 
     //  Motor
     private final TalonFX motor = new TalonFX(DRIVE_ID);
@@ -55,6 +55,8 @@ public class TurretIOTalonFX implements TurretIO {
         config.CurrentLimits.SupplyCurrentLimit = 70.0;
         config.CurrentLimits.SupplyCurrentLowerLimit = 40.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 0.5;
+        config.CurrentLimits.StatorCurrentLimitEnable = true;
+        config.CurrentLimits.StatorCurrentLimit = 80.0;
 
         config.Slot0.kP = KP;
         config.Slot0.kI = KI;
@@ -78,9 +80,9 @@ public class TurretIOTalonFX implements TurretIO {
         bigCANcoder.getConfigurator().apply(configEncoder);
 
         BaseStatusSignal.setUpdateFrequencyForAll(
+                250, position, velocity); // Higher update rate since these are used for vision pose estimation
+        BaseStatusSignal.setUpdateFrequencyForAll(
                 50,
-                position,
-                velocity,
                 appliedVoltage,
                 motorSupplyCurrent,
                 motorTemp,
@@ -91,13 +93,12 @@ public class TurretIOTalonFX implements TurretIO {
     }
 
     public void updateInputs(TurretIO.TurretIOInputs inputs) {
-        StatusCode Status = BaseStatusSignal.refreshAll(
+        StatusCode motorStatus = BaseStatusSignal.refreshAll(
                 position, velocity,
                 appliedVoltage, motorSupplyCurrent,
-                motorTemp, motorStatorCurrent,
-                smallCANcoderPosition, bigCANcoderPosition);
+                motorTemp, motorStatorCurrent);
 
-        inputs.connected = Status.isOK();
+        inputs.connected = motorStatus.isOK();
 
         inputs.position = Rotation2d.fromRotations(position.getValueAsDouble());
         inputs.positionTimestamp =
@@ -109,8 +110,9 @@ public class TurretIOTalonFX implements TurretIO {
         inputs.tempCelsius = motorTemp.getValueAsDouble();
         inputs.statorCurrentAmps = motorStatorCurrent.getValueAsDouble();
 
-        inputs.smallEncoderConnected = smallCANcoder.isConnected();
-        inputs.bigEncoderConnected = smallCANcoder.isConnected();
+        inputs.smallEncoderConnected =
+                smallCANcoderPosition.refresh().getStatus().isOK();
+        inputs.bigEncoderConnected = bigCANcoderPosition.refresh().getStatus().isOK();
         inputs.smallEncoderPosition =
                 Rotation2d.fromRotations(smallCANcoder.getAbsolutePosition().getValueAsDouble());
         inputs.bigEncoderPosition =

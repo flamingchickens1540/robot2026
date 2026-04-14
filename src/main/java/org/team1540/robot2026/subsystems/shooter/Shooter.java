@@ -11,8 +11,9 @@ import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.Constants;
-import org.team1540.robot2026.util.LoggedTracer;
-import org.team1540.robot2026.util.LoggedTunableNumber;
+import org.team1540.robot2026.SimState;
+import org.team1540.robot2026.util.logging.LoggedTracer;
+import org.team1540.robot2026.util.logging.LoggedTunableNumber;
 
 public class Shooter extends SubsystemBase {
     private static boolean hasInstance = false;
@@ -54,6 +55,10 @@ public class Shooter extends SubsystemBase {
 
         if (DriverStation.isDisabled()) {
             stop();
+        }
+
+        if (Constants.CURRENT_MODE == Constants.Mode.SIM) {
+            SimState.getInstance().addShooterData(inputs.leftVelocityRPM, inputs.rightVelocityRPM);
         }
 
         LoggedTunableNumber.ifChanged(

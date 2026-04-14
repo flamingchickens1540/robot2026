@@ -1,16 +1,19 @@
 package org.team1540.robot2026;
 
-import au.grapplerobotics.CanBridge;
+import com.ctre.phoenix6.SignalLogger;
+import edu.wpi.first.math.MathShared;
+import edu.wpi.first.math.MathSharedStore;
+import edu.wpi.first.math.MathUsageId;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.Commands;
-import org.littletonrobotics.junction.LogFileUtil;
-import org.littletonrobotics.junction.LoggedRobot;
-import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.*;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
+import org.team1540.robot2026.util.logging.PerformanceLogger;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -25,9 +28,6 @@ public class Robot extends LoggedRobot {
     public Robot() {
         super(Constants.LOOP_PERIOD_SECS);
 
-        if (Constants.isTuningMode()) {
-            CanBridge.runTCP();
-        }
         // Record metadata
         Logger.recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
         Logger.recordMetadata("BuildDate", BuildConstants.BUILD_DATE);
@@ -41,7 +41,7 @@ public class Robot extends LoggedRobot {
                     case 1 -> "Uncommitted changes";
                     default -> "Unknown";
                 });
-        Logger.recordMetadata("TuningMode", Constants.isTuningMode() ? "on" : "off");
+        Logger.recordMetadata("TuningMode", Constants.TUNING_MODE ? "on" : "off");
 
         // Set up data receivers & replay source
         switch (Constants.CURRENT_MODE) {
@@ -65,11 +65,46 @@ public class Robot extends LoggedRobot {
                 break;
         }
 
+        Logger.addDataReceiver(new LogDataReceiver() {
+            @Override
+            public void start() {
+                Threads.setCurrentThreadPriority(true, 1);
+            }
+
+            @Override
+            public void putTable(LogTable table) {}
+        });
+
         // See http://bit.ly/3YIzFZ6 for more information on timestamps in AdvantageKit.
         // Logger.disableDeterministicTimestamps()
 
         // Start AdvantageKit logger
         Logger.start();
+
+        // Disable automatic hoot logging
+        SignalLogger.enableAutoLogging(false);
+
+        // Silence Rotation2d warnings
+        MathShared mathShared = MathSharedStore.getMathShared();
+        MathSharedStore.setMathShared(new MathShared() {
+            @Override
+            public void reportError(String error, StackTraceElement[] stackTrace) {
+                if (error.startsWith("x and y components of Rotation2d are zero")) {
+                    return;
+                }
+                mathShared.reportError(error, stackTrace);
+            }
+
+            @Override
+            public void reportUsage(MathUsageId id, int count) {
+                mathShared.reportUsage(id, count);
+            }
+
+            @Override
+            public double getTimestamp() {
+                return mathShared.getTimestamp();
+            }
+        });
 
         // Set up command logging
         CommandScheduler.getInstance()
@@ -82,6 +117,8 @@ public class Robot extends LoggedRobot {
                 .onCommandInterrupt(cmd -> Logger.recordOutput(
                         "Commands/" + cmd.getName() + "_" + Integer.toHexString(cmd.hashCode()), false));
 
+        RobotController.setBrownoutVoltage(6.0);
+
         // Instantiate our RobotContainer. This will perform all our button bindings,
         // and put our autonomous chooser on the dashboard.
         robotContainer = new RobotContainer();
@@ -90,17 +127,21 @@ public class Robot extends LoggedRobot {
         RobotState.getInstance().getHubAimingParameters();
         RobotState.getInstance().getShuffleAimingParameters();
 
+        // Choreo warmup
         CommandScheduler.getInstance()
-                .schedule(Commands.waitSeconds(0.5)
-                        .andThen(robotContainer.turret.zeroCommand())
-                        .ignoringDisable(true));
+                .schedule(robotContainer
+                        .autoFactory
+                        .trajectoryCmd("Sprint")
+                        .ignoringDisable(true)
+                        .until(this::isEnabled));
     }
 
     /** This function is called periodically during all modes. */
     @Override
     public void robotPeriodic() {
         // Switch main robot thread to high priority to improve loop timing
-        Threads.setCurrentThreadPriority(true, 99);
+        if (DriverStation.isEnabled()) Threads.setCurrentThreadPriority(true, 2);
+        else Threads.setCurrentThreadPriority(false, 0);
         // Runs the Scheduler. This is responsible for polling buttons, adding
         // newly-scheduled commands, running already-scheduled commands, removing
         // finished or interrupted commands, and running subsystem periodic() methods.
@@ -108,8 +149,11 @@ public class Robot extends LoggedRobot {
         // the Command-based framework to work.
         CommandScheduler.getInstance().run();
 
+        // Log RIO performance metrics
+        PerformanceLogger.log();
+
         // Return to normal thread priority
-        Threads.setCurrentThreadPriority(false, 10);
+        Threads.setCurrentThreadPriority(false, 0);
     }
 
     /** This function is called once when the robot is disabled. */

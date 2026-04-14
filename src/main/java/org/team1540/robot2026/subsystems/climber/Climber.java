@@ -11,8 +11,8 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
-import org.team1540.robot2026.util.LoggedTracer;
-import org.team1540.robot2026.util.LoggedTunableNumber;
+import org.team1540.robot2026.util.logging.LoggedTracer;
+import org.team1540.robot2026.util.logging.LoggedTunableNumber;
 
 public class Climber extends SubsystemBase {
     private static boolean hasInstance = false;
