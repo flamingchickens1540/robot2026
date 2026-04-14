@@ -14,7 +14,7 @@ import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.subsystems.drive.DrivetrainConstants;
-import org.team1540.robot2026.util.LoggedTunableNumber;
+import org.team1540.robot2026.util.logging.LoggedTunableNumber;
 import org.team1540.robot2026.util.math.PolynomialRegression;
 
 public class CharacterizationCommands {

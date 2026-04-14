@@ -35,7 +35,7 @@ import org.team1540.robot2026.subsystems.hood.HoodConstants;
 import org.team1540.robot2026.subsystems.vision.AprilTagVisionIO;
 import org.team1540.robot2026.util.AimingParameters;
 import org.team1540.robot2026.util.AllianceFlipUtil;
-import org.team1540.robot2026.util.LoggedTunableNumber;
+import org.team1540.robot2026.util.logging.LoggedTunableNumber;
 
 public class RobotState {
     private static RobotState instance = null;

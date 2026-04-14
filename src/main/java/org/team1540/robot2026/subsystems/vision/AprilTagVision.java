@@ -12,7 +12,7 @@ import org.team1540.robot2026.FieldConstants;
 import org.team1540.robot2026.RobotState;
 import org.team1540.robot2026.SimState;
 import org.team1540.robot2026.subsystems.vision.AprilTagVisionIO.PoseObservation;
-import org.team1540.robot2026.util.LoggedTracer;
+import org.team1540.robot2026.util.logging.LoggedTracer;
 
 public class AprilTagVision extends SubsystemBase {
     private final AprilTagVisionIO turretCameraIO;

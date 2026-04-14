@@ -1,4 +1,4 @@
-package org.team1540.robot2026.util;
+package org.team1540.robot2026.util.logging;
 
 import java.util.Arrays;
 import java.util.HashMap;

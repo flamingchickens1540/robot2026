@@ -1,4 +1,4 @@
-package org.team1540.robot2026.util;
+package org.team1540.robot2026.util.logging;
 
 import com.pathplanner.lib.path.GoalEndState;
 import com.pathplanner.lib.path.PathConstraints;

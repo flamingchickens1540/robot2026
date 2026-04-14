@@ -38,9 +38,9 @@ import org.team1540.robot2026.subsystems.turret.Turret;
 import org.team1540.robot2026.subsystems.vision.AprilTagVision;
 import org.team1540.robot2026.util.AllianceFlipUtil;
 import org.team1540.robot2026.util.HubShiftUtil;
-import org.team1540.robot2026.util.LoggedTracer;
 import org.team1540.robot2026.util.MatchTriggers;
 import org.team1540.robot2026.util.hid.JoystickUtil;
+import org.team1540.robot2026.util.logging.LoggedTracer;
 
 public class RobotContainer {
     private final DriverControls driver = DriverControls.EnvisionController;

@@ -14,7 +14,7 @@ import org.team1540.robot2026.subsystems.shooter.Shooter;
 import org.team1540.robot2026.subsystems.turret.Turret;
 import org.team1540.robot2026.subsystems.turret.TurretConstants;
 import org.team1540.robot2026.util.AllianceFlipUtil;
-import org.team1540.robot2026.util.LoggedTunableNumber;
+import org.team1540.robot2026.util.logging.LoggedTunableNumber;
 
 public class ShootingCommands {
 

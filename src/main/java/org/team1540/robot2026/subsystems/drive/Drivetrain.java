@@ -30,9 +30,9 @@ import org.team1540.robot2026.SimState;
 import org.team1540.robot2026.generated.TunerConstants;
 import org.team1540.robot2026.util.AllianceFlipUtil;
 import org.team1540.robot2026.util.Container;
-import org.team1540.robot2026.util.LoggedTracer;
-import org.team1540.robot2026.util.LoggedTunableNumber;
 import org.team1540.robot2026.util.hid.JoystickUtil;
+import org.team1540.robot2026.util.logging.LoggedTracer;
+import org.team1540.robot2026.util.logging.LoggedTunableNumber;
 import org.team1540.robot2026.util.swerve.TrajectoryController;
 
 public class Drivetrain extends SubsystemBase {
