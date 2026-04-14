@@ -395,17 +395,20 @@ public class RobotState {
                         estimatedPose.getRotation().rotateBy(Rotation2d.kCW_90deg)));
 
         double timeOfFlight = tofMap.applyAsDouble(targetDistance);
-        Pose2d lookaheadPose = turretPose;
+        double lookaheadX = turretPose.getX();
+        double lookaheadY = turretPose.getY();
         double lookaheadDistance = targetDistance;
 
         for (int i = 0; i < 20; i++) {
             double offsetX = turretVelocity.getX() * timeOfFlight;
             double offsetY = turretVelocity.getY() * timeOfFlight;
-            lookaheadPose = new Pose2d(
-                    turretPose.getTranslation().plus(new Translation2d(offsetX, offsetY)), turretPose.getRotation());
-            lookaheadDistance = target.getDistance(lookaheadPose.getTranslation());
+            lookaheadX = turretPose.getX() + offsetX;
+            lookaheadY = turretPose.getY() + offsetY;
+            lookaheadDistance = Math.hypot(target.getX() - lookaheadX, target.getY() - lookaheadY);
             timeOfFlight = tofMap.applyAsDouble(lookaheadDistance);
         }
+
+        Pose2d lookaheadPose = new Pose2d(lookaheadX, lookaheadY, turretPose.getRotation());
 
         double turretVelocityFFRadPerSec = -target.minus(lookaheadPose.getTranslation())
                                 .rotateBy(Rotation2d.kCCW_90deg)
