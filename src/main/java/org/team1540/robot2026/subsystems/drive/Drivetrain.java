@@ -3,6 +3,7 @@ package org.team1540.robot2026.subsystems.drive;
 import static org.team1540.robot2026.subsystems.drive.DrivetrainConstants.*;
 
 import choreo.trajectory.SwerveSample;
+import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.swerve.SwerveSetpoint;
 import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
@@ -119,8 +120,10 @@ public class Drivetrain extends SubsystemBase {
 
         // Update odometry
         double[] sampleTimestamps = modules[0].getOdometryTimestamps(); // All signals are sampled together
+        double totalDt = 0.0;
         int sampleCount = sampleTimestamps.length;
         int rejectedSamples = 0;
+
         for (int i = 0; i < sampleCount; i++) {
             // Read wheel positions and deltas from each module
             SwerveModulePosition[] modulePositions = new SwerveModulePosition[4];
@@ -135,17 +138,22 @@ public class Drivetrain extends SubsystemBase {
             // Filter odometry data based on wheel deltas
             boolean acceptMeasurement = true;
             double dt = sampleTimestamps[i] - lastOdometryUpdateTimeSecs;
-            for (int moduleIndex = 0; moduleIndex < modules.length; moduleIndex++) {
-                double velocity = moduleDeltas[moduleIndex].distanceMeters / dt;
-                double turnVelocity = modulePositions[moduleIndex]
-                                .angle
-                                .minus(lastModulePositions[moduleIndex].angle)
-                                .getRadians()
-                        / dt;
-                if (Math.abs(velocity) > MAX_LINEAR_SPEED_MPS * sampleRejectionThreshold.get()
-                        || Math.abs(turnVelocity) > MAX_STEER_SPEED_RAD_PER_SEC * sampleRejectionThreshold.get()) {
-                    acceptMeasurement = false;
-                    break;
+            totalDt += dt;
+            if (dt < 0) {
+                acceptMeasurement = false;
+            } else {
+                for (int moduleIndex = 0; moduleIndex < modules.length; moduleIndex++) {
+                    double velocity = moduleDeltas[moduleIndex].distanceMeters / dt;
+                    double turnVelocity = modulePositions[moduleIndex]
+                                    .angle
+                                    .minus(lastModulePositions[moduleIndex].angle)
+                                    .getRadians()
+                            / dt;
+                    if (Math.abs(velocity) > MAX_LINEAR_SPEED_MPS * sampleRejectionThreshold.get()
+                            || Math.abs(turnVelocity) > MAX_STEER_SPEED_RAD_PER_SEC * sampleRejectionThreshold.get()) {
+                        acceptMeasurement = false;
+                        break;
+                    }
                 }
             }
             // Accept measurements if delta is not too large
@@ -164,6 +172,7 @@ public class Drivetrain extends SubsystemBase {
             }
         }
         Logger.recordOutput("Odometry/RejectedSamples", rejectedSamples);
+        Logger.recordOutput("Odometry/UpdateRateHz", sampleCount / totalDt);
 
         // Update robot velocities
         ChassisSpeeds speeds = kinematics.toChassisSpeeds(getModuleStates());
@@ -176,8 +185,16 @@ public class Drivetrain extends SubsystemBase {
             for (Module module : modules) {
                 module.stop();
             }
+
+            // Log empty module setpoints
             Logger.recordOutput(
                     "Drivetrain/SwerveStates/Setpoints",
+                    new SwerveModuleState(),
+                    new SwerveModuleState(),
+                    new SwerveModuleState(),
+                    new SwerveModuleState());
+            Logger.recordOutput(
+                    "Drivetrain/SwerveStates/UnoptimizedSetpoints",
                     new SwerveModuleState(),
                     new SwerveModuleState(),
                     new SwerveModuleState(),
@@ -216,28 +233,23 @@ public class Drivetrain extends SubsystemBase {
 
     /** Runs the drivetrain at the given velocity */
     public void runVelocity(ChassisSpeeds velocity) {
-        runVelocity(velocity, false);
+        runVelocity(velocity, DEFAULT_CONSTRAINTS);
     }
 
     /** Runs the drivetrain at the given velocity */
-    public void runVelocity(ChassisSpeeds velocity, boolean optimizeSetpoints) {
+    public void runVelocity(ChassisSpeeds velocity, PathConstraints constraints) {
         SwerveModuleState[] moduleSetpoints;
-        if (!optimizeSetpoints) {
-            moduleSetpoints =
-                    kinematics.toSwerveModuleStates(ChassisSpeeds.discretize(velocity, Constants.LOOP_PERIOD_SECS));
-            lastSetpoint = new SwerveSetpoint(velocity, moduleSetpoints, lastSetpoint.feedforwards());
-        } else {
-            SwerveSetpoint setpoint =
-                    setpointGenerator.generateSetpoint(lastSetpoint, velocity, Constants.LOOP_PERIOD_SECS);
-            moduleSetpoints = setpoint.moduleStates();
-            lastSetpoint = setpoint;
-        }
+        SwerveSetpoint setpoint =
+                setpointGenerator.generateSetpoint(lastSetpoint, velocity, constraints, Constants.LOOP_PERIOD_SECS, 12.0);
+        moduleSetpoints = setpoint.moduleStates();
+        lastSetpoint = setpoint;
 
-        SwerveDriveKinematics.desaturateWheelSpeeds(
-                moduleSetpoints, MAX_LINEAR_SPEED_MPS); // Ensure wheel speeds are physically reachable
         for (int i = 0; i < 4; i++) {
             modules[i].runSetpoint(moduleSetpoints[i]);
         }
+        Logger.recordOutput("Drivetrain/RequestedSpeeds", velocity);
+        Logger.recordOutput("Drivetrain/SetpointSpeeds", setpoint.robotRelativeSpeeds());
+        Logger.recordOutput("Drivetrain/SwerveStates/UnoptimizedSetpoints", kinematics.toSwerveModuleStates(velocity));
         Logger.recordOutput("Drivetrain/SwerveStates/Setpoints", moduleSetpoints);
     }
 
@@ -355,7 +367,7 @@ public class Drivetrain extends SubsystemBase {
                         velocity = ChassisSpeeds.fromFieldRelativeSpeeds(
                                 velocity, rawGyroRotation.minus(fieldOrientationOffset));
                     }
-                    runVelocity(velocity, rateLimit.getAsBoolean());
+                    runVelocity(velocity, rateLimit.getAsBoolean() ? LIMITED_CONSTRAINTS : DEFAULT_CONSTRAINTS);
                 })
                 .finallyDo(this::stop)
                 .withName("PercentDriveCommand");

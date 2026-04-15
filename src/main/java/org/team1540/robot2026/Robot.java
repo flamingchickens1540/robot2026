@@ -13,7 +13,6 @@ import org.littletonrobotics.junction.*;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
-import org.team1540.robot2026.util.logging.PerformanceLogger;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -65,6 +64,7 @@ public class Robot extends LoggedRobot {
                 break;
         }
 
+        // Hack to give the logging thread RT priority so it doesn't get starved by the main robot thread
         Logger.addDataReceiver(new LogDataReceiver() {
             @Override
             public void start() {
@@ -148,9 +148,6 @@ public class Robot extends LoggedRobot {
         // This must be called from the robot's periodic block in order for anything in
         // the Command-based framework to work.
         CommandScheduler.getInstance().run();
-
-        // Log RIO performance metrics
-        PerformanceLogger.log();
 
         // Return to normal thread priority
         Threads.setCurrentThreadPriority(false, 0);

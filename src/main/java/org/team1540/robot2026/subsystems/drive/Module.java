@@ -80,13 +80,13 @@ public class Module {
         // Optimize velocity setpoint
         state.optimize(getTurnAngle());
 
-        // Cosine scale the velocity and torque setpoints based on turn angle
+        // Cosine scale the velocity setpoint based on turn angle
         state.cosineScale(inputs.turnPosition);
         wheelTorqueNM *= state.angle.minus(getTurnAngle()).getCos();
 
         // Apply setpoints
         double velocityRadPerSec = state.speedMetersPerSecond / constants.WheelRadius;
-        if (USE_DRIVE_TORQUE_CONTROL) {
+        if (DRIVE_TORQUE_CONTROL) {
             io.setDriveVelocityTorqueCurrent(velocityRadPerSec, wheelTorqueNM / DRIVE_KT);
         } else {
             io.setDriveVelocityVoltage(velocityRadPerSec);

@@ -1,38 +1,16 @@
-package org.team1540.robot2026.util.swerve;
+package org.team1540.robot2026.subsystems.drive;
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
-import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.signals.*;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Notifier;
 
-public record ModuleHWConfigs(
+public record ModuleDeviceConfigs(
         TalonFXConfiguration driveConfig, TalonFXConfiguration turnConfig, CANcoderConfiguration turnEncoderConfig) {
-    public static final Slot0Configs DRIVE_VOLTAGE_GAINS = new Slot0Configs()
-            .withKP(0.1)
-            .withKI(0.0)
-            .withKD(0.0)
-            .withKS(0.25854004341546240)
-            .withKV(0.9146790761644792);
-
-    public static final Slot0Configs DRIVE_TORQUE_GAINS = new Slot0Configs()
-            .withKP(35.0)
-            .withKI(0.0)
-            .withKD(0.0)
-            .withKS(5.0);
-
-    public static final Slot0Configs STEER_GAINS = new Slot0Configs()
-            .withKP(100)
-            .withKI(0)
-            .withKD(0.5)
-            .withKS(0.1)
-            .withKV(2.33)
-            .withKA(0)
-            .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign);
-
-    public static ModuleHWConfigs fromModuleConstants(
+    public static ModuleDeviceConfigs fromModuleConstants(
             SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants) {
         TalonFXConfiguration driveConfig = constants.DriveMotorInitialConfigs;
         driveConfig.MotorOutput.Inverted = constants.DriveMotorInverted
@@ -50,10 +28,7 @@ public record ModuleHWConfigs(
         driveConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
         driveConfig.CurrentLimits.SupplyCurrentLowerTime = 1.0;
         driveConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-        driveConfig.Slot0 = constants.DriveMotorClosedLoopOutput
-                        == SwerveModuleConstants.ClosedLoopOutputType.TorqueCurrentFOC
-                ? DRIVE_TORQUE_GAINS
-                : DRIVE_VOLTAGE_GAINS;
+        driveConfig.Slot0 = constants.DriveMotorGains;
 
         TalonFXConfiguration turnConfig = constants.SteerMotorInitialConfigs;
         turnConfig.MotorOutput.Inverted = constants.SteerMotorInverted
@@ -77,7 +52,7 @@ public record ModuleHWConfigs(
         turnConfig.Feedback.SensorToMechanismRatio = 1.0;
         turnConfig.CurrentLimits.SupplyCurrentLimit = 40;
         turnConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-        turnConfig.Slot0 = STEER_GAINS;
+        turnConfig.Slot0 = constants.SteerMotorGains;
         turnConfig.MotionMagic.MotionMagicCruiseVelocity = Units.radiansToRotations(
                 DCMotor.getFalcon500Foc(1).withReduction(constants.SteerMotorGearRatio).freeSpeedRadPerSec);
         turnConfig.MotionMagic.MotionMagicAcceleration = turnConfig.MotionMagic.MotionMagicCruiseVelocity / 0.1;
@@ -92,6 +67,6 @@ public record ModuleHWConfigs(
         turnEncoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
         turnEncoderConfig.MagnetSensor.AbsoluteSensorDiscontinuityPoint = 0.5;
 
-        return new ModuleHWConfigs(driveConfig, turnConfig, turnEncoderConfig);
+        return new ModuleDeviceConfigs(driveConfig, turnConfig, turnEncoderConfig);
     }
 }

@@ -18,7 +18,6 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.*;
 import java.util.Queue;
 import org.team1540.robot2026.util.PhoenixUtil;
-import org.team1540.robot2026.util.swerve.ModuleHWConfigs;
 
 /**
  * Module IO implementation for Talon FX drive motor controller, Talon FX turn motor controller, and
@@ -73,7 +72,7 @@ public class ModuleIOTalonFX implements ModuleIO {
     public ModuleIOTalonFX(
             SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants) {
         this.constants = constants;
-        ModuleHWConfigs hw = ModuleHWConfigs.fromModuleConstants(constants);
+        ModuleDeviceConfigs hw = ModuleDeviceConfigs.fromModuleConstants(constants);
         drive = new TalonFX(constants.DriveMotorId, CAN_BUS);
         turn = new TalonFX(constants.SteerMotorId, CAN_BUS);
         cancoder = new CANcoder(constants.EncoderId, CAN_BUS);
