@@ -26,8 +26,9 @@ public class Spindexer extends SubsystemBase {
 
     private int numBallsCounted = 0;
     private double lastLaserCanMeasurementMM;
-    private double timeStampLast = Double.MAX_VALUE;
-    private final LinearFilter bpsFilter = LinearFilter.movingAverage(3);
+    private double timeStampLast = 0;
+    private double timeStampLastLast = Double.MAX_VALUE;
+    private final LinearFilter bpsFilter = LinearFilter.movingAverage(120);
 
     private Spindexer(SpindexerIO io, SpindexerSensorIO sensorIO) {
         if (hasInstance) throw new IllegalStateException("Instance of spindexer already exists");
@@ -37,21 +38,27 @@ public class Spindexer extends SubsystemBase {
     }
 
     private void calculateBPS() {
+        double threshold = 40;
 
+        if (timeStampLast - timeStampLastLast != 0) { // just to be extra careful
+            bpsFilter.calculate(1 / (timeStampLast - timeStampLastLast));
+        } else bpsFilter.calculate(0);
 
-        if (timeStampLast - Timer.getTimestamp() != 0) { // just to be extra careful
-            bpsFilter.calculate(1 / (timeStampLast - Timer.getTimestamp()));
-        } else System.out.println("prevented a divide by zero error!!!");
         Logger.recordOutput("RealOutputs/Spindexer/balls", numBallsCounted);
-        Logger.recordOutput("RealOutputs/Spindexer/bps3", bpsFilter.lastValue()); // must do this first to prevent a divide by 0 zero error
+        Logger.recordOutput(
+                "RealOutputs/Spindexer/bps3",
+                bpsFilter.lastValue()); // must do this first to prevent a divide by 0 zero error
 
-        if (!(lastLaserCanMeasurementMM <= (double) 1)
-                && sensorInputs.distanceMM <= (double) 1) { // could have issues skipping balls if ball goes fully through without getting counted
+        if (!(lastLaserCanMeasurementMM <= threshold)
+                && sensorInputs.distanceMM
+                        <= threshold) { // could have issues skipping balls if ball goes fully through without getting
+            // counted
+
             numBallsCounted++;
+            timeStampLastLast = timeStampLast;
             timeStampLast = Timer.getTimestamp();
         }
         lastLaserCanMeasurementMM = sensorInputs.distanceMM;
-
     }
 
     @Override

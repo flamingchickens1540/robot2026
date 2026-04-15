@@ -25,7 +25,7 @@ public class Robot extends LoggedRobot {
 
     public Robot() {
         super(Constants.LOOP_PERIOD_SECS);
-
+        CanBridge.runTCP();
         if (Constants.isTuningMode()) {
             CanBridge.runTCP();
         }

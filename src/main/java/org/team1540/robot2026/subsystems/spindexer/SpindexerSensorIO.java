@@ -10,5 +10,4 @@ public interface SpindexerSensorIO {
     }
 
     default void updateInputs(SpindexerSensorIOInputs inputs) {}
-
 }
