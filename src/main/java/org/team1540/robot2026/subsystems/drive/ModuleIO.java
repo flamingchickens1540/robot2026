@@ -12,6 +12,7 @@ public interface ModuleIO {
         public double driveAppliedVolts = 0.0;
         public double driveSupplyCurrentAmps = 0.0;
         public double driveStatorCurrentAmps = 0.0;
+        public double driveTorqueCurrentAmps = 0.0;
         public double driveTempCelsius = 0.0;
 
         public boolean turnConnected = false;
@@ -32,14 +33,17 @@ public interface ModuleIO {
     /** Updates the set of loggable inputs. */
     default void updateInputs(ModuleIOInputs inputs) {}
 
-    /** Run the drive motor at the specified open loop value. */
-    default void setDriveOpenLoop(double output) {}
+    /** Run the drive motor at the specified voltage */
+    default void setDriveVoltage(double volts) {}
 
-    /** Run the turn motor at the specified open loop value. */
-    default void setTurnOpenLoop(double output) {}
+    /** Run the turn motor at the specified voltage */
+    default void setTurnVoltage(double volts) {}
 
-    /** Run the drive motor at the specified velocity. */
-    default void setDriveVelocity(double velocityRadPerSec) {}
+    /** Run the drive motor at the specified velocity using voltage control */
+    default void setDriveVelocityVoltage(double velocityRadPerSec) {}
+
+    /** Runs the drive motor at the specified velocity and feedforward using torque-current control*/
+    default void setDriveVelocityTorqueCurrent(double velocityRadPerSec, double ffCurrentAmps) {}
 
     /** Run the turn motor to the specified rotation. */
     default void setTurnPosition(Rotation2d rotation) {}

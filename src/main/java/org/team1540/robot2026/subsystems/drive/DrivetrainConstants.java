@@ -3,11 +3,14 @@ package org.team1540.robot2026.subsystems.drive;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 
 import com.ctre.phoenix6.CANBus;
+import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import org.team1540.robot2026.Constants;
+import org.team1540.robot2026.Robot;
 import org.team1540.robot2026.generated.TunerConstants;
 
 public class DrivetrainConstants {
@@ -27,7 +30,7 @@ public class DrivetrainConstants {
     public static final double MAX_STEER_SPEED_RAD_PER_SEC =
             DCMotor.getFalcon500Foc(1).withReduction(TunerConstants.FrontLeft.SteerMotorGearRatio).freeSpeedRadPerSec;
 
-    public static final double WHEEL_COF = 1.0;
+    public static final double WHEEL_COF = 1.4;
 
     public static final RobotConfig ROBOT_CONFIG = new RobotConfig(
             Constants.ROBOT_MASS_KG,
@@ -40,6 +43,18 @@ public class DrivetrainConstants {
                     TunerConstants.FrontLeft.SlipCurrent,
                     1),
             getModuleTranslations());
+    public static final PathConstraints DEFAULT_CONSTRAINTS = PathConstraints.unlimitedConstraints(12.0);
+    public static final PathConstraints LIMITED_CONSTRAINTS = new PathConstraints(
+            MAX_LINEAR_SPEED_MPS,
+            5.0, // m/s^2
+            MAX_ANGULAR_SPEED_RAD_PER_SEC / 2.0,
+            15.0); // rad/s^2
+
+    public static final boolean DRIVE_TORQUE_CONTROL = TunerConstants.FrontLeft.DriveMotorClosedLoopOutput
+                    == SwerveModuleConstants.ClosedLoopOutputType.TorqueCurrentFOC
+            && Robot.isReal();
+    public static final double DRIVE_KT =
+            DCMotor.getKrakenX60Foc(1).withReduction(TunerConstants.FrontLeft.DriveMotorGearRatio).KtNMPerAmp;
 
     public static Translation2d[] getModuleTranslations() {
         return new Translation2d[] {

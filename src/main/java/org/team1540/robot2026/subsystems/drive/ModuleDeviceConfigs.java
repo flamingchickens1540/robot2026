@@ -1,18 +1,16 @@
-package org.team1540.robot2026.util.swerve;
+package org.team1540.robot2026.subsystems.drive;
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
-import com.ctre.phoenix6.signals.InvertedValue;
-import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.ctre.phoenix6.signals.SensorDirectionValue;
+import com.ctre.phoenix6.signals.*;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Notifier;
 
-public record ModuleHWConfigs(
+public record ModuleDeviceConfigs(
         TalonFXConfiguration driveConfig, TalonFXConfiguration turnConfig, CANcoderConfiguration turnEncoderConfig) {
-    public static ModuleHWConfigs fromModuleConstants(
+    public static ModuleDeviceConfigs fromModuleConstants(
             SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants) {
         TalonFXConfiguration driveConfig = constants.DriveMotorInitialConfigs;
         driveConfig.MotorOutput.Inverted = constants.DriveMotorInverted
@@ -22,7 +20,7 @@ public record ModuleHWConfigs(
         driveConfig.Feedback.SensorToMechanismRatio = constants.DriveMotorGearRatio;
 
         driveConfig.TorqueCurrent.PeakForwardTorqueCurrent = constants.SlipCurrent;
-        driveConfig.TorqueCurrent.PeakReverseTorqueCurrent = constants.SlipCurrent;
+        driveConfig.TorqueCurrent.PeakReverseTorqueCurrent = -constants.SlipCurrent;
         driveConfig.CurrentLimits.StatorCurrentLimit = constants.SlipCurrent;
         driveConfig.CurrentLimits.StatorCurrentLimitEnable = true;
 
@@ -58,8 +56,9 @@ public record ModuleHWConfigs(
         turnConfig.MotionMagic.MotionMagicCruiseVelocity = Units.radiansToRotations(
                 DCMotor.getFalcon500Foc(1).withReduction(constants.SteerMotorGearRatio).freeSpeedRadPerSec);
         turnConfig.MotionMagic.MotionMagicAcceleration = turnConfig.MotionMagic.MotionMagicCruiseVelocity / 0.1;
-        turnConfig.MotionMagic.MotionMagicExpo_kV = Units.radiansToRotations(
-                DCMotor.getFalcon500Foc(1).withReduction(constants.SteerMotorGearRatio).KvRadPerSecPerVolt);
+        turnConfig.MotionMagic.MotionMagicExpo_kV = 1.0
+                / Units.radiansToRotations(
+                        DCMotor.getFalcon500Foc(1).withReduction(constants.SteerMotorGearRatio).KvRadPerSecPerVolt);
         turnConfig.MotionMagic.MotionMagicExpo_kA = 0.1;
         turnConfig.ClosedLoopGeneral.ContinuousWrap = true;
 
@@ -68,6 +67,6 @@ public record ModuleHWConfigs(
         turnEncoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
         turnEncoderConfig.MagnetSensor.AbsoluteSensorDiscontinuityPoint = 0.5;
 
-        return new ModuleHWConfigs(driveConfig, turnConfig, turnEncoderConfig);
+        return new ModuleDeviceConfigs(driveConfig, turnConfig, turnEncoderConfig);
     }
 }

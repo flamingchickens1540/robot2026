@@ -18,7 +18,6 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.*;
 import java.util.Queue;
 import org.team1540.robot2026.util.PhoenixUtil;
-import org.team1540.robot2026.util.swerve.ModuleHWConfigs;
 
 /**
  * Module IO implementation for Talon FX drive motor controller, Talon FX turn motor controller, and
@@ -41,16 +40,12 @@ public class ModuleIOTalonFX implements ModuleIO {
     // Drive motor control requests
     private final VoltageOut driveVoltageReq = new VoltageOut(0).withUpdateFreqHz(0);
     private final VelocityVoltage driveVelocityVoltageReq = new VelocityVoltage(0.0).withUpdateFreqHz(0);
-    private final TorqueCurrentFOC driveTorqueReq = new TorqueCurrentFOC(0).withUpdateFreqHz(0);
     private final VelocityTorqueCurrentFOC driveVelocityTorqueReq =
             new VelocityTorqueCurrentFOC(0.0).withUpdateFreqHz(0);
 
     // Turn motor control requests
     private final VoltageOut turnVoltageReq = new VoltageOut(0).withUpdateFreqHz(0);
-    private final TorqueCurrentFOC turnTorqueReq = new TorqueCurrentFOC(0).withUpdateFreqHz(0);
     private final PositionVoltage turnPositionVoltageReq = new PositionVoltage(0.0).withUpdateFreqHz(0);
-    private final PositionTorqueCurrentFOC turnPositionTorqueReq =
-            new PositionTorqueCurrentFOC(0.0).withUpdateFreqHz(0);
 
     // Timestamp inputs from Phoenix thread
     private final Queue<Double> timestampQueue;
@@ -77,7 +72,7 @@ public class ModuleIOTalonFX implements ModuleIO {
     public ModuleIOTalonFX(
             SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants) {
         this.constants = constants;
-        ModuleHWConfigs hw = ModuleHWConfigs.fromModuleConstants(constants);
+        ModuleDeviceConfigs hw = ModuleDeviceConfigs.fromModuleConstants(constants);
         drive = new TalonFX(constants.DriveMotorId, CAN_BUS);
         turn = new TalonFX(constants.SteerMotorId, CAN_BUS);
         cancoder = new CANcoder(constants.EncoderId, CAN_BUS);
@@ -173,40 +168,30 @@ public class ModuleIOTalonFX implements ModuleIO {
     }
 
     @Override
-    public void setDriveOpenLoop(double input) {
-        drive.setControl(
-                switch (constants.DriveMotorClosedLoopOutput) {
-                    case Voltage -> driveVoltageReq.withOutput(input);
-                    case TorqueCurrentFOC -> driveTorqueReq.withOutput(input);
-                });
+    public void setDriveVoltage(double volts) {
+        drive.setControl(driveVoltageReq.withOutput(volts));
     }
 
     @Override
-    public void setTurnOpenLoop(double input) {
-        turn.setControl(
-                switch (constants.SteerMotorClosedLoopOutput) {
-                    case Voltage -> turnVoltageReq.withOutput(input);
-                    case TorqueCurrentFOC -> turnTorqueReq.withOutput(input);
-                });
+    public void setTurnVoltage(double volts) {
+        turn.setControl(turnVoltageReq.withOutput(volts));
     }
 
     @Override
-    public void setDriveVelocity(double velocityRadPerSec) {
-        double velocityRotPerSec = Units.radiansToRotations(velocityRadPerSec);
-        drive.setControl(
-                switch (constants.DriveMotorClosedLoopOutput) {
-                    case Voltage -> driveVelocityVoltageReq.withVelocity(velocityRotPerSec);
-                    case TorqueCurrentFOC -> driveVelocityTorqueReq.withVelocity(velocityRotPerSec);
-                });
+    public void setDriveVelocityVoltage(double velocityRadPerSec) {
+        drive.setControl(driveVelocityVoltageReq.withVelocity(Units.radiansToRotations(velocityRadPerSec)));
+    }
+
+    @Override
+    public void setDriveVelocityTorqueCurrent(double velocityRadPerSec, double ffCurrentAmps) {
+        drive.setControl(driveVelocityTorqueReq
+                .withVelocity(Units.radiansToRotations(velocityRadPerSec))
+                .withFeedForward(ffCurrentAmps));
     }
 
     @Override
     public void setTurnPosition(Rotation2d rotation) {
-        turn.setControl(
-                switch (constants.SteerMotorClosedLoopOutput) {
-                    case Voltage -> turnPositionVoltageReq.withPosition(rotation.getRotations());
-                    case TorqueCurrentFOC -> turnPositionTorqueReq.withPosition(rotation.getRotations());
-                });
+        turn.setControl(turnPositionVoltageReq.withPosition(rotation.getRotations()));
     }
 
     @Override
