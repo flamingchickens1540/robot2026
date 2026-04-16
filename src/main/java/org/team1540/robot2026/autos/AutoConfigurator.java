@@ -274,12 +274,12 @@ public class AutoConfigurator {
 
         trajectories.add(traj);
 
-        previousTrigger.onTrue(traj.spawnCmd()
-                .alongWith(intake.zeroWhileRunningCommand().andThen(intake.commandRunIntake(1.0)))
+        previousTrigger.onTrue(traj.cmd());
+        previousTrigger.onTrue(intake.zeroWhileRunningCommand()
+                .andThen(intake.commandRunIntake(1.0))
                 .withName("AutoZeroAndRunIntakeCommand"));
 
-        Trigger doneTrigger =
-                shootIndefinitely ? new Trigger(routine.loop(), () -> false) : traj.doneDelayed(shootTime.get());
+        Trigger doneTrigger = shootIndefinitely ? routine.observe(() -> false) : traj.doneDelayed(shootTime.get());
 
         // If the sweep ends rotated, run a rotation trajectory while shooting
         if (sweep.rotatedEnd && alignAtEnd) {

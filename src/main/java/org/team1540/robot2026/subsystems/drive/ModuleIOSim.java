@@ -1,6 +1,7 @@
 package org.team1540.robot2026.subsystems.drive;
 
 import static edu.wpi.first.units.Units.*;
+import static org.team1540.robot2026.subsystems.drive.DrivetrainConstants.*;
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -9,6 +10,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Voltage;
 import java.util.Arrays;
@@ -30,7 +32,12 @@ public class ModuleIOSim implements ModuleIO {
     private Voltage turnAppliedVolts = Volts.zero();
 
     private boolean driveClosedLoop;
+    private boolean driveTorqueControl;
     private boolean turnClosedLoop;
+
+    private double driveFFCurrentAmps;
+
+    private final DCMotor driveMotorModel;
 
     public ModuleIOSim(
             SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants,
@@ -40,9 +47,13 @@ public class ModuleIOSim implements ModuleIO {
                 moduleSim.useGenericMotorControllerForDrive().withCurrentLimit(Amps.of(constants.SlipCurrent));
         this.turnMotor = moduleSim.useGenericControllerForSteer().withCurrentLimit(Amps.of(120.0));
 
-        drivePID = new PIDController(0.8, 0.0, 0.0);
-        driveFF = new SimpleMotorFeedforward(0.05098, 0.83092);
+        drivePID = DRIVE_TORQUE_CONTROL ? new PIDController(35, 0.0, 0.0) : new PIDController(0.8, 0.0, 0.0);
+        driveFF = DRIVE_TORQUE_CONTROL
+                ? new SimpleMotorFeedforward(0.05098, 0.83092)
+                : new SimpleMotorFeedforward(5.0, 0.0);
         turnPID = new PIDController(75.0, 0.0, 0.0);
+
+        driveMotorModel = DCMotor.getKrakenX60Foc(1).withReduction(constants.DriveMotorGearRatio);
 
         turnPID.enableContinuousInput(-0.5, 0.5);
     }
@@ -50,9 +61,19 @@ public class ModuleIOSim implements ModuleIO {
     @Override
     public void updateInputs(ModuleIOInputs inputs) {
         if (driveClosedLoop) {
-            driveAppliedVolts = Volts.of(
-                    drivePID.calculate(moduleSim.getDriveWheelFinalSpeed().in(RotationsPerSecond))
-                            + driveFF.calculate(drivePID.getSetpoint()));
+            if (!driveTorqueControl) {
+                driveAppliedVolts = Volts.of(
+                        drivePID.calculate(moduleSim.getDriveWheelFinalSpeed().in(RotationsPerSecond))
+                                + driveFF.calculate(drivePID.getSetpoint()));
+            } else {
+                double driveSpeedRPS = moduleSim.getDriveWheelFinalSpeed().in(RotationsPerSecond);
+                double driveAppliedTorqueCurrentAmps = drivePID.calculate(driveSpeedRPS)
+                        + driveFF.calculate(drivePID.getSetpoint())
+                        + driveFFCurrentAmps;
+                driveAppliedVolts = Volts.of(driveMotorModel.getVoltage(
+                        driveMotorModel.getTorque(driveAppliedTorqueCurrentAmps),
+                        Units.rotationsToRadians(driveSpeedRPS)));
+            }
         }
         if (turnClosedLoop) {
             turnAppliedVolts = Volts.of(
@@ -71,8 +92,7 @@ public class ModuleIOSim implements ModuleIO {
         inputs.driveAppliedVolts = driveAppliedVolts.in(Volts);
         inputs.driveSupplyCurrentAmps = moduleSim.getDriveMotorSupplyCurrent().in(Amps);
         inputs.driveStatorCurrentAmps = moduleSim.getDriveMotorStatorCurrent().in(Amps);
-        inputs.driveTorqueCurrentAmps =
-                moduleSim.getDriveMotorStatorCurrent().in(Amps) * Math.signum(driveAppliedVolts.in(Volts));
+        inputs.driveTorqueCurrentAmps = moduleSim.getDriveMotorStatorCurrent().in(Amps);
 
         inputs.turnConnected = true;
         inputs.turnEncoderConnected = true;
@@ -98,7 +118,10 @@ public class ModuleIOSim implements ModuleIO {
 
     @Override
     public void setDriveVelocityTorqueCurrent(double velocityRadPerSec, double ffCurrentAmps) {
-        setDriveVelocityVoltage(velocityRadPerSec);
+        driveClosedLoop = true;
+        driveTorqueControl = true;
+        driveFFCurrentAmps = ffCurrentAmps;
+        drivePID.setSetpoint(Units.radiansToRotations(velocityRadPerSec));
     }
 
     @Override

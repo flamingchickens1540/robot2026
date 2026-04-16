@@ -10,7 +10,6 @@ import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import org.team1540.robot2026.Constants;
-import org.team1540.robot2026.Robot;
 import org.team1540.robot2026.generated.TunerConstants;
 
 public class DrivetrainConstants {
@@ -51,8 +50,7 @@ public class DrivetrainConstants {
             15.0); // rad/s^2
 
     public static final boolean DRIVE_TORQUE_CONTROL = TunerConstants.FrontLeft.DriveMotorClosedLoopOutput
-                    == SwerveModuleConstants.ClosedLoopOutputType.TorqueCurrentFOC
-            && Robot.isReal();
+            == SwerveModuleConstants.ClosedLoopOutputType.TorqueCurrentFOC;
     public static final double DRIVE_KT =
             DCMotor.getKrakenX60Foc(1).withReduction(TunerConstants.FrontLeft.DriveMotorGearRatio).KtNMPerAmp;
 

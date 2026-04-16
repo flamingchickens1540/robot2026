@@ -82,7 +82,6 @@ public class Module {
 
         // Cosine scale the velocity setpoint based on turn angle
         state.cosineScale(inputs.turnPosition);
-        wheelTorqueNM *= state.angle.minus(getTurnAngle()).getCos();
 
         // Apply setpoints
         double velocityRadPerSec = state.speedMetersPerSecond / constants.WheelRadius;

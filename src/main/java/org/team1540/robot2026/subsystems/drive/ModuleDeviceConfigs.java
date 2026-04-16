@@ -6,7 +6,6 @@ import com.ctre.phoenix6.signals.*;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.Notifier;
 
 public record ModuleDeviceConfigs(
         TalonFXConfiguration driveConfig, TalonFXConfiguration turnConfig, CANcoderConfiguration turnEncoderConfig) {

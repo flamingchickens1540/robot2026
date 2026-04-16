@@ -3,6 +3,7 @@ package org.team1540.robot2026.subsystems.drive;
 import static org.team1540.robot2026.subsystems.drive.DrivetrainConstants.*;
 
 import choreo.trajectory.SwerveSample;
+import com.ctre.phoenix6.swerve.utility.WheelForceCalculator;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.swerve.SwerveSetpoint;
@@ -66,6 +67,9 @@ public class Drivetrain extends SubsystemBase {
     private final SwerveSetpointGenerator setpointGenerator =
             new SwerveSetpointGenerator(ROBOT_CONFIG, MAX_STEER_SPEED_RAD_PER_SEC);
 
+    private final WheelForceCalculator wheelForceCalculator =
+            new WheelForceCalculator(getModuleTranslations(), Constants.ROBOT_MASS_KG, Constants.ROBOT_MOI_KGM2);
+
     private final ProfiledPIDController headingController = new ProfiledPIDController(
             rotationKP.get(),
             rotationKI.get(),
@@ -99,10 +103,7 @@ public class Drivetrain extends SubsystemBase {
         headingController.setTolerance(Math.toRadians(1.0));
         headingController.enableContinuousInput(-Math.PI, Math.PI);
 
-        lastSetpoint = new SwerveSetpoint(
-                new ChassisSpeeds(),
-                getModuleStates(),
-                new DriveFeedforwards(new double[4], new double[4], new double[4], new double[4], new double[4]));
+        lastSetpoint = new SwerveSetpoint(new ChassisSpeeds(), getModuleStates(), DriveFeedforwards.zeros(4));
 
         OdometryThread.getInstance().start();
     }
@@ -233,24 +234,76 @@ public class Drivetrain extends SubsystemBase {
 
     /** Runs the drivetrain at the given velocity */
     public void runVelocity(ChassisSpeeds velocity) {
-        runVelocity(velocity, DEFAULT_CONSTRAINTS);
+        runVelocity(velocity, null);
+    }
+
+    public void runVelocity(ChassisSpeeds velocity, double[] wheelForcesX, double[] wheelForcesY) {
+        runVelocity(velocity, null, wheelForcesX, wheelForcesY);
+    }
+
+    public void runVelocity(ChassisSpeeds velocity, PathConstraints constraints) {
+        runVelocity(velocity, constraints, null, null);
     }
 
     /** Runs the drivetrain at the given velocity */
-    public void runVelocity(ChassisSpeeds velocity, PathConstraints constraints) {
-        SwerveModuleState[] moduleSetpoints;
-        SwerveSetpoint setpoint =
-                setpointGenerator.generateSetpoint(lastSetpoint, velocity, constraints, Constants.LOOP_PERIOD_SECS, 12.0);
-        moduleSetpoints = setpoint.moduleStates();
-        lastSetpoint = setpoint;
+    public void runVelocity(
+            ChassisSpeeds velocity, PathConstraints constraints, double[] wheelForcesX, double[] wheelForcesY) {
+        boolean forcesProvided =
+                wheelForcesX != null && wheelForcesY != null && wheelForcesX.length == 4 && wheelForcesY.length == 4;
+        ChassisSpeeds discretizedSpeeds = ChassisSpeeds.discretize(velocity, Constants.LOOP_PERIOD_SECS);
 
+        SwerveModuleState[] moduleSetpoints;
+        SwerveModuleState[] unoptimizedSetpoints = kinematics.toSwerveModuleStates(discretizedSpeeds);
+        if (constraints == null) {
+            // Don't use setpoint generator
+            moduleSetpoints = unoptimizedSetpoints;
+
+            // Calculate feedforwards if not provided
+            if (!forcesProvided) {
+                WheelForceCalculator.Feedforwards ffs = wheelForceCalculator.calculate(
+                        Constants.LOOP_PERIOD_SECS, lastSetpoint.robotRelativeSpeeds(), discretizedSpeeds);
+                wheelForcesX = ffs.x_newtons;
+                wheelForcesY = ffs.y_newtons;
+            }
+
+            lastSetpoint = new SwerveSetpoint(
+                    discretizedSpeeds,
+                    moduleSetpoints,
+                    new DriveFeedforwards(new double[4], new double[4], new double[4], wheelForcesX, wheelForcesY));
+
+            Logger.recordOutput("Drivetrain/SetpointSpeeds", discretizedSpeeds);
+        } else {
+            SwerveSetpoint setpoint = setpointGenerator.generateSetpoint(
+                    lastSetpoint,
+                    velocity, // Don't discretize speeds for setpoint generator
+                    constraints,
+                    Constants.LOOP_PERIOD_SECS,
+                    12.0);
+            moduleSetpoints = setpoint.moduleStates();
+            lastSetpoint = setpoint;
+
+            if (!forcesProvided) {
+                wheelForcesX = setpoint.feedforwards().robotRelativeForcesXNewtons();
+                wheelForcesY = setpoint.feedforwards().robotRelativeForcesYNewtons();
+            }
+
+            Logger.recordOutput("Drivetrain/SetpointSpeeds", setpoint.robotRelativeSpeeds());
+        }
+
+        SwerveModuleState[] wheelTorques = new SwerveModuleState[4];
         for (int i = 0; i < 4; i++) {
-            modules[i].runSetpoint(moduleSetpoints[i]);
+            SwerveModuleState[] moduleStates = getModuleStates();
+            Rotation2d wheelAngle = moduleStates[i].angle;
+            double wheelTorqueNM = TunerConstants.FrontLeft.WheelRadius
+                    * (wheelForcesX[i] * wheelAngle.getCos() + wheelForcesY[i] * wheelAngle.getSin());
+            wheelTorques[i] = new SwerveModuleState(wheelTorqueNM, wheelAngle);
+
+            modules[i].runSetpoint(moduleSetpoints[i], wheelTorqueNM);
         }
         Logger.recordOutput("Drivetrain/RequestedSpeeds", velocity);
-        Logger.recordOutput("Drivetrain/SetpointSpeeds", setpoint.robotRelativeSpeeds());
-        Logger.recordOutput("Drivetrain/SwerveStates/UnoptimizedSetpoints", kinematics.toSwerveModuleStates(velocity));
+        Logger.recordOutput("Drivetrain/SwerveStates/UnoptimizedSetpoints", unoptimizedSetpoints);
         Logger.recordOutput("Drivetrain/SwerveStates/Setpoints", moduleSetpoints);
+        Logger.recordOutput("Drivetrain/SwerveStates/ModuleTorques", wheelTorques);
     }
 
     @AutoLogOutput(key = "Drivetrain/SkidDetection/IsSkidding")
@@ -286,7 +339,22 @@ public class Drivetrain extends SubsystemBase {
     /** Runs the drivetrain such that it follows the given trajectory sample */
     public void followTrajectory(SwerveSample trajectorySample) {
         RobotState.getInstance().setTrajectoryTarget(trajectorySample.getPose());
-        runVelocity(trajectoryController.calculate(RobotState.getInstance().getEstimatedPose(), trajectorySample));
+
+        double[] forcesX = trajectorySample.moduleForcesX();
+        double[] forcesY = trajectorySample.moduleForcesY();
+        for (int i = 0; i < 4; i++) {
+            Translation2d forceVector = new Translation2d(
+                            trajectorySample.moduleForcesX()[i],
+                            trajectorySample.moduleForcesY()[i])
+                    .rotateBy(Rotation2d.fromRadians(-trajectorySample.heading));
+            forcesX[i] = forceVector.getX();
+            forcesY[i] = forceVector.getY();
+        }
+
+        runVelocity(
+                trajectoryController.calculate(RobotState.getInstance().getEstimatedPose(), trajectorySample),
+                forcesX,
+                forcesY);
     }
 
     /** Align all modules forward and runs the drive at the given open-loop input for FF characterization*/
