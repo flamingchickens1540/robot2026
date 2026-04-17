@@ -128,12 +128,7 @@ public class Robot extends LoggedRobot {
         RobotState.getInstance().getShuffleAimingParameters();
 
         // Choreo warmup
-        CommandScheduler.getInstance()
-                .schedule(robotContainer
-                        .autoFactory
-                        .trajectoryCmd("Sprint")
-                        .ignoringDisable(true)
-                        .until(this::isEnabled));
+        robotContainer.autoFactory.warmupCmd();
     }
 
     /** This function is called periodically during all modes. */

@@ -163,7 +163,7 @@ public class RobotContainer {
                 () -> shootCmd.isScheduled() && robotState.getTargetingMode() == RobotState.TargetingMode.HUB);
         drivetrain.setDefaultCommand(
                 drivetrain.teleopDriveCommand(driver.driveX, driver.driveY, driver.driveRotation, rateLimitActive));
-        driver.driveXMode.onTrue(drivetrain.runOnce(drivetrain::stopWithX).withName("DriveXMode"));
+        driver.driveXMode.whileTrue(drivetrain.run(drivetrain::stopWithX).withName("DriveXMode"));
         driver.pointMode
                 .and(intakeCmd::isScheduled)
                 .whileTrue(drivetrain.teleopDrivePointCommand(
