@@ -3,7 +3,10 @@ package org.team1540.robot2026.subsystems.turret;
 import static org.team1540.robot2026.subsystems.turret.TurretConstants.*;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -12,11 +15,13 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import java.util.List;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.Constants;
+import org.team1540.robot2026.FieldConstants;
 import org.team1540.robot2026.MechanismVisualizer;
 import org.team1540.robot2026.RobotState;
 import org.team1540.robot2026.util.logging.LoggedTracer;
@@ -68,10 +73,7 @@ public class Turret extends SubsystemBase {
         this.io = turretIO;
         hasInstance = true;
 
-        setDefaultCommand(commandToSetpoint(
-                () -> RobotState.getInstance().getAimingParameters().turretAngle(),
-                () -> RobotState.getInstance().getAimingParameters().turretVelocityRadPerSec(),
-                true));
+        setDefaultCommand(trackNearestHubCommand());
 
         CommandScheduler.getInstance().schedule(autoZeroOnStartupCommand());
     }
@@ -234,6 +236,42 @@ public class Turret extends SubsystemBase {
                                 velocityRadPerSec.getAsDouble()),
                         this::stop)
                 .withName("TurretSetpointCommand");
+    }
+
+    public Command trackNearestHubCommand() {
+        Supplier<Translation2d> nearestHub = () -> {
+            Pose2d pose = RobotState.getInstance().getTurretPose();
+            return pose.getTranslation()
+                    .nearest(List.of(
+                            FieldConstants.Hub.topCenterPoint.toTranslation2d(),
+                            FieldConstants.Hub.oppTopCenterPoint.toTranslation2d()));
+        };
+        return commandToSetpoint(
+                () -> nearestHub
+                        .get()
+                        .minus(RobotState.getInstance().getTurretPose().getTranslation())
+                        .getAngle(),
+                () -> {
+                    Translation2d target = nearestHub.get();
+                    Pose2d pose = RobotState.getInstance().getTurretPose();
+                    ChassisSpeeds robotVelocity = RobotState.getInstance().getFieldRelativeVelocity();
+                    Translation2d turretVelocity = new Translation2d(
+                                    robotVelocity.vxMetersPerSecond, robotVelocity.vyMetersPerSecond)
+                            .plus(new Translation2d(
+                                    robotVelocity.omegaRadiansPerSecond
+                                            * ROBOT_TO_TURRET_2D
+                                                    .getTranslation()
+                                                    .getNorm(),
+                                    pose.getRotation().rotateBy(Rotation2d.kCW_90deg)));
+                    double targetDistance = pose.getTranslation().getDistance(target);
+
+                    return -target.minus(pose.getTranslation())
+                                            .rotateBy(Rotation2d.kCCW_90deg)
+                                            .dot(turretVelocity)
+                                    / (targetDistance * targetDistance)
+                            - robotVelocity.omegaRadiansPerSecond;
+                },
+                true);
     }
 
     public Command zeroCommand() {
