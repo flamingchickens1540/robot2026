@@ -22,10 +22,10 @@ public class HoodConstants {
     public static final double KD = 0.0;
     public static final double KS = 0.0;
     public static final double KV = 0.0;
-    public static final double KG = 0.0;
+    public static final double KG = 0.25;
 
     public static final double CRUISE_VELOCITY_RPS = 1.5;
-    public static final double MAX_ACCELERATION_RPS2 = 6.0;
+    public static final double MAX_ACCELERATION_RPS2 = 30;
     public static final double JERK_RPS3 = 670.0;
 
     public static final double LENGTH_METERS = Units.inchesToMeters(10.0);
