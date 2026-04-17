@@ -12,10 +12,10 @@ public class ShooterConstants {
     public static final double VOLTAGE_KS = 0.30890533875168136;
     public static final double VOLTAGE_KV = 0.12009058138607204;
 
-    public static final double TORQUE_KP = 999999.67; // Bang-bang torque control
+    public static final double TORQUE_KP = 6767.67; // Bang-bang torque control
     public static final double TORQUE_KI = 0.0;
     public static final double TORQUE_KD = 0.0;
-    public static final double TORQUE_KS = 5.8;
+    public static final double TORQUE_KS = 0.0;
     public static final double TORQUE_KV = 0.0;
 
     public static final boolean TORQUE_CONTROL = false;
