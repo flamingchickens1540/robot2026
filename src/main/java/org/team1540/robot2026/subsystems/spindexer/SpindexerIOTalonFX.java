@@ -60,6 +60,7 @@ public class SpindexerIOTalonFX implements SpindexerIO {
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
         feederMotor1.getConfigurator().apply(config);
+        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         feederMotor2.getConfigurator().apply(config);
 
         BaseStatusSignal.setUpdateFrequencyForAll(
