@@ -250,6 +250,8 @@ public class Drivetrain extends SubsystemBase {
     /** Runs the drivetrain at the given velocity */
     public void runVelocity(
             ChassisSpeeds velocity, PathConstraints constraints, double[] wheelForcesX, double[] wheelForcesY) {
+        LoggedTracer.reset();
+
         boolean forcesProvided =
                 wheelForcesX != null && wheelForcesY != null && wheelForcesX.length == 4 && wheelForcesY.length == 4;
         ChassisSpeeds discretizedSpeeds = ChassisSpeeds.discretize(velocity, Constants.LOOP_PERIOD_SECS);
@@ -306,6 +308,8 @@ public class Drivetrain extends SubsystemBase {
         Logger.recordOutput("Drivetrain/SwerveStates/UnoptimizedSetpoints", unoptimizedSetpoints);
         Logger.recordOutput("Drivetrain/SwerveStates/Setpoints", moduleSetpoints);
         Logger.recordOutput("Drivetrain/SwerveStates/ModuleTorques", wheelTorques);
+
+        LoggedTracer.record("SwerveSetpointCalculation");
     }
 
     @AutoLogOutput(key = "Drivetrain/SkidDetection/IsSkidding")
