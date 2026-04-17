@@ -26,10 +26,10 @@ public class AprilTagVisionConstants {
             Units.inchesToMeters(8.137),
             new Rotation3d(0.0, Math.toRadians(-30.0), Math.toRadians(-110.0)));
 
-    public static final double TURRET_XY_STD_DEV_COEFF = 0.15;
+    public static final double TURRET_XY_STD_DEV_COEFF = 0.10;
     public static final double TURRET_ROT_STD_DEV_COEFF = 0.30;
 
-    public static final double XY_STD_DEV_COEFF = 0.25;
+    public static final double XY_STD_DEV_COEFF = 0.10;
     public static final double ROT_STD_DEV_COEFF = 0.25;
 
     public static final double MIN_ACCEPTED_NUM_TAGS = 1;

@@ -1,5 +1,7 @@
 package org.team1540.robot2026.subsystems.shooter;
 
+import static org.team1540.robot2026.subsystems.shooter.ShooterConstants.*;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.wpilibj.Alert;
@@ -14,8 +16,6 @@ import org.team1540.robot2026.Constants;
 import org.team1540.robot2026.SimState;
 import org.team1540.robot2026.util.logging.LoggedTracer;
 import org.team1540.robot2026.util.logging.LoggedTunableNumber;
-
-import static org.team1540.robot2026.subsystems.shooter.ShooterConstants.*;
 
 public class Shooter extends SubsystemBase {
     private static boolean hasInstance = false;
@@ -72,7 +72,8 @@ public class Shooter extends SubsystemBase {
         if (TORQUE_CONTROL) {
             LoggedTunableNumber.ifChanged(
                     hashCode(),
-                    () -> shooterIO.configPID(torqueKP.get(), torqueKI.get(), torqueKD.get(), torqueKS.get(), torqueKV.get()),
+                    () -> shooterIO.configPID(
+                            torqueKP.get(), torqueKI.get(), torqueKD.get(), torqueKS.get(), torqueKV.get()),
                     torqueKP,
                     torqueKI,
                     torqueKD,
@@ -81,7 +82,8 @@ public class Shooter extends SubsystemBase {
         } else {
             LoggedTunableNumber.ifChanged(
                     hashCode(),
-                    () -> shooterIO.configPID(voltageKP.get(), voltageKI.get(), voltageKD.get(), voltageKS.get(), voltageKV.get()),
+                    () -> shooterIO.configPID(
+                            voltageKP.get(), voltageKI.get(), voltageKD.get(), voltageKS.get(), voltageKV.get()),
                     voltageKP,
                     voltageKI,
                     voltageKD,

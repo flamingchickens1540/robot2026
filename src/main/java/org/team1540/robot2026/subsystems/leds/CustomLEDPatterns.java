@@ -10,7 +10,6 @@ import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.LEDPattern;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.util.Color;
-
 import java.util.Map;
 import java.util.function.DoubleSupplier;
 import org.team1540.robot2026.RobotState;
@@ -62,13 +61,16 @@ public class CustomLEDPatterns {
     }
 
     public static LEDPattern transFlag() {
-        return LEDPattern.steps(
-                Map.of(
-                        0, new Color(91, 206, 250),
-                        0.2, new Color(245, 169, 184),
-                        0.4, Color.kWhite,
-                        0.6, new Color(245, 169, 184),
-                        0.8, new Color(91, 206, 250)
-                ));
+        return LEDPattern.steps(Map.of(
+                0,
+                new Color(91, 206, 250),
+                0.2,
+                new Color(245, 169, 184),
+                0.4,
+                Color.kWhite,
+                0.6,
+                new Color(245, 169, 184),
+                0.8,
+                new Color(91, 206, 250)));
     }
 }
