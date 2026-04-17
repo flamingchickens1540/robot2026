@@ -284,7 +284,7 @@ public class RobotContainer {
             if (!DriverStation.isDSAttached())
                 return LEDPattern.solid(Color.kWhite).breathe(Seconds.of(1.5));
             else if (!turret.isZeroed()) return CustomLEDPatterns.strobe(Color.kRed);
-            return CustomLEDPatterns.movingRainbow(Hertz.of(0.5));
+            return CustomLEDPatterns.transFlag().scrollAtRelativeSpeed(Hertz.of(0.5));
         };
         Supplier<LEDPattern> teleopPattern = () -> {
             if (turretLockedMode) return CustomLEDPatterns.strobe(Color.kRed);
@@ -305,7 +305,7 @@ public class RobotContainer {
 
         new Trigger(() -> !FeedingCommands.shouldFeed(turret, hood, manualFeedOverride) && shootCmd.isScheduled())
                 .whileTrue(leds.viewFull.commandShowPattern(CustomLEDPatterns.strobe(Color.kOrange)));
-        MatchTriggers.timeRemaining(30)
+        MatchTriggers.endgame()
                 .onTrue(leds.viewFull
                         .commandShowPattern(CustomLEDPatterns.strobe(Color.kWhite))
                         .withTimeout(1.0));
