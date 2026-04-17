@@ -187,6 +187,8 @@ public class Drivetrain extends SubsystemBase {
                 module.stop();
             }
 
+            lastSetpoint = new SwerveSetpoint(new ChassisSpeeds(), getModuleStates(), DriveFeedforwards.zeros(4));
+
             // Log empty module setpoints
             Logger.recordOutput(
                     "Drivetrain/SwerveStates/Setpoints",

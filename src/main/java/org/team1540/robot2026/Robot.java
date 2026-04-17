@@ -1,12 +1,16 @@
 package org.team1540.robot2026;
 
+import choreo.auto.AutoFactory;
 import com.ctre.phoenix6.SignalLogger;
+import edu.wpi.first.hal.AllianceStationID;
 import edu.wpi.first.math.MathShared;
 import edu.wpi.first.math.MathSharedStore;
 import edu.wpi.first.math.MathUsageId;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Threads;
+import edu.wpi.first.wpilibj.simulation.DriverStationSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import org.littletonrobotics.junction.*;
@@ -119,6 +123,11 @@ public class Robot extends LoggedRobot {
 
         RobotController.setBrownoutVoltage(6.0);
 
+        if (Constants.CURRENT_MODE == Constants.Mode.SIM) {
+            DriverStationSim.setAllianceStationId(AllianceStationID.Blue1);
+            DriverStationSim.notifyNewData();
+        }
+
         // Instantiate our RobotContainer. This will perform all our button bindings,
         // and put our autonomous chooser on the dashboard.
         robotContainer = new RobotContainer();
@@ -128,7 +137,13 @@ public class Robot extends LoggedRobot {
         RobotState.getInstance().getShuffleAimingParameters();
 
         // Choreo warmup
-        robotContainer.autoFactory.warmupCmd();
+        CommandScheduler.getInstance()
+                .schedule(
+                        new AutoFactory(() -> Pose2d.kZero, pose -> {}, sample -> {}, false, robotContainer.drivetrain)
+                                .trajectoryCmd("Sprint")
+                                .ignoringDisable(true)
+                                .until(this::isEnabled)
+                                .withName("ChoreoWarmup"));
     }
 
     /** This function is called periodically during all modes. */
