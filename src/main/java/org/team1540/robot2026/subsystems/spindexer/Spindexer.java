@@ -28,8 +28,7 @@ public class Spindexer extends SubsystemBase {
 
     private int numBallsCounted = 0;
     private double lastLaserCanMeasurementMM;
-    private double timeStampLast = 0;
-    private double timeStampLastLast = Double.MAX_VALUE;
+    private double timeStampLast = Double.MAX_VALUE;
     private final LinearFilter bpsFilter = LinearFilter.movingAverage(120);
 
     private Spindexer(SpindexerIO io, SpindexerSensorIO sensorIO) {
@@ -41,26 +40,21 @@ public class Spindexer extends SubsystemBase {
 
     private void calculateBPS() {
         double threshold = 40;
-
-        if (timeStampLast - timeStampLastLast != 0) { // just to be extra careful
-            bpsFilter.calculate(1 / (timeStampLast - timeStampLastLast));
-        } else bpsFilter.calculate(0);
-
-        Logger.recordOutput("RealOutputs/Spindexer/balls", numBallsCounted);
-        Logger.recordOutput(
-                "RealOutputs/Spindexer/bps3",
-                bpsFilter.lastValue()); // must do this first to prevent a divide by 0 zero error
-
         if (!(lastLaserCanMeasurementMM <= threshold)
                 && sensorInputs.distanceMM
                         <= threshold) { // could have issues skipping balls if ball goes fully through without getting
             // counted
-
+            if (Timer.getTimestamp() - timeStampLast != 0) { // just to be extra careful
+                bpsFilter.calculate(1 / (Timer.getTimestamp() - timeStampLast));
+            } else bpsFilter.calculate(0); // ensuring no divide by zero when inputting
             numBallsCounted++;
-            timeStampLastLast = timeStampLast;
             timeStampLast = Timer.getTimestamp();
         }
         lastLaserCanMeasurementMM = sensorInputs.distanceMM;
+        Logger.recordOutput("RealOutputs/Spindexer/balls", numBallsCounted);
+        Logger.recordOutput(
+                "RealOutputs/Spindexer/bps3",
+                bpsFilter.lastValue());
     }
 
     @Override
