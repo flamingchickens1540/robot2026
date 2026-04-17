@@ -69,15 +69,15 @@ public class TurretIOTalonFX implements TurretIO {
         config.MotionMagic.MotionMagicCruiseVelocity = CRUISE_VELOCITY_RPS;
         config.MotionMagic.MotionMagicAcceleration = MAX_ACCEL_RPS2;
 
-        motor.getConfigurator().apply(config);
+        PhoenixUtil.tryUntilOk(5, () -> motor.getConfigurator().apply(config));
 
         CANcoderConfiguration configEncoder = new CANcoderConfiguration();
         configEncoder.MagnetSensor.MagnetOffset = SMALL_ENCODER_MAGNET_SENSOR_OFFSET;
         configEncoder.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
         configEncoder.MagnetSensor.AbsoluteSensorDiscontinuityPoint = 1;
-        smallCANcoder.getConfigurator().apply(configEncoder);
+        PhoenixUtil.tryUntilOk(5, () -> smallCANcoder.getConfigurator().apply(configEncoder));
         configEncoder.MagnetSensor.MagnetOffset = BIG_ENCODER_MAGNET_SENSOR_OFFSET;
-        bigCANcoder.getConfigurator().apply(configEncoder);
+        PhoenixUtil.tryUntilOk(5, () -> bigCANcoder.getConfigurator().apply(configEncoder));
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 250, position, velocity); // Higher update rate since these are used for vision pose estimation
@@ -147,7 +147,7 @@ public class TurretIOTalonFX implements TurretIO {
         configs.kP = kP;
         configs.kI = kI;
         configs.kD = kD;
-        motor.getConfigurator().apply(configs);
+        PhoenixUtil.tryUntilOk(5, () -> motor.getConfigurator().apply(configs));
     }
 
     @Override
@@ -156,6 +156,6 @@ public class TurretIOTalonFX implements TurretIO {
         motor.getConfigurator().refresh(configs);
         configs.kS = kS;
         configs.kV = kV;
-        motor.getConfigurator().apply(configs);
+        PhoenixUtil.tryUntilOk(5, () -> motor.getConfigurator().apply(configs));
     }
 }

@@ -13,6 +13,7 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.*;
+import org.team1540.robot2026.util.PhoenixUtil;
 
 public class HoodIOTalonFX implements HoodIO {
     private final TalonFX motor = new TalonFX(MOTOR_ID);
@@ -54,7 +55,7 @@ public class HoodIOTalonFX implements HoodIO {
         motorConfig.MotionMagic.MotionMagicAcceleration = MAX_ACCELERATION_RPS2;
         motorConfig.MotionMagic.MotionMagicJerk = JERK_RPS3;
 
-        motor.getConfigurator().apply(motorConfig);
+        PhoenixUtil.tryUntilOk(5, () -> motor.getConfigurator().apply(motorConfig));
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 50.0, position, velocity, voltage, supplyCurrent, statorCurrent, temp);
@@ -94,7 +95,7 @@ public class HoodIOTalonFX implements HoodIO {
     @Override
     public void setBrakeMode(boolean enabled) {
         motorConfig.MotorOutput.NeutralMode = enabled ? NeutralModeValue.Brake : NeutralModeValue.Coast;
-        motor.getConfigurator().apply(motorConfig);
+        PhoenixUtil.tryUntilOk(5, () -> motor.getConfigurator().apply(motorConfig));
     }
 
     @Override
@@ -105,6 +106,6 @@ public class HoodIOTalonFX implements HoodIO {
         motorConfig.Slot0.kS = kS;
         motorConfig.Slot0.kV = kV;
         motorConfig.Slot0.kG = kG;
-        motor.getConfigurator().apply(motorConfig);
+        PhoenixUtil.tryUntilOk(5, () -> motor.getConfigurator().apply(motorConfig));
     }
 }

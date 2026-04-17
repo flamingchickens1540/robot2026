@@ -13,6 +13,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
+import org.team1540.robot2026.util.PhoenixUtil;
 
 public class SpindexerIOTalonFX implements SpindexerIO {
     private final TalonFX spinMotor1 = new TalonFX(SPIN_MOTOR_ID);
@@ -53,15 +54,15 @@ public class SpindexerIOTalonFX implements SpindexerIO {
         config.CurrentLimits.StatorCurrentLimitEnable = true;
         config.CurrentLimits.StatorCurrentLimit = 60.0;
 
-        spinMotor1.getConfigurator().apply(config);
+        PhoenixUtil.tryUntilOk(5, () -> spinMotor1.getConfigurator().apply(config));
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         config.Feedback.SensorToMechanismRatio = FEEDER_GEAR_RATIO;
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
-        feederMotor1.getConfigurator().apply(config);
+        PhoenixUtil.tryUntilOk(5, () -> feederMotor1.getConfigurator().apply(config));
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        feederMotor2.getConfigurator().apply(config);
+        PhoenixUtil.tryUntilOk(5, () -> feederMotor2.getConfigurator().apply(config));
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 50.0,

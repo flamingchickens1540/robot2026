@@ -17,6 +17,7 @@ import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.*;
+import org.team1540.robot2026.util.PhoenixUtil;
 
 public class IntakeIOTalonFX implements IntakeIO {
 
@@ -84,8 +85,8 @@ public class IntakeIOTalonFX implements IntakeIO {
         intakeTalonFXConfig.Feedback.SensorToMechanismRatio = SPIN_GEAR_RATIO;
         intakeTalonFXConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
-        leftSpinMotor.getConfigurator().apply(intakeTalonFXConfig);
-        rightSpinMotor.getConfigurator().apply(intakeTalonFXConfig);
+        PhoenixUtil.tryUntilOk(5, () -> leftSpinMotor.getConfigurator().apply(intakeTalonFXConfig));
+        PhoenixUtil.tryUntilOk(5, () -> rightSpinMotor.getConfigurator().apply(intakeTalonFXConfig));
         leftSpinMotor.setControl(new Follower(rightSpinMotor.getDeviceID(), MotorAlignmentValue.Opposed));
 
         BaseStatusSignal.setUpdateFrequencyForAll(
@@ -180,7 +181,7 @@ public class IntakeIOTalonFX implements IntakeIO {
         configs.kP = kP;
         configs.kI = kI;
         configs.kD = kD;
-        pivotMotor.getConfigurator().apply(configs);
+        PhoenixUtil.tryUntilOk(5, () -> pivotMotor.getConfigurator().apply(configs));
     }
 
     @Override
@@ -190,6 +191,6 @@ public class IntakeIOTalonFX implements IntakeIO {
         configs.kS = kS;
         configs.kV = kV;
         configs.kA = kG;
-        pivotMotor.getConfigurator().apply(configs);
+        PhoenixUtil.tryUntilOk(5, () -> pivotMotor.getConfigurator().apply(configs));
     }
 }

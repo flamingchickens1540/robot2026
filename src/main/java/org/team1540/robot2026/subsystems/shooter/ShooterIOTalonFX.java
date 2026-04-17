@@ -16,6 +16,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
+import org.team1540.robot2026.util.PhoenixUtil;
 
 import static org.team1540.robot2026.subsystems.shooter.ShooterConstants.*;
 
@@ -60,17 +61,17 @@ public class ShooterIOTalonFX implements ShooterIO {
             config.Slot0.kV = VOLTAGE_KV;
         }
 
+        config.TorqueCurrent.PeakForwardTorqueCurrent = 120.0;
+        config.TorqueCurrent.PeakReverseTorqueCurrent = -2.54;
+
         config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        rightMotor.getConfigurator().apply(config);
+        PhoenixUtil.tryUntilOk(5, () -> rightMotor.getConfigurator().apply(config));
 
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-        leftMotor.getConfigurator().apply(config);
-
-        config.TorqueCurrent.PeakForwardTorqueCurrent = 120.0;
-        config.TorqueCurrent.PeakReverseTorqueCurrent = -2.54;
+        PhoenixUtil.tryUntilOk(5, () -> leftMotor.getConfigurator().apply(config));
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 50,
@@ -141,7 +142,7 @@ public class ShooterIOTalonFX implements ShooterIO {
         pidConfigs.kD = kD;
         pidConfigs.kS = kS;
         pidConfigs.kV = kV;
-        rightMotor.getConfigurator().apply(pidConfigs);
-        leftMotor.getConfigurator().apply(pidConfigs);
+        PhoenixUtil.tryUntilOk(5, () -> rightMotor.getConfigurator().apply(pidConfigs));
+        PhoenixUtil.tryUntilOk(5, () -> leftMotor.getConfigurator().apply(pidConfigs));
     }
 }
