@@ -23,9 +23,9 @@ public record ModuleDeviceConfigs(
         driveConfig.CurrentLimits.StatorCurrentLimit = constants.SlipCurrent;
         driveConfig.CurrentLimits.StatorCurrentLimitEnable = true;
 
-        driveConfig.CurrentLimits.SupplyCurrentLimit = 70;
+        driveConfig.CurrentLimits.SupplyCurrentLimit = 60;
         driveConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
-        driveConfig.CurrentLimits.SupplyCurrentLowerTime = 1.0;
+        driveConfig.CurrentLimits.SupplyCurrentLowerTime = 0.1;
         driveConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         driveConfig.Slot0 = constants.DriveMotorGains;
 

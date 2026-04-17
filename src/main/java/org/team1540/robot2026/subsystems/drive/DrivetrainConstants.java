@@ -46,7 +46,7 @@ public class DrivetrainConstants {
     public static final PathConstraints LIMITED_CONSTRAINTS = new PathConstraints(
             MAX_LINEAR_SPEED_MPS,
             5.0, // m/s^2
-            MAX_ANGULAR_SPEED_RAD_PER_SEC / 2.0,
+            MAX_ANGULAR_SPEED_RAD_PER_SEC,
             15.0); // rad/s^2
 
     public static final boolean DRIVE_TORQUE_CONTROL = TunerConstants.FrontLeft.DriveMotorClosedLoopOutput
