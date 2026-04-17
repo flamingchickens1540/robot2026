@@ -5,6 +5,7 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -16,37 +17,50 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
 
+import static org.team1540.robot2026.subsystems.shooter.ShooterConstants.*;
+
 public class ShooterIOTalonFX implements ShooterIO {
-    private final TalonFX rightMotor = new TalonFX(ShooterConstants.RIGHT_ID);
-    private final TalonFX leftMotor = new TalonFX(ShooterConstants.LEFT_ID);
+    private final TalonFX rightMotor = new TalonFX(RIGHT_ID);
+    private final TalonFX leftMotor = new TalonFX(LEFT_ID);
 
     private final StatusSignal<AngularVelocity> leftVelocity = leftMotor.getVelocity();
     private final StatusSignal<Voltage> leftAppliedVoltage = leftMotor.getMotorVoltage();
+    private final StatusSignal<Current> leftTorqueCurrent = leftMotor.getTorqueCurrent();
     private final StatusSignal<Current> leftStatorCurrent = leftMotor.getStatorCurrent();
     private final StatusSignal<Current> leftSupplyCurrent = leftMotor.getSupplyCurrent();
     private final StatusSignal<Temperature> leftTemperature = leftMotor.getDeviceTemp();
 
     private final StatusSignal<AngularVelocity> rightVelocity = rightMotor.getVelocity();
     private final StatusSignal<Voltage> rightAppliedVoltage = rightMotor.getMotorVoltage();
+    private final StatusSignal<Current> rightTorqueCurrent = rightMotor.getTorqueCurrent();
     private final StatusSignal<Current> rightStatorCurrent = rightMotor.getStatorCurrent();
     private final StatusSignal<Current> rightSupplyCurrent = rightMotor.getSupplyCurrent();
     private final StatusSignal<Temperature> rightTemperature = rightMotor.getDeviceTemp();
 
-    private final VelocityVoltage velocityCtrlReq =
+    private final VelocityVoltage velocityVoltageCtrlReq =
             new VelocityVoltage(0).withEnableFOC(true).withSlot(0).withUpdateFreqHz(0);
+    private final VelocityTorqueCurrentFOC velocityTorqueCtrlReq = new VelocityTorqueCurrentFOC(0).withUpdateFreqHz(0);
     private final VoltageOut voltageCtrlReq =
             new VoltageOut(0).withEnableFOC(true).withUpdateFreqHz(0);
 
     public ShooterIOTalonFX() {
         TalonFXConfiguration config = new TalonFXConfiguration();
 
-        config.Slot0.kP = ShooterConstants.KP;
-        config.Slot0.kI = ShooterConstants.KI;
-        config.Slot0.kD = ShooterConstants.KD;
-        config.Slot0.kS = ShooterConstants.KS;
-        config.Slot0.kV = ShooterConstants.KV;
+        if (TORQUE_CONTROL) {
+            config.Slot0.kP = TORQUE_KP;
+            config.Slot0.kI = TORQUE_KI;
+            config.Slot0.kD = TORQUE_KD;
+            config.Slot0.kS = TORQUE_KS;
+            config.Slot0.kV = TORQUE_KV;
+        } else {
+            config.Slot0.kP = VOLTAGE_KP;
+            config.Slot0.kI = VOLTAGE_KI;
+            config.Slot0.kD = VOLTAGE_KD;
+            config.Slot0.kS = VOLTAGE_KS;
+            config.Slot0.kV = VOLTAGE_KV;
+        }
 
-        config.Feedback.SensorToMechanismRatio = ShooterConstants.GEAR_RATIO;
+        config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
@@ -55,54 +69,66 @@ public class ShooterIOTalonFX implements ShooterIO {
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         leftMotor.getConfigurator().apply(config);
 
-        rightAppliedVoltage.setUpdateFrequency(100); // Leader motor voltage updates faster for better follower tracking
+        config.TorqueCurrent.PeakForwardTorqueCurrent = 120.0;
+        config.TorqueCurrent.PeakReverseTorqueCurrent = -2.54;
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 50,
                 leftVelocity,
                 leftAppliedVoltage,
+                leftTorqueCurrent,
                 leftStatorCurrent,
                 leftSupplyCurrent,
                 leftTemperature,
-                rightVelocity,
                 rightAppliedVoltage,
+                rightTorqueCurrent,
+                rightVelocity,
                 rightStatorCurrent,
                 rightSupplyCurrent,
                 rightTemperature);
 
-        leftMotor.setControl(new Follower(ShooterConstants.RIGHT_ID, MotorAlignmentValue.Opposed));
-
         rightMotor.optimizeBusUtilization();
+        leftMotor.optimizeBusUtilization();
     }
 
     @Override
     public void updateInputs(ShooterIOInputs inputs) {
         inputs.leftMotorConnected = BaseStatusSignal.refreshAll(
-                        leftVelocity, leftAppliedVoltage, leftStatorCurrent, leftSupplyCurrent, leftTemperature)
+                        leftVelocity, leftAppliedVoltage, leftTorqueCurrent, leftStatorCurrent, leftSupplyCurrent, leftTemperature)
                 .isOK();
         inputs.leftVelocityRPM = leftVelocity.getValueAsDouble() * 60;
         inputs.leftAppliedVolts = leftAppliedVoltage.getValueAsDouble();
+        inputs.leftTorqueCurrentAmps = leftTorqueCurrent.getValueAsDouble();
         inputs.leftStatorCurrentAmps = leftStatorCurrent.getValueAsDouble();
         inputs.leftTempCelsius = leftTemperature.getValueAsDouble();
         inputs.leftSupplyCurrentAmps = leftSupplyCurrent.getValueAsDouble();
 
         inputs.rightMotorConnected = BaseStatusSignal.refreshAll(
-                        rightVelocity, rightAppliedVoltage, rightStatorCurrent, rightSupplyCurrent, rightTemperature)
+                        rightVelocity, rightAppliedVoltage, rightTorqueCurrent, rightStatorCurrent, rightSupplyCurrent, rightTemperature)
                 .isOK();
         inputs.rightVelocityRPM = rightVelocity.getValueAsDouble() * 60;
         inputs.rightAppliedVolts = rightAppliedVoltage.getValueAsDouble();
+        inputs.rightTorqueCurrentAmps = rightTorqueCurrent.getValueAsDouble();
         inputs.rightStatorCurrentAmps = rightStatorCurrent.getValueAsDouble();
         inputs.rightTempCelsius = rightTemperature.getValueAsDouble();
         inputs.rightSupplyCurrentAmps = rightSupplyCurrent.getValueAsDouble();
     }
 
     @Override
-    public void setSpeed(double rpm) {
-        rightMotor.setControl(velocityCtrlReq.withVelocity(rpm / 60));
+    public void runVelocityVoltage(double rpm) {
+        leftMotor.setControl(velocityVoltageCtrlReq.withVelocity(rpm / 60));
+        rightMotor.setControl(velocityVoltageCtrlReq.withVelocity(rpm / 60));
+    }
+
+    @Override
+    public void runVelocityTorque(double rpm) {
+        leftMotor.setControl(velocityTorqueCtrlReq.withVelocity(rpm / 60));
+        rightMotor.setControl(velocityTorqueCtrlReq.withVelocity(rpm / 60));
     }
 
     @Override
     public void setVoltage(double volts) {
+        leftMotor.setControl(voltageCtrlReq.withOutput(volts));
         rightMotor.setControl(voltageCtrlReq.withOutput(volts));
     }
 
@@ -116,5 +142,6 @@ public class ShooterIOTalonFX implements ShooterIO {
         pidConfigs.kS = kS;
         pidConfigs.kV = kV;
         rightMotor.getConfigurator().apply(pidConfigs);
+        leftMotor.getConfigurator().apply(pidConfigs);
     }
 }

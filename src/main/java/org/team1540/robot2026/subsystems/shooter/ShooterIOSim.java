@@ -17,7 +17,7 @@ public class ShooterIOSim implements ShooterIO {
             LinearSystemId.createDCMotorSystem(DCMotor.getKrakenX60Foc(2), MOI_KGM2, GEAR_RATIO),
             DCMotor.getKrakenX60Foc(2));
 
-    private final PIDController pid = new PIDController(KP, KI, KD);
+    private final PIDController pid = new PIDController(VOLTAGE_KP, VOLTAGE_KI, VOLTAGE_KD);
     private final SimpleMotorFeedforward ff = new SimpleMotorFeedforward(0.0, 0.12363);
 
     private double voltageRequest = 0.0;
@@ -64,12 +64,16 @@ public class ShooterIOSim implements ShooterIO {
     }
 
     @Override
-    public void setSpeed(double rpm) {
+    public void runVelocityVoltage(double rpm) {
         if (!isClosedLoop) {
             pid.reset();
         }
         pid.setSetpoint(rpm / 60.0);
         isClosedLoop = true;
+    }
+
+    public void runVelocityTorque(double rpm) {
+        runVelocityVoltage(rpm);
     }
 
     @Override

@@ -15,14 +15,22 @@ import org.team1540.robot2026.SimState;
 import org.team1540.robot2026.util.logging.LoggedTracer;
 import org.team1540.robot2026.util.logging.LoggedTunableNumber;
 
+import static org.team1540.robot2026.subsystems.shooter.ShooterConstants.*;
+
 public class Shooter extends SubsystemBase {
     private static boolean hasInstance = false;
 
-    private final LoggedTunableNumber kP = new LoggedTunableNumber("Shooter/kP", ShooterConstants.KP);
-    private final LoggedTunableNumber kI = new LoggedTunableNumber("Shooter/kI", ShooterConstants.KI);
-    private final LoggedTunableNumber kD = new LoggedTunableNumber("Shooter/kD", ShooterConstants.KD);
-    private final LoggedTunableNumber kS = new LoggedTunableNumber("Shooter/kS", ShooterConstants.KS);
-    private final LoggedTunableNumber kV = new LoggedTunableNumber("Shooter/kV", ShooterConstants.KV);
+    private final LoggedTunableNumber voltageKP = new LoggedTunableNumber("Shooter/Voltage/KP", VOLTAGE_KP);
+    private final LoggedTunableNumber voltageKI = new LoggedTunableNumber("Shooter/Voltage/KI", VOLTAGE_KI);
+    private final LoggedTunableNumber voltageKD = new LoggedTunableNumber("Shooter/Voltage/KD", VOLTAGE_KD);
+    private final LoggedTunableNumber voltageKS = new LoggedTunableNumber("Shooter/Voltage/KS", VOLTAGE_KS);
+    private final LoggedTunableNumber voltageKV = new LoggedTunableNumber("Shooter/Voltage/KV", VOLTAGE_KV);
+
+    private final LoggedTunableNumber torqueKP = new LoggedTunableNumber("Shooter/Torque/KP", TORQUE_KP);
+    private final LoggedTunableNumber torqueKI = new LoggedTunableNumber("Shooter/Torque/KI", TORQUE_KI);
+    private final LoggedTunableNumber torqueKD = new LoggedTunableNumber("Shooter/Torque/KD", TORQUE_KD);
+    private final LoggedTunableNumber torqueKS = new LoggedTunableNumber("Shooter/Torque/KS", TORQUE_KS);
+    private final LoggedTunableNumber torqueKV = new LoggedTunableNumber("Shooter/Torque/KV", TORQUE_KV);
 
     private final ShooterIO shooterIO;
     private final ShooterIOInputsAutoLogged inputs = new ShooterIOInputsAutoLogged();
@@ -61,14 +69,25 @@ public class Shooter extends SubsystemBase {
             SimState.getInstance().addShooterData(inputs.leftVelocityRPM, inputs.rightVelocityRPM);
         }
 
-        LoggedTunableNumber.ifChanged(
-                hashCode(),
-                () -> shooterIO.configPID(kP.get(), kI.get(), kD.get(), kS.get(), kV.get()),
-                kP,
-                kI,
-                kD,
-                kS,
-                kV);
+        if (TORQUE_CONTROL) {
+            LoggedTunableNumber.ifChanged(
+                    hashCode(),
+                    () -> shooterIO.configPID(torqueKP.get(), torqueKI.get(), torqueKD.get(), torqueKS.get(), torqueKV.get()),
+                    torqueKP,
+                    torqueKI,
+                    torqueKD,
+                    torqueKS,
+                    torqueKV);
+        } else {
+            LoggedTunableNumber.ifChanged(
+                    hashCode(),
+                    () -> shooterIO.configPID(voltageKP.get(), voltageKI.get(), voltageKD.get(), voltageKS.get(), voltageKV.get()),
+                    voltageKP,
+                    voltageKI,
+                    voltageKD,
+                    voltageKS,
+                    voltageKV);
+        }
 
         leftDisconnected.set(!inputs.leftMotorConnected);
         rightDisconnected.set(!inputs.rightMotorConnected);
@@ -84,7 +103,11 @@ public class Shooter extends SubsystemBase {
 
     public void runVelocity(double rpm) {
         setpointRPM = rpm;
-        shooterIO.setSpeed(rpm);
+        if (TORQUE_CONTROL) {
+            shooterIO.runVelocityTorque(rpm);
+        } else {
+            shooterIO.runVelocityVoltage(rpm);
+        }
     }
 
     public void setVoltage(double volts) {
@@ -101,7 +124,7 @@ public class Shooter extends SubsystemBase {
 
     @AutoLogOutput(key = "Shooter/AtSetpoint")
     public boolean atSetpoint() {
-        return MathUtil.isNear(setpointRPM, filteredRPM, ShooterConstants.ERROR_TOLERANCE_RPM);
+        return MathUtil.isNear(setpointRPM, filteredRPM, ERROR_TOLERANCE_RPM);
     }
 
     public Command commandVelocity(DoubleSupplier setpoint) {

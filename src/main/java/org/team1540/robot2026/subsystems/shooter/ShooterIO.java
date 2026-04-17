@@ -8,6 +8,7 @@ public interface ShooterIO {
     class ShooterIOInputs {
         public boolean leftMotorConnected = false;
         public double leftAppliedVolts = 0.0;
+        public double leftTorqueCurrentAmps = 0.0;
         public double leftStatorCurrentAmps = 0.0;
         public double leftSupplyCurrentAmps = 0.0;
         public double leftVelocityRPM = 0.0;
@@ -15,6 +16,7 @@ public interface ShooterIO {
 
         public boolean rightMotorConnected = false;
         public double rightAppliedVolts = 0.0;
+        public double rightTorqueCurrentAmps = 0.0;
         public double rightStatorCurrentAmps = 0.0;
         public double rightSupplyCurrentAmps = 0.0;
         public double rightVelocityRPM = 0.0;
@@ -32,9 +34,14 @@ public interface ShooterIO {
     default void setVoltage(double volts) {}
 
     /**
-     * Runs closed loop at the specified RPM
+     * Runs closed loop at the specified RPM with voltage control
      */
-    default void setSpeed(double rpm) {}
+    default void runVelocityVoltage(double rpm) {}
+
+    /**
+     * Runs closed loop at the specified RPM with torque control
+     */
+    default void runVelocityTorque(double rpm) {}
 
     /**
      * Configures the PID controller

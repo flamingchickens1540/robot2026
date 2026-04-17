@@ -43,7 +43,7 @@ public class IntakeIOTalonFX implements IntakeIO {
     private final StatusSignal<Voltage> pivotMotorAppliedVolts = pivotMotor.getMotorVoltage();
     private final StatusSignal<Current> pivotSupplyCurrentAmps = pivotMotor.getSupplyCurrent();
 
-    private final VoltageOut spinVoltageRequest = new VoltageOut(0).withEnableFOC(false);
+    private final VoltageOut spinVoltageRequest = new VoltageOut(0);
 
     private final MotionMagicVoltage pivotPositionRequest = new MotionMagicVoltage(0).withSlot(0);
 
