@@ -90,7 +90,8 @@ public class ModuleIOSim implements ModuleIO {
         inputs.drivePositionRads = moduleSim.getDriveWheelFinalPosition().in(Radians);
         inputs.driveVelocityRadPerSec = moduleSim.getDriveWheelFinalSpeed().in(RadiansPerSecond);
         inputs.driveAppliedVolts = driveAppliedVolts.in(Volts);
-        inputs.driveSupplyCurrentAmps = moduleSim.getDriveMotorSupplyCurrent().in(Amps);
+        inputs.driveSupplyCurrentAmps =
+                Math.abs(moduleSim.getDriveMotorSupplyCurrent().in(Amps));
         inputs.driveStatorCurrentAmps = moduleSim.getDriveMotorStatorCurrent().in(Amps);
         inputs.driveTorqueCurrentAmps = moduleSim.getDriveMotorStatorCurrent().in(Amps);
 
@@ -100,7 +101,8 @@ public class ModuleIOSim implements ModuleIO {
         inputs.turnPosition = inputs.turnAbsolutePosition;
         inputs.turnVelocityRadPerSec = moduleSim.getSteerAbsoluteEncoderSpeed().in(RadiansPerSecond);
         inputs.turnAppliedVolts = turnAppliedVolts.in(Volts);
-        inputs.turnSupplyCurrentAmps = moduleSim.getSteerMotorSupplyCurrent().in(Amps);
+        inputs.turnSupplyCurrentAmps =
+                Math.abs(moduleSim.getSteerMotorSupplyCurrent().in(Amps));
         inputs.turnStatorCurrentAmps = moduleSim.getSteerMotorStatorCurrent().in(Amps);
 
         inputs.odometryTimestamps = SimState.getInstance().getSimOdometryTimestamps();

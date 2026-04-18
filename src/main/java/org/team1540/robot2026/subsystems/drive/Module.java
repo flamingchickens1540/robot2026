@@ -12,6 +12,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import org.littletonrobotics.junction.Logger;
+import org.team1540.robot2026.util.logging.BatteryLogger;
 
 public class Module {
     public enum MountPosition {
@@ -69,13 +70,18 @@ public class Module {
         driveDisconnectedAlert.set(!inputs.driveConnected);
         turnDisconnectedAlert.set(!inputs.turnConnected);
         turnEncoderDisconnectedAlert.set(!inputs.turnEncoderConnected);
+
+        BatteryLogger.reportCurrent("Drivetrain/" + mountPosition + "Module/Drive", inputs.driveSupplyCurrentAmps);
+        BatteryLogger.reportCurrent("Drivetrain/" + mountPosition + "Module/Turn", inputs.turnSupplyCurrentAmps);
     }
 
     public void runSetpoint(SwerveModuleState state) {
         runSetpoint(state, 0.0);
     }
 
-    /** Runs the module with the specified setpoint state. Mutates the state to optimize it. */
+    /**
+     * Runs the module with the specified setpoint state. Mutates the state to optimize it.
+     */
     public void runSetpoint(SwerveModuleState state, double wheelTorqueNM) {
         // Optimize velocity setpoint
         state.optimize(getTurnAngle());
@@ -93,64 +99,88 @@ public class Module {
         io.setTurnPosition(state.angle);
     }
 
-    /** Runs the module with the specified output while controlling to zero degrees. */
+    /**
+     * Runs the module with the specified output while controlling to zero degrees.
+     */
     public void runCharacterization(double output) {
         io.setDriveVoltage(output);
         io.setTurnPosition(Rotation2d.kZero);
     }
 
-    /** Disables all outputs to motors. */
+    /**
+     * Disables all outputs to motors.
+     */
     public void stop() {
         io.setDriveVoltage(0.0);
         io.setTurnVoltage(0.0);
     }
 
-    /** Returns the current turn angle of the module. */
+    /**
+     * Returns the current turn angle of the module.
+     */
     public Rotation2d getTurnAngle() {
         return inputs.turnPosition;
     }
 
-    /** Returns the current drive position of the module in meters. */
+    /**
+     * Returns the current drive position of the module in meters.
+     */
     public double getDrivePositionMeters() {
         return inputs.drivePositionRads * constants.WheelRadius;
     }
 
-    /** Returns the current drive velocity of the module in meters per second. */
+    /**
+     * Returns the current drive velocity of the module in meters per second.
+     */
     public double getDriveVelocityMetersPerSec() {
         return inputs.driveVelocityRadPerSec * constants.WheelRadius;
     }
 
-    /** Returns the module position (turn angle and drive position). */
+    /**
+     * Returns the module position (turn angle and drive position).
+     */
     public SwerveModulePosition getPosition() {
         return new SwerveModulePosition(getDrivePositionMeters(), getTurnAngle());
     }
 
-    /** Returns the module state (turn angle and drive velocity). */
+    /**
+     * Returns the module state (turn angle and drive velocity).
+     */
     public SwerveModuleState getState() {
         return new SwerveModuleState(getDriveVelocityMetersPerSec(), getTurnAngle());
     }
 
-    /** Returns the module positions received this cycle. */
+    /**
+     * Returns the module positions received this cycle.
+     */
     public SwerveModulePosition[] getOdometryPositions() {
         return odometryPositions;
     }
 
-    /** Returns the timestamps of the samples received this cycle. */
+    /**
+     * Returns the timestamps of the samples received this cycle.
+     */
     public double[] getOdometryTimestamps() {
         return inputs.odometryTimestamps;
     }
 
-    /** Returns the module position in radians. */
+    /**
+     * Returns the module position in radians.
+     */
     public double getWheelRadiusCharacterizationPosition() {
         return inputs.drivePositionRads;
     }
 
-    /** Returns the module velocity in rotations/sec (Phoenix native units). */
+    /**
+     * Returns the module velocity in rotations/sec (Phoenix native units).
+     */
     public double getFFCharacterizationVelocity() {
         return Units.radiansToRotations(inputs.driveVelocityRadPerSec);
     }
 
-    /** Sets the neutral mode of all motors. */
+    /**
+     * Sets the neutral mode of all motors.
+     */
     public void setBrakeMode(boolean enabled) {
         io.setBrakeMode(enabled);
     }

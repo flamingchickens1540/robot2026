@@ -6,11 +6,13 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -60,7 +62,7 @@ public class ShooterIOTalonFX implements ShooterIO {
         }
 
         config.TorqueCurrent.PeakForwardTorqueCurrent = 120.0;
-        config.TorqueCurrent.PeakReverseTorqueCurrent = -2.54;
+        config.TorqueCurrent.PeakReverseTorqueCurrent = 0.0;
 
         config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
         config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
@@ -71,6 +73,8 @@ public class ShooterIOTalonFX implements ShooterIO {
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         PhoenixUtil.tryUntilOk(5, () -> leftMotor.getConfigurator().apply(config));
 
+        BaseStatusSignal.setUpdateFrequencyForAll(1000, rightAppliedVoltage, rightTorqueCurrent);
+
         BaseStatusSignal.setUpdateFrequencyForAll(
                 50,
                 leftVelocity,
@@ -79,8 +83,6 @@ public class ShooterIOTalonFX implements ShooterIO {
                 leftStatorCurrent,
                 leftSupplyCurrent,
                 leftTemperature,
-                rightAppliedVoltage,
-                rightTorqueCurrent,
                 rightVelocity,
                 rightStatorCurrent,
                 rightSupplyCurrent,
@@ -88,6 +90,8 @@ public class ShooterIOTalonFX implements ShooterIO {
 
         rightMotor.optimizeBusUtilization();
         leftMotor.optimizeBusUtilization();
+
+        leftMotor.setControl(new Follower(rightMotor.getDeviceID(), MotorAlignmentValue.Opposed));
     }
 
     @Override
@@ -125,19 +129,16 @@ public class ShooterIOTalonFX implements ShooterIO {
 
     @Override
     public void runVelocityVoltage(double rpm) {
-        leftMotor.setControl(velocityVoltageCtrlReq.withVelocity(rpm / 60));
         rightMotor.setControl(velocityVoltageCtrlReq.withVelocity(rpm / 60));
     }
 
     @Override
     public void runVelocityTorque(double rpm) {
-        leftMotor.setControl(velocityTorqueCtrlReq.withVelocity(rpm / 60));
         rightMotor.setControl(velocityTorqueCtrlReq.withVelocity(rpm / 60));
     }
 
     @Override
     public void setVoltage(double volts) {
-        leftMotor.setControl(voltageCtrlReq.withOutput(volts));
         rightMotor.setControl(voltageCtrlReq.withOutput(volts));
     }
 

@@ -2,7 +2,6 @@ package org.team1540.robot2026.subsystems.leds;
 
 import static edu.wpi.first.units.Units.Microseconds;
 import static edu.wpi.first.units.Units.Seconds;
-import static org.team1540.robot2026.subsystems.leds.LEDConstants.*;
 
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.Frequency;
@@ -63,14 +62,24 @@ public class CustomLEDPatterns {
     public static LEDPattern transFlag() {
         return LEDPattern.steps(Map.of(
                 0,
-                new Color(91, 206, 250),
+                Color.kCyan,
+                0.1,
+                Color.kPink,
                 0.2,
-                new Color(245, 169, 184),
-                0.4,
                 Color.kWhite,
+                0.3,
+                Color.kPink,
+                0.4,
+                Color.kCyan,
+                0.5,
+                Color.kCyan,
                 0.6,
-                new Color(245, 169, 184),
+                Color.kPink,
+                0.7,
+                Color.kWhite,
                 0.8,
-                new Color(91, 206, 250)));
+                Color.kPink,
+                0.9,
+                Color.kCyan));
     }
 }

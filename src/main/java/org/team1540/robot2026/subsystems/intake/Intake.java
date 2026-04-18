@@ -20,6 +20,7 @@ import org.team1540.robot2026.Constants;
 import org.team1540.robot2026.MechanismVisualizer;
 import org.team1540.robot2026.SimState;
 import org.team1540.robot2026.util.Container;
+import org.team1540.robot2026.util.logging.BatteryLogger;
 import org.team1540.robot2026.util.logging.LoggedTracer;
 import org.team1540.robot2026.util.logging.LoggedTunableNumber;
 
@@ -117,6 +118,9 @@ public class Intake extends SubsystemBase {
         Logger.recordOutput(
                 "Intake/ActiveCommand",
                 activeCmd != null ? activeCmd.getName() + "_" + Integer.toHexString(activeCmd.hashCode()) : "None");
+
+        BatteryLogger.reportCurrent("Intake/Pivot", inputs.pivotSupplyCurrentAmps);
+        BatteryLogger.reportCurrent("Intake/Roller", inputs.spinSupplyCurrentAmps);
 
         LoggedTracer.record("Intake");
     }

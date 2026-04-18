@@ -13,6 +13,7 @@ import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.Constants;
 import org.team1540.robot2026.SimState;
+import org.team1540.robot2026.util.logging.BatteryLogger;
 import org.team1540.robot2026.util.logging.LoggedTracer;
 
 public class Spindexer extends SubsystemBase {
@@ -80,6 +81,10 @@ public class Spindexer extends SubsystemBase {
         Logger.recordOutput(
                 "Spindexer/ActiveCommand",
                 activeCmd != null ? activeCmd.getName() + "_" + Integer.toHexString(activeCmd.hashCode()) : "None");
+
+        BatteryLogger.reportCurrent("Spindexer/SpinMotor", inputs.spinSupplyCurrentAmps);
+        BatteryLogger.reportCurrent("Spindexer/FeederMotor", inputs.feeder1SupplyCurrentAmps);
+        BatteryLogger.reportCurrent("Spindexer/HopperMotor", inputs.feeder2SupplyCurrentAmps);
 
         LoggedTracer.record("Spindexer");
     }

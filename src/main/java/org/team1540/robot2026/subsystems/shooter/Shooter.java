@@ -14,6 +14,7 @@ import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.Constants;
 import org.team1540.robot2026.SimState;
+import org.team1540.robot2026.util.logging.BatteryLogger;
 import org.team1540.robot2026.util.logging.LoggedTracer;
 import org.team1540.robot2026.util.logging.LoggedTunableNumber;
 
@@ -99,6 +100,9 @@ public class Shooter extends SubsystemBase {
         Logger.recordOutput(
                 "Shooter/ActiveCommand",
                 activeCmd != null ? activeCmd.getName() + "_" + Integer.toHexString(activeCmd.hashCode()) : "None");
+
+        BatteryLogger.reportCurrent("Shooter/LeftMotor", inputs.leftSupplyCurrentAmps);
+        BatteryLogger.reportCurrent("Shooter/RightMotor", inputs.rightSupplyCurrentAmps);
 
         LoggedTracer.record("Shooter");
     }
