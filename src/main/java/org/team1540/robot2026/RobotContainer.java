@@ -40,7 +40,6 @@ import org.team1540.robot2026.util.AllianceFlipUtil;
 import org.team1540.robot2026.util.HubShiftUtil;
 import org.team1540.robot2026.util.MatchTriggers;
 import org.team1540.robot2026.util.hid.JoystickUtil;
-import org.team1540.robot2026.util.logging.BatteryLogger;
 import org.team1540.robot2026.util.logging.LoggedTracer;
 
 public class RobotContainer {
@@ -379,10 +378,9 @@ public class RobotContainer {
     }
 
     private void configurePeriodicCallbacks() {
-        addPeriodicCallback(robotState::periodic, "RobotStatePeriodic");
         addPeriodicCallback(HubShiftUtil::periodic, "HubShiftPeriodic");
         addPeriodicCallback(MechanismVisualizer::periodic, "MechanismVisualizerPeriodic");
-        addPeriodicCallback(BatteryLogger::periodic, "BatteryLoggerPeriodic");
+        //        addPeriodicCallback(BatteryLogger::periodic, "BatteryLoggerPeriodic");
         if (Constants.CURRENT_MODE == Constants.Mode.SIM) {
             addPeriodicCallback(SimState.getInstance()::update, "SimulationUpdate");
         }

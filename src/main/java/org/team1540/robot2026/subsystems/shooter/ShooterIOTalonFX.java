@@ -73,7 +73,7 @@ public class ShooterIOTalonFX implements ShooterIO {
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         PhoenixUtil.tryUntilOk(5, () -> leftMotor.getConfigurator().apply(config));
 
-        BaseStatusSignal.setUpdateFrequencyForAll(1000, rightAppliedVoltage, rightTorqueCurrent);
+        BaseStatusSignal.setUpdateFrequencyForAll(250, rightAppliedVoltage, rightTorqueCurrent);
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 50,

@@ -24,7 +24,7 @@ public class ShootingCommands {
     public static Command tuneShooterCommand(Turret turret, Shooter shooter, Hood hood) {
         return Commands.parallel(
                 turret.commandToSetpoint(
-                        () -> RobotState.getInstance().getHubAimingParameters().turretAngle(), () -> 0.0, true),
+                        () -> RobotState.getInstance().getAimingParameters().turretAngle(), () -> 0.0, true),
                 shooter.commandVelocity(shooterRPM),
                 hood.setpointCommand(() -> Rotation2d.fromDegrees(hoodDegrees.get())),
                 Commands.run(() -> Logger.recordOutput(

@@ -48,9 +48,7 @@ public class SpindexerIOTalonFX implements SpindexerIO {
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         config.Feedback.SensorToMechanismRatio = SPIN_GEAR_RATIO;
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
-        config.CurrentLimits.SupplyCurrentLimit = 60.0;
-        config.CurrentLimits.SupplyCurrentLowerLimit = 30.0;
-        config.CurrentLimits.SupplyCurrentLowerTime = 0.1;
+        config.CurrentLimits.SupplyCurrentLimit = 30.0;
         config.CurrentLimits.StatorCurrentLimitEnable = true;
         config.CurrentLimits.StatorCurrentLimit = 60.0;
 
@@ -58,11 +56,16 @@ public class SpindexerIOTalonFX implements SpindexerIO {
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         config.Feedback.SensorToMechanismRatio = FEEDER_GEAR_RATIO;
+        PhoenixUtil.tryUntilOk(5, () -> feederMotor2.getConfigurator().apply(config));
+
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        config.CurrentLimits.SupplyCurrentLimit = 80.0;
+        config.CurrentLimits.SupplyCurrentLowerLimit = 40;
+        config.CurrentLimits.SupplyCurrentLowerTime = 0.1;
+        config.CurrentLimits.StatorCurrentLimit = 120;
 
         PhoenixUtil.tryUntilOk(5, () -> feederMotor1.getConfigurator().apply(config));
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        PhoenixUtil.tryUntilOk(5, () -> feederMotor2.getConfigurator().apply(config));
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 50.0,

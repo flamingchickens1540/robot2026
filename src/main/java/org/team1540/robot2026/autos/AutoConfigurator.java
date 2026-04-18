@@ -51,24 +51,28 @@ public class AutoConfigurator {
         FAR_SWEEP("FarSweep", SweepType.SWEEP),
         CLOSE_HOOK("CloseHook", SweepType.HOOK),
         FAR_HOOK("FarHook", SweepType.HOOK),
+        CHEZY_HOOK_BUMP("ChezyHook", SweepType.HOOK),
         CLOSE_PLOW("ClosePlow", SweepType.PLOW),
         CENTER_PLOW("CenterPlow", SweepType.PLOW),
         OPPOSING_PLOW("OpposingPlow", SweepType.PLOW),
         CLOSE_PLOW_BUMP("ClosePlowBump", SweepType.PLOW),
         CENTER_PLOW_BUMP("CenterPlowBump", SweepType.PLOW),
         OPPOSING_PLOW_BUMP("OpposingPlowBump", SweepType.PLOW),
+        MADTOWN_SWEEP_BUMP("MadtownSweep", SweepType.PLOW),
         OPPOSING_STEAL("OpposingSteal", SweepType.STEAL);
 
         public final String trajectoryName;
         public final boolean firstSweepOnly; // Can this path only be selected as the first sweep
-        public final boolean rotatedEnd; // Does this path end with the robot faced away from the neutral zone
+        public final boolean alignAtEnd; // Does this path end with the robot faced away from the neutral zone
+        public final boolean rotatedEnd;
         public final boolean bump;
 
         SweepPath(String trajectoryName, SweepType type) {
             this.trajectoryName = trajectoryName;
             firstSweepOnly = false;
             bump = toString().endsWith("BUMP");
-            rotatedEnd = type == SweepType.HOOK || bump;
+            alignAtEnd = type == SweepType.HOOK || bump;
+            rotatedEnd = type == SweepType.HOOK;
         }
     }
 
@@ -103,7 +107,7 @@ public class AutoConfigurator {
             new LoggedDashboardChooser<>("Auto/Configurator/End Action");
 
     private final LoggedNetworkNumber shootTime =
-            new LoggedNetworkNumber("SmartDashboard/Auto/Configurator/Shoot Time", 6.0);
+            new LoggedNetworkNumber("SmartDashboard/Auto/Configurator/Shoot Time", 5.0);
     private final LoggedNetworkNumber startingDelay =
             new LoggedNetworkNumber("SmartDashboard/Auto/Configurator/Starting Delay", 0.0);
 
@@ -216,7 +220,7 @@ public class AutoConfigurator {
 
             String trajName = "DepotIntake";
             if (!lastSweep.rotatedEnd) trajName = "Rotate" + trajName;
-            else if (lastSweep.bump) trajName = "Bump" + trajName;
+            if (lastSweep.bump) trajName = "Bump" + trajName;
 
             AutoTrajectory depotTraj = routine.trajectory(trajName);
             if (startingSide.mirrored) depotTraj = depotTraj.mirrorY();
@@ -282,7 +286,7 @@ public class AutoConfigurator {
         Trigger doneTrigger = shootIndefinitely ? routine.observe(() -> false) : traj.doneDelayed(shootTime.get());
 
         // If the sweep ends rotated, run a rotation trajectory while shooting
-        if (sweep.rotatedEnd && alignAtEnd) {
+        if (sweep.alignAtEnd && alignAtEnd) {
             AutoTrajectory rotateTraj = routine.trajectory(sweep.trajectoryName, 1);
             if (startingSide.mirrored) rotateTraj = rotateTraj.mirrorY();
             trajectories.add(rotateTraj);
@@ -291,7 +295,7 @@ public class AutoConfigurator {
 
         // Shoot after sweep
         traj.done()
-                .onTrue(Commands.waitSeconds(0.5)
+                .onTrue(Commands.waitSeconds(0.25)
                         .onlyIf(() -> sweep.bump)
                         .andThen(ShootingCommands.hubAimCommand(turret, shooter, hood)
                                 .alongWith(

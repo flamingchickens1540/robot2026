@@ -25,7 +25,7 @@ public class IntakeConstants {
 
     public static Rotation2d PIVOT_MIN_ANGLE = Rotation2d.fromDegrees(-140.0);
     public static Rotation2d PIVOT_MAX_ANGLE = Rotation2d.fromDegrees(0.0);
-    public static Rotation2d PIVOT_JIGGLE_ANGLE = Rotation2d.fromDegrees(-45);
+    public static Rotation2d PIVOT_JIGGLE_ANGLE = Rotation2d.fromDegrees(-30);
     public static Rotation2d PIVOT_DEPOT_ANGLE = Rotation2d.fromDegrees(-7);
     public static Rotation2d PIVOT_TILT_ANGLE = Rotation2d.fromDegrees(-67);
 

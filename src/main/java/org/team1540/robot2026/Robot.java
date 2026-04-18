@@ -1,6 +1,7 @@
 package org.team1540.robot2026;
 
 import choreo.auto.AutoFactory;
+import choreo.util.ChoreoAllianceFlipUtil;
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.hal.AllianceStationID;
 import edu.wpi.first.math.MathShared;
@@ -132,6 +133,8 @@ public class Robot extends LoggedRobot {
         // and put our autonomous chooser on the dashboard.
         robotContainer = new RobotContainer();
 
+        // Preload classes to minimize auto delay
+
         // Aiming calculation warmup
         RobotState.getInstance().getHubAimingParameters();
         RobotState.getInstance().getShuffleAimingParameters();
@@ -143,7 +146,16 @@ public class Robot extends LoggedRobot {
                                 .trajectoryCmd("Sprint")
                                 .ignoringDisable(true)
                                 .until(this::isEnabled)
-                                .withName("ChoreoWarmup"));
+                                .withTimeout(5.0)
+                                .withName("ChoreoWarmup")
+                                .andThen(robotContainer
+                                        .drivetrain
+                                        .teleopDriveCommand(() -> 0, () -> 0, () -> 0, () -> true)
+                                        .until(this::isEnabled)
+                                        .withTimeout(5.0)
+                                        .withName("DriveWarmup")
+                                        .ignoringDisable(true)));
+        ChoreoAllianceFlipUtil.flip(Pose2d.kZero);
     }
 
     /** This function is called periodically during all modes. */
@@ -157,6 +169,8 @@ public class Robot extends LoggedRobot {
         // finished or interrupted commands, and running subsystem periodic() methods.
         // This must be called from the robot's periodic block in order for anything in
         // the Command-based framework to work.
+        RobotState.getInstance().periodicBeforeScheduler();
+
         CommandScheduler.getInstance().run();
 
         // Return to normal thread priority

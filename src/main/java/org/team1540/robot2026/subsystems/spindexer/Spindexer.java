@@ -32,7 +32,7 @@ public class Spindexer extends SubsystemBase {
     private int numBallsCounted = 0;
     private double lastSensorMeasurementMM;
     private double lastBallTimestamp = Double.MAX_VALUE;
-    private final LinearFilter bpsFilter = LinearFilter.movingAverage(120);
+    private final LinearFilter bpsFilter = LinearFilter.movingAverage(3);
 
     private Spindexer(SpindexerIO io, SpindexerSensorIO sensorIO) {
         if (hasInstance) throw new IllegalStateException("Instance of spindexer already exists");

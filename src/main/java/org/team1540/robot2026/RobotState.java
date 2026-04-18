@@ -35,6 +35,7 @@ import org.team1540.robot2026.subsystems.hood.HoodConstants;
 import org.team1540.robot2026.subsystems.vision.AprilTagVisionIO;
 import org.team1540.robot2026.util.AimingParameters;
 import org.team1540.robot2026.util.AllianceFlipUtil;
+import org.team1540.robot2026.util.logging.LoggedTracer;
 import org.team1540.robot2026.util.logging.LoggedTunableNumber;
 
 public class RobotState {
@@ -83,13 +84,18 @@ public class RobotState {
     private final InterpolatingDoubleTreeMap shuffleTOFMap = new InterpolatingDoubleTreeMap();
 
     @AutoLogOutput(key = "Aiming/ShooterRPMOffset")
-    private double shooterRPMOffset = 30.0;
+    private double shooterRPMOffset = 0.0;
 
     @AutoLogOutput(key = "Aiming/Hub/LastParameters")
     private AimingParameters lastHubAimingParameters;
 
     @AutoLogOutput(key = "Aiming/Shuffle/LastParameters")
     private AimingParameters lastShuffleAimingParameters;
+
+    @AutoLogOutput(key = "TrenchAvoidance/Active")
+    private boolean trenchAvoidanceActive = false;
+
+    private boolean trenchAvoidanceUpdated = false;
 
     private AutoRoutineData selectedAuto;
 
@@ -106,23 +112,23 @@ public class RobotState {
         hubHoodAngleMap.put(3.169, Rotation2d.fromDegrees(23.4));
         hubHoodAngleMap.put(2.543, Rotation2d.fromDegrees(21.1));
         hubHoodAngleMap.put(1.421, Rotation2d.fromDegrees(15));
-        hubHoodAngleMap.put(5.540, Rotation2d.fromDegrees(29));
-        hubHoodAngleMap.put(4.155, Rotation2d.fromDegrees(26.5));
-        hubHoodAngleMap.put(6.455, Rotation2d.fromDegrees(29.0));
+        hubHoodAngleMap.put(5.417, Rotation2d.fromDegrees(35));
+        hubHoodAngleMap.put(4.092, Rotation2d.fromDegrees(32));
+        hubHoodAngleMap.put(6.236, Rotation2d.fromDegrees(37));
 
         hubShooterSpeedMap.put(3.169, 2056.0);
         hubShooterSpeedMap.put(2.543, 1923.0);
         hubShooterSpeedMap.put(1.421, 1678.0);
-        hubShooterSpeedMap.put(5.540, 2481.0);
-        hubShooterSpeedMap.put(4.155, 2154.0);
-        hubShooterSpeedMap.put(6.455, 2811.0);
+        hubShooterSpeedMap.put(5.417, 2300.0);
+        hubShooterSpeedMap.put(4.092, 2020.0);
+        hubShooterSpeedMap.put(6.236, 2600.0);
 
-        hubTOFMap.put(3.169, 1.098457062);
-        hubTOFMap.put(2.543, 1.028185787);
-        hubTOFMap.put(1.421, 0.8914489253);
-        hubTOFMap.put(5.540, 1.32339774);
-        hubTOFMap.put(4.155, 1.188565533);
-        hubTOFMap.put(6.455, 1.444998072);
+        hubTOFMap.put(3.169, 1.098457062 * 0.9);
+        hubTOFMap.put(2.543, 1.028185787 * 0.9);
+        hubTOFMap.put(1.421, 0.891448925 * 0.9);
+        hubTOFMap.put(5.417, 1.136162062 * 0.9);
+        hubTOFMap.put(4.092, 1.024034999 * 0.9);
+        hubTOFMap.put(6.236, 1.183562905 * 0.9);
 
         // Worn wheel tunings
         //        hubHoodAngleMap.put(3.169, Rotation2d.fromDegrees(23.4));
@@ -149,12 +155,12 @@ public class RobotState {
         shuffleHoodAngleMap.put(2.412, Rotation2d.fromDegrees(30));
         shuffleHoodAngleMap.put(4.466, Rotation2d.fromDegrees(35));
         shuffleHoodAngleMap.put(7.590, Rotation2d.fromDegrees(40));
-        shuffleHoodAngleMap.put(12.132, Rotation2d.fromDegrees(45));
+        shuffleHoodAngleMap.put(12.132, Rotation2d.fromDegrees(43.75));
 
         shuffleShooterSpeedMap.put(2.412, 1323.0);
         shuffleShooterSpeedMap.put(4.466, 1923.0);
         shuffleShooterSpeedMap.put(7.590, 2471.0);
-        shuffleShooterSpeedMap.put(12.132, 4414.0);
+        shuffleShooterSpeedMap.put(12.132, 5940.0);
 
         shuffleTOFMap.put(2.412, 0.8041877681);
         shuffleTOFMap.put(4.466, 1.04664185);
@@ -163,9 +169,11 @@ public class RobotState {
         AutoLogOutputManager.addObject(this);
     }
 
-    public void periodic() {
+    public void periodicBeforeScheduler() {
+        LoggedTracer.reset();
         SmartDashboard.putString("Aiming/Shooter RPM Offset", String.format("%.1f", shooterRPMOffset));
         clearAimingParameters();
+        trenchAvoidanceUpdated = false;
 
         if (DriverStation.isAutonomous() && DriverStation.isDisabled()) {
             autoStartPositionAlert.set(selectedAuto != null
@@ -191,6 +199,7 @@ public class RobotState {
             autoStartRotationAlert.set(false);
             field.getObject("trajectory").setPoses();
         }
+        LoggedTracer.record("RobotStatePeriodic");
     }
 
     public SwerveDriveKinematics getKinematics() {
@@ -373,6 +382,7 @@ public class RobotState {
             DoubleUnaryOperator shooterSpeedMap,
             DoubleUnaryOperator tofMap,
             String loggingKey) {
+        LoggedTracer.reset();
         double phaseDelay = aimingPhaseDelay.getAsDouble();
         Pose2d estimatedPose = getEstimatedPose();
         ChassisSpeeds velocity = getRobotVelocity();
@@ -428,6 +438,7 @@ public class RobotState {
         Logger.recordOutput("Aiming/" + loggingKey + "/CompensatedTargetDistanceMeters", lookaheadDistance);
         Logger.recordOutput(
                 "Aiming/" + loggingKey + "/TurretVelocityFFRPS", Units.radiansToRotations(turretVelocityFFRadPerSec));
+        LoggedTracer.record("AimingCalculation");
 
         return new AimingParameters(
                 target.minus(lookaheadPose.getTranslation()).getAngle(),
@@ -475,8 +486,14 @@ public class RobotState {
         shooterRPMOffset += rpm;
     }
 
-    @AutoLogOutput(key = "TrenchAvoidance/Active")
     public boolean shouldLowerHood() {
+        if (trenchAvoidanceUpdated) return trenchAvoidanceActive;
+        trenchAvoidanceActive = updateTrenchAvoidance();
+        trenchAvoidanceUpdated = true;
+        return trenchAvoidanceActive;
+    }
+
+    private boolean updateTrenchAvoidance() {
         Pose2d robotPose = getEstimatedPose();
         if (robotPose.getY() >= FieldConstants.LinesHorizontal.rightTrenchOpenStart
                 && robotPose.getY() < FieldConstants.LinesHorizontal.leftTrenchOpenEnd)
