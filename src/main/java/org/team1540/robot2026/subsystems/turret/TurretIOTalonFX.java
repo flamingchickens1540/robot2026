@@ -22,7 +22,7 @@ import org.team1540.robot2026.util.PhoenixUtil;
 
 public class TurretIOTalonFX implements TurretIO {
     // Motion Magic
-    private final MotionMagicVoltage profiledPositionControl = new MotionMagicVoltage(0.0).withUpdateFreqHz(0);
+    private final MotionMagicVoltage profiledPositionControl = new MotionMagicVoltage(0.0);
 
     //  Motor
     private final TalonFX motor = new TalonFX(DRIVE_ID);
