@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.AutoLogOutput;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 import org.team1540.robot2026.autos.AutoConfigurator;
 import org.team1540.robot2026.autos.AutoConfigurator.StartingSide;
 import org.team1540.robot2026.autos.AutoPresets;
@@ -69,6 +70,9 @@ public class RobotContainer {
     private final Alert turretLockedAlert = new Alert("Turret is in locked mode!", Alert.AlertType.kError);
     private final Alert turretManualAlert = new Alert("Turret is under manual control", Alert.AlertType.kWarning);
     private final Alert intakeManualAlert = new Alert("Intake is under manual control", Alert.AlertType.kWarning);
+
+    private final LoggedNetworkNumber autoStartDelay =
+            new LoggedNetworkNumber("SmartDashboard/Auto/Starting Delay", 0.0);
 
     /**
      * The container for the robot. Contains subsystems, IO devices, and commands.
@@ -403,6 +407,10 @@ public class RobotContainer {
      * @return the command to run in autonomous
      */
     public Command getAutonomousCommand() {
-        return autoSelector.getSelectedAuto().command();
+        Command selectedCmd = autoSelector.getSelectedAuto().command();
+        // Don't delay start if delay is less than loop period (prevents extra command from taking up a loop cycle)
+        if (autoStartDelay.get() <= Constants.LOOP_PERIOD_SECS) return selectedCmd;
+        // Add delayed start
+        return selectedCmd.beforeStarting(Commands.waitSeconds(autoStartDelay.get()));
     }
 }

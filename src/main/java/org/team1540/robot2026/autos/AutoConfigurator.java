@@ -9,7 +9,6 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Consumer;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
@@ -108,8 +107,6 @@ public class AutoConfigurator {
 
     private final LoggedNetworkNumber shootTime =
             new LoggedNetworkNumber("SmartDashboard/Auto/Configurator/Shoot Time", 5.0);
-    private final LoggedNetworkNumber startingDelay =
-            new LoggedNetworkNumber("SmartDashboard/Auto/Configurator/Starting Delay", 0.0);
 
     private AutoRoutineData selectedAuto;
 
@@ -219,14 +216,15 @@ public class AutoConfigurator {
             SweepPath lastSweep = sweep2 != SweepPath.NONE ? sweep2 : sweep1;
 
             String trajName = "DepotIntake";
-            if (!lastSweep.rotatedEnd) trajName = "Rotate" + trajName;
             if (lastSweep.bump) trajName = "Bump" + trajName;
+            if (!lastSweep.rotatedEnd) trajName = "Rotate" + trajName;
 
             AutoTrajectory depotTraj = routine.trajectory(trajName);
             if (startingSide.mirrored) depotTraj = depotTraj.mirrorY();
             trajectories.add(depotTraj);
 
-            nextTrigger.onTrue(depotTraj.spawnCmd().alongWith(intake.commandRunIntake(1.0)));
+            nextTrigger.onTrue(depotTraj.cmd());
+            nextTrigger.onTrue(intake.commandRunIntake(1.0));
             depotTraj.atTime("Intake").onTrue(intake.commandRunDepotIntake(1.0).withName("AutoDepotIntakeCommand"));
             depotTraj.atTime("StopIntake").onTrue(intake.jiggleCommand());
         }
@@ -250,14 +248,7 @@ public class AutoConfigurator {
                                 list.addAll(List.of(traj.getRawTrajectory().getPoses())),
                         ArrayList::addAll);
 
-        selectedAuto = new AutoRoutineData(
-                name,
-                startingSide,
-                startingPose,
-                sweeps,
-                trajectoryPoints,
-                routine.cmd()
-                        .beforeStarting(Commands.defer(() -> Commands.waitSeconds(startingDelay.get()), Set.of())));
+        selectedAuto = new AutoRoutineData(name, startingSide, startingPose, sweeps, trajectoryPoints, routine.cmd());
     }
 
     private Trigger addSweepRoutine(

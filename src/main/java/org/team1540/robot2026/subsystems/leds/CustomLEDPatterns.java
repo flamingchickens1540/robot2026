@@ -62,24 +62,20 @@ public class CustomLEDPatterns {
     public static LEDPattern transFlag() {
         return LEDPattern.steps(Map.of(
                 0,
-                Color.kCyan,
-                0.1,
+                Color.kLightBlue,
+                0.125,
                 Color.kHotPink,
-                0.2,
+                0.25,
                 Color.kWhite,
-                0.3,
+                0.375,
                 Color.kHotPink,
-                0.4,
-                Color.kCyan,
                 0.5,
-                Color.kCyan,
-                0.6,
+                Color.kLightBlue,
+                0.625,
                 Color.kHotPink,
-                0.7,
+                0.75,
                 Color.kWhite,
-                0.8,
-                Color.kHotPink,
-                0.9,
-                Color.kCyan));
+                0.875,
+                Color.kHotPink));
     }
 }

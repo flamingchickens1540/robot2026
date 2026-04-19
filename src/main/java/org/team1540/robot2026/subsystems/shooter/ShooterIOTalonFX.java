@@ -41,8 +41,7 @@ public class ShooterIOTalonFX implements ShooterIO {
     private final VelocityVoltage velocityVoltageCtrlReq =
             new VelocityVoltage(0).withEnableFOC(true).withSlot(0);
     private final VelocityTorqueCurrentFOC velocityTorqueCtrlReq = new VelocityTorqueCurrentFOC(0);
-    private final VoltageOut voltageCtrlReq =
-            new VoltageOut(0).withEnableFOC(true);
+    private final VoltageOut voltageCtrlReq = new VoltageOut(0).withEnableFOC(true);
 
     public ShooterIOTalonFX() {
         TalonFXConfiguration config = new TalonFXConfiguration();
