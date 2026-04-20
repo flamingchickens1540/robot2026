@@ -10,8 +10,11 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.Constants;
+import org.team1540.robot2026.RobotState;
 import org.team1540.robot2026.SimState;
 import org.team1540.robot2026.util.logging.LoggedTracer;
+
+import static org.team1540.robot2026.RobotState.TargetingMode.SHUFFLE;
 
 public class Spindexer extends SubsystemBase {
     private static boolean hasInstance = false;
@@ -27,6 +30,8 @@ public class Spindexer extends SubsystemBase {
             new Alert("Hopper feeder motor disconnected", Alert.AlertType.kError);
 
     private int numBallsCounted = 0;
+    private int ballsShotHub = 0;
+    private int ballsShuffled = 0;
     private double lastLaserCanMeasurementMM;
     private double timeStampLast = Double.MAX_VALUE;
     private final LinearFilter bpsFilter = LinearFilter.movingAverage(120);
@@ -49,12 +54,21 @@ public class Spindexer extends SubsystemBase {
             } else bpsFilter.calculate(0); // ensuring no divide by zero when inputting
             numBallsCounted++;
             timeStampLast = Timer.getTimestamp();
+
+            switch (RobotState.getInstance().getTargetingMode()) {
+                case HUB -> ballsShotHub++;
+                case SHUFFLE -> ballsShuffled++;
+            }
+
         }
+
         lastLaserCanMeasurementMM = sensorInputs.distanceMM;
-        Logger.recordOutput("RealOutputs/Spindexer/balls", numBallsCounted);
+        Logger.recordOutput("RealOutputs/Spindexer/balls/total", numBallsCounted);
         Logger.recordOutput(
                 "RealOutputs/Spindexer/bps3",
                 bpsFilter.lastValue());
+        Logger.recordOutput("RealOutputs/Spindexer/balls/scored", ballsShotHub);
+        Logger.recordOutput("RealOutputs/Spindexer/balls/shuffled", ballsShuffled);
     }
 
     @Override
