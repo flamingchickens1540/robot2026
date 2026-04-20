@@ -47,6 +47,7 @@ public class IntakeIOTalonFX implements IntakeIO {
     private final VoltageOut spinVoltageRequest = new VoltageOut(0);
 
     private final MotionMagicVoltage pivotPositionRequest = new MotionMagicVoltage(0).withSlot(0);
+    private final VoltageOut pivotVoltageRequest = new VoltageOut(0);
 
     public IntakeIOTalonFX() {
 
@@ -169,7 +170,7 @@ public class IntakeIOTalonFX implements IntakeIO {
 
     @Override
     public void setPivotVoltage(double voltage) {
-        pivotMotor.setControl(new VoltageOut(voltage));
+        pivotMotor.setControl(pivotVoltageRequest.withOutput(voltage));
     }
 
     @Override

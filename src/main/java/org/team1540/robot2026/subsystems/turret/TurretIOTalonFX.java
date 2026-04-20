@@ -9,6 +9,7 @@ import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -21,9 +22,6 @@ import edu.wpi.first.wpilibj.Timer;
 import org.team1540.robot2026.util.PhoenixUtil;
 
 public class TurretIOTalonFX implements TurretIO {
-    // Motion Magic
-    private final MotionMagicVoltage profiledPositionControl = new MotionMagicVoltage(0.0);
-
     //  Motor
     private final TalonFX motor = new TalonFX(DRIVE_ID);
     private final StatusSignal<AngularVelocity> velocity = motor.getVelocity();
@@ -38,6 +36,10 @@ public class TurretIOTalonFX implements TurretIO {
     private final CANcoder bigCANcoder = new CANcoder(BIG_ENCODER_CANCODER_ID);
     private final StatusSignal<Angle> smallCANcoderPosition = smallCANcoder.getAbsolutePosition();
     private final StatusSignal<Angle> bigCANcoderPosition = bigCANcoder.getAbsolutePosition();
+
+    // Control reqs
+    private final MotionMagicVoltage positionReq = new MotionMagicVoltage(0.0);
+    private final VoltageOut voltageReq = new VoltageOut(0.0);
 
     public TurretIOTalonFX() {
         TalonFXConfiguration config = new TalonFXConfiguration();
@@ -121,13 +123,12 @@ public class TurretIOTalonFX implements TurretIO {
 
     @Override
     public void setVoltage(double volts) {
-        motor.setVoltage(volts);
+        motor.setControl(voltageReq);
     }
 
     @Override
     public void setSetpoint(Rotation2d position, double voltageFF) {
-        motor.setControl(
-                profiledPositionControl.withPosition(position.getRotations()).withFeedForward(voltageFF));
+        motor.setControl(positionReq.withPosition(position.getRotations()).withFeedForward(voltageFF));
     }
 
     @Override
