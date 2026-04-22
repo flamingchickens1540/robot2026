@@ -63,7 +63,6 @@ public class AutoConfigurator {
         public final String trajectoryName;
         public final boolean firstSweepOnly; // Can this path only be selected as the first sweep
         public final boolean alignAtEnd; // Does this path end with the robot faced away from the neutral zone
-        public final boolean rotatedEnd;
         public final boolean bump;
 
         SweepPath(String trajectoryName, SweepType type) {
@@ -71,7 +70,6 @@ public class AutoConfigurator {
             firstSweepOnly = false;
             bump = toString().endsWith("BUMP");
             alignAtEnd = type == SweepType.HOOK || bump;
-            rotatedEnd = type == SweepType.HOOK;
         }
     }
 
@@ -217,7 +215,6 @@ public class AutoConfigurator {
 
             String trajName = "DepotIntake";
             if (lastSweep.bump) trajName = "Bump" + trajName;
-            if (!lastSweep.rotatedEnd) trajName = "Rotate" + trajName;
 
             AutoTrajectory depotTraj = routine.trajectory(trajName);
             if (startingSide.mirrored) depotTraj = depotTraj.mirrorY();

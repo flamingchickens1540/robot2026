@@ -11,6 +11,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Threads;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.DriverStationSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -28,6 +29,7 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 public class Robot extends LoggedRobot {
     private Command autonomousCommand;
     private final RobotContainer robotContainer;
+    private final Timer timer = new Timer();
 
     public Robot() {
         super(Constants.LOOP_PERIOD_SECS);
@@ -156,14 +158,19 @@ public class Robot extends LoggedRobot {
                                         .withName("DriveWarmup")
                                         .ignoringDisable(true)));
         ChoreoAllianceFlipUtil.flip(Pose2d.kZero);
+
+        timer.restart();
     }
 
     /** This function is called periodically during all modes. */
     @Override
     public void robotPeriodic() {
         // Switch main robot thread to high priority to improve loop timing
-        if (DriverStation.isEnabled()) Threads.setCurrentThreadPriority(true, 2);
-        else Threads.setCurrentThreadPriority(false, 0);
+        if (timer.hasElapsed(20.0) || DriverStation.isEnabled()) {
+            Threads.setCurrentThreadPriority(true, 2);
+        } else {
+            Threads.setCurrentThreadPriority(false, 0);
+        }
         // Runs the Scheduler. This is responsible for polling buttons, adding
         // newly-scheduled commands, running already-scheduled commands, removing
         // finished or interrupted commands, and running subsystem periodic() methods.
@@ -191,11 +198,7 @@ public class Robot extends LoggedRobot {
     @Override
     public void autonomousInit() {
         autonomousCommand = robotContainer.getAutonomousCommand();
-
-        // schedule the autonomous command (example)
-        if (autonomousCommand != null) {
-            CommandScheduler.getInstance().schedule(autonomousCommand);
-        }
+        CommandScheduler.getInstance().schedule(autonomousCommand);
     }
 
     @Override
