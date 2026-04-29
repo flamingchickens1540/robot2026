@@ -157,7 +157,7 @@ public class Robot extends LoggedRobot {
                                         .withTimeout(5.0)
                                         .withName("DriveWarmup")
                                         .ignoringDisable(true)));
-        ChoreoAllianceFlipUtil.flip(Pose2d.kZero);
+        ChoreoAllianceFlipUtil.getFlipper();
 
         timer.restart();
     }
