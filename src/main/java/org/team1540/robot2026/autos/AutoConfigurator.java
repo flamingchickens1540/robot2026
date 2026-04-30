@@ -302,14 +302,12 @@ public class AutoConfigurator {
 
         // Shoot after sweep
         traj.done()
-                .onTrue(Commands.waitSeconds(0.25)
-                        .onlyIf(() -> sweep.bump)
-                        .andThen(ShootingCommands.hubAimCommand(turret, shooter, hood)
+                .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
                                 .alongWith(
                                         FeedingCommands.feedCommand(turret, hood, spindexer),
                                         intake.jiggleCommand().asProxy())
                                 .until(doneTrigger)
-                                .withName("AutoShootCommand")));
+                                .withName("AutoShootCommand"));
 
         return shootIndefinitely ? traj.done() : doneTrigger;
     }
