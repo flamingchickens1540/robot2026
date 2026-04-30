@@ -63,12 +63,14 @@ public class AutoConfigurator {
         public final String trajectoryName;
         public final boolean firstSweepOnly; // Can this path only be selected as the first sweep
         public final boolean alignAtEnd; // Does this path end with the robot faced away from the neutral zone
+        public final boolean rotatedEnd;
         public final boolean bump;
 
         SweepPath(String trajectoryName, SweepType type) {
             this.trajectoryName = trajectoryName;
             firstSweepOnly = false;
             bump = toString().endsWith("BUMP");
+            rotatedEnd = type == SweepType.HOOK;
             alignAtEnd = type == SweepType.HOOK || bump;
         }
     }
@@ -76,12 +78,17 @@ public class AutoConfigurator {
     public enum EndAction {
         NONE(""),
         SPRINT("Sprint"),
-        DEPOT("DepotIntake");
+        DEPOT("DepotIntake"),
+        DEPOT_NO_RETURN("DepotIntakeNoReturn"),
+        TIME_OUT_CORNER("TimeOutCorner"),
+        TOWER("Tower");
 
         public final String trajectoryName;
+        public final boolean depot;
 
         EndAction(String trajectoryName) {
             this.trajectoryName = trajectoryName;
+            this.depot = toString().startsWith("DEPOT");
         }
     }
 
@@ -192,7 +199,7 @@ public class AutoConfigurator {
                 sweep1,
                 startingSide,
                 sweep2 == SweepPath.NONE && endAction != EndAction.SPRINT,
-                sweep2 != SweepPath.NONE || endAction != EndAction.DEPOT,
+                sweep2 != SweepPath.NONE || !endAction.depot,
                 nextTrigger,
                 trajectories);
         nextTrigger = addSweepRoutine(
@@ -200,20 +207,20 @@ public class AutoConfigurator {
                 sweep2,
                 startingSide,
                 endAction != EndAction.SPRINT,
-                endAction != EndAction.DEPOT,
+                !endAction.depot,
                 nextTrigger,
                 trajectories);
 
         if (endAction == EndAction.SPRINT) {
-            AutoTrajectory sprintTraj = routine.trajectory("Sprint");
+            AutoTrajectory sprintTraj = routine.trajectory(endAction.trajectoryName);
             if (startingSide.mirrored) sprintTraj = sprintTraj.mirrorY();
             trajectories.add(sprintTraj);
 
             nextTrigger.onTrue(sprintTraj.spawnCmd().alongWith(intake.commandRunIntake(1.0)));
-        } else if (endAction == EndAction.DEPOT && startingSide == StartingSide.LEFT) {
+        } else if (endAction.depot && startingSide == StartingSide.LEFT) {
             SweepPath lastSweep = sweep2 != SweepPath.NONE ? sweep2 : sweep1;
 
-            String trajName = "DepotIntake";
+            String trajName = endAction.trajectoryName;
             if (lastSweep.bump) trajName = "Bump" + trajName;
 
             AutoTrajectory depotTraj = routine.trajectory(trajName);
@@ -224,6 +231,18 @@ public class AutoConfigurator {
             nextTrigger.onTrue(intake.commandRunIntake(1.0));
             depotTraj.atTime("Intake").onTrue(intake.commandRunDepotIntake(1.0).withName("AutoDepotIntakeCommand"));
             depotTraj.atTime("StopIntake").onTrue(intake.jiggleCommand());
+        } else if (endAction != EndAction.NONE) {
+            SweepPath lastSweep = sweep2 != SweepPath.NONE ? sweep2 : sweep1;
+
+            String trajName = endAction.trajectoryName;
+            if (!lastSweep.bump) trajName = (lastSweep.rotatedEnd ? "Rotated" : "") + "TrenchTo" + trajName;
+            else trajName = "BumpTo" + trajName;
+
+            AutoTrajectory traj = routine.trajectory(trajName);
+            if (startingSide.mirrored) traj = traj.mirrorY();
+            trajectories.add(traj);
+
+            nextTrigger.onTrue(traj.cmd());
         }
 
         Optional<Pose2d> startingPose = trajectories.isEmpty()
