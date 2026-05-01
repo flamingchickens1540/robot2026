@@ -123,7 +123,7 @@ public class TurretIOTalonFX implements TurretIO {
 
     @Override
     public void setVoltage(double volts) {
-        motor.setControl(voltageReq);
+        motor.setControl(voltageReq.withOutput(volts));
     }
 
     @Override
