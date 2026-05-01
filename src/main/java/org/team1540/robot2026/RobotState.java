@@ -269,7 +269,9 @@ public class RobotState {
 
     public void setActiveTrajectory(Pose2d... trajectory) {
         activeTrajectory = trajectory;
-        Logger.recordOutput("Odometry/Trajectory/Current", trajectory);
+        if (Constants.CURRENT_MODE != Constants.Mode.REAL) {
+            Logger.recordOutput("Odometry/Trajectory/Current", trajectory);
+        }
     }
 
     public void clearActiveTrajectory() {
