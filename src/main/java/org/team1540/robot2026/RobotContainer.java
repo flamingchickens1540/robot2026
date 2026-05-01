@@ -231,7 +231,7 @@ public class RobotContainer {
                         .withName("TurretManualControl"));
         copilot.manualIntake.toggleOnTrue(intake.run(() -> {
                     intake.setPivotVoltage(
-                            JoystickUtil.smartDeadzone(copilot.manualTurretInput.getAsDouble(), 0.1) * 0.5 * 12.0);
+                            JoystickUtil.smartDeadzone(copilot.manualIntakeInput.getAsDouble(), 0.1) * 0.5 * 12.0);
                     intakeManualAlert.set(true);
                 })
                 .finallyDo(() -> {
@@ -339,6 +339,12 @@ public class RobotContainer {
                 "Right Trench 2 Sweep Hook", () -> autoPresets.doubleSweep(StartingSide.RIGHT, true, false));
         autoSelector.addAuto(
                 "Right Trench 2 Sweep Hook Sprint", () -> autoPresets.doubleSweep(StartingSide.RIGHT, true, true));
+        autoSelector.addAuto(
+                "Left Madtown Sweep Over Bump Chezyish Hook",
+                () -> autoPresets.doubleSweepMadtownOverBumpHook(StartingSide.LEFT));
+        autoSelector.addAuto(
+                "Right Madtown Sweep Over Bump Chezyish Hook",
+                () -> autoPresets.doubleSweepMadtownOverBumpHook(StartingSide.RIGHT));
 
         // Characterization routines
         if (Constants.TUNING_MODE) {

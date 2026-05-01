@@ -8,6 +8,7 @@ import choreo.auto.AutoTrajectory;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -220,6 +221,66 @@ public class AutoPresets {
                 firstSweep.getInitialPose(),
                 List.of(SweepPath.CLOSE_SWEEP, hook ? SweepPath.CLOSE_HOOK : SweepPath.FAR_SWEEP),
                 Stream.of(firstSweep, secondSweep, sprintTraj)
+                        .collect(
+                                ArrayList::new,
+                                (list, trajectory) -> list.addAll(
+                                        List.of(trajectory.getRawTrajectory().getPoses())),
+                                ArrayList::addAll),
+                routine.cmd());
+    }
+
+    public AutoRoutineData doubleSweepMadtownOverBumpHook(StartingSide startingSide) {
+        final String trajName = "MadtownOverBumpHook";
+
+        String name = (startingSide == StartingSide.LEFT ? "Left" : "Right") + trajName;
+        AutoRoutine routine = autoFactory.newRoutine(name);
+
+        AutoTrajectory madtownSweep = routine.trajectory(trajName, 0);
+        AutoTrajectory shoot = routine.trajectory(trajName, 1);
+        AutoTrajectory hook = routine.trajectory(trajName, 2);
+        if (startingSide.mirrored) {
+            madtownSweep = madtownSweep.mirrorY();
+            shoot = shoot.mirrorY();
+            hook = hook.mirrorY();
+        }
+
+        resetPoseInSim(routine, madtownSweep);
+
+        routine.active().onTrue(hood.zeroCommand().withTimeout(1.0).withName("ZeroHoodCommand"));
+        routine.active()
+                .onTrue(intake.zeroWhileRunningCommand()
+                        .andThen(intake.commandRunIntake(1.0))
+                        .withName("AutoZeroAndRunIntakeCommand"));
+        routine.active().onTrue(madtownSweep.cmd());
+
+        Trigger doneShooting = madtownSweep.doneDelayed(5.0);
+        madtownSweep.chain(shoot);
+        madtownSweep
+                .done()
+                .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
+                        .alongWith(
+                                FeedingCommands.feedCommand(turret, hood, spindexer),
+                                intake.jiggleCommand().asProxy())
+                        .until(doneShooting)
+                        .withName("AutoShootCommand"));
+        doneShooting.onTrue(hook.cmd());
+
+        hook.active().onTrue(intake.zeroWhileRunningCommand()
+                .andThen(intake.commandRunIntake(1.0))
+                .withName("AutoZeroAndRunIntakeCommand"));
+        hook.done()
+                .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
+                        .alongWith(
+                                FeedingCommands.feedCommand(turret, hood, spindexer),
+                                intake.jiggleCommand().asProxy())
+                        .until(doneShooting));
+
+        return new AutoRoutineData(
+                name,
+                startingSide,
+                madtownSweep.getInitialPose(),
+                List.of(SweepPath.MADTOWN_SWEEP_BUMP, SweepPath.CHEZY_HOOK_BUMP),
+                Stream.of(madtownSweep, shoot, hook)
                         .collect(
                                 ArrayList::new,
                                 (list, trajectory) -> list.addAll(
