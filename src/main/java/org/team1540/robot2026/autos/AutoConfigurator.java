@@ -81,6 +81,7 @@ public class AutoConfigurator {
         DEPOT("DepotIntake"),
         DEPOT_NO_RETURN("DepotIntakeNoReturn"),
         TIME_OUT_CORNER("TimeOutCorner"),
+        HUB("Hub"),
         TOWER("Tower");
 
         public final String trajectoryName;
