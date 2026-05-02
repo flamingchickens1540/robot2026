@@ -265,9 +265,10 @@ public class AutoPresets {
                         .withName("AutoShootCommand"));
         doneShooting.onTrue(hook.cmd());
 
-        hook.active().onTrue(intake.zeroWhileRunningCommand()
-                .andThen(intake.commandRunIntake(1.0))
-                .withName("AutoZeroAndRunIntakeCommand"));
+        hook.active()
+                .onTrue(intake.zeroWhileRunningCommand()
+                        .andThen(intake.commandRunIntake(1.0))
+                        .withName("AutoZeroAndRunIntakeCommand"));
         hook.done()
                 .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
                         .alongWith(
@@ -281,6 +282,41 @@ public class AutoPresets {
                 madtownSweep.getInitialPose(),
                 List.of(SweepPath.MADTOWN_SWEEP_BUMP, SweepPath.CHEZY_HOOK_BUMP),
                 Stream.of(madtownSweep, shoot, hook)
+                        .collect(
+                                ArrayList::new,
+                                (list, trajectory) -> list.addAll(
+                                        List.of(trajectory.getRawTrajectory().getPoses())),
+                                ArrayList::addAll),
+                routine.cmd());
+    }
+
+    public AutoRoutineData rightFollowCenterCrossDepot() {
+        final String trajName = "RightFollowCenterCrossDepot";
+
+        String name = trajName;
+        AutoRoutine routine = autoFactory.newRoutine(name);
+
+        AutoTrajectory traj = routine.trajectory(trajName, 0);
+        AutoTrajectory depotTraj = routine.trajectory(trajName, 1);
+
+        resetPoseInSim(routine, traj);
+
+        routine.active()
+                .onTrue(traj.cmd()
+                        .alongWith(
+                                intake.zeroWhileRunningCommand().andThen(intake.commandRunIntake(1.0)),
+                                hood.zeroCommand().withTimeout(1.0)));
+        traj.chain(depotTraj);
+        traj.done()
+                .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
+                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.commandRunDepotIntake(1.0)));
+
+        return new AutoRoutineData(
+                name,
+                StartingSide.RIGHT,
+                traj.getInitialPose(),
+                List.of(SweepPath.CLOSE_PLOW),
+                Stream.of(traj, depotTraj)
                         .collect(
                                 ArrayList::new,
                                 (list, trajectory) -> list.addAll(

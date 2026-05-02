@@ -306,7 +306,10 @@ public class AutoConfigurator {
                 .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
                         .alongWith(
                                 FeedingCommands.feedCommand(turret, hood, spindexer),
-                                intake.jiggleCommand().asProxy())
+                                intake.jiggleCommand()
+                                        .withTimeout(2.0)
+                                        .andThen(intake.commandRunIntake(1.0))
+                                        .asProxy())
                         .until(doneTrigger)
                         .withName("AutoShootCommand"));
 
