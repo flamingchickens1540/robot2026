@@ -45,7 +45,8 @@ import org.team1540.robot2026.util.hid.JoystickUtil;
 import org.team1540.robot2026.util.logging.LoggedTracer;
 
 public class RobotContainer {
-    private final DemoControls driver = DemoControls.EnvisionController;
+    private final DemoControls buddy = DemoControls.XboxController;
+    private final DriverControls driver = DriverControls.EnvisionController;
     private final CopilotControls copilot = CopilotControls.XboxController;
 
     final Drivetrain drivetrain;
@@ -141,7 +142,16 @@ public class RobotContainer {
     }
 
     private void configureButtonBindings() {
-        Trigger manualFeedOverride = driver.forceShoot.or(() -> turretLockedMode);
+        {
+            Command intakeCmd = intake.commandRunIntake(0.3);
+            Command shootCmd = Commands.run(()->shooter.runVelocity(1000)).finallyDo(()->shooter.runVelocity(0));
+            drivetrain.setDefaultCommand(
+                    drivetrain.teleopDriveCommand(buddy.driveX, buddy.driveY, buddy.driveRotation, new Trigger(() -> false)));
+            buddy.intake.toggleOnTrue(intakeCmd);
+            buddy.shoot.toggleOnTrue(shootCmd);
+        }
+
+        Trigger manualFeedOverride = new Trigger(()->true);
         Command intakeCmd = intake.commandRunIntakeAutoReverse();
         Command shootCmd = Commands.either(
                         ShootingCommands.shooterAimTurretLockedCommand(
@@ -242,8 +252,7 @@ public class RobotContainer {
                 .withName("IntakeManualControl"));
 
         // Misc mechanism controls
-        copilot.reverseSpindexer.whileTrue(
-                spindexer.runCommand(() -> -0.67, () -> -0.67, () -> 0.67).withName("SpindexerReverseCommand"));
+
         copilot.stowHood.onTrue(
                 hood.setpointCommand(() -> HoodConstants.MIN_ANGLE).withName("StowHoodCommand"));
         copilot.lockTurret.toggleOnTrue(turret.run(turret::stop)
@@ -257,16 +266,6 @@ public class RobotContainer {
                 }));
 
         // Pretuned shots
-        copilot.closeShot.whileTrue(ShootingCommands.closeShotCommand(shooter, hood)
-                .alongWith(
-                        FeedingCommands.feedCommand(turret, hood, spindexer, manualFeedOverride),
-                        intake.jiggleCommand())
-                .withName("CloseShotCommand"));
-        copilot.trenchShot.whileTrue(ShootingCommands.trenchShotCommand(shooter, hood)
-                .alongWith(
-                        FeedingCommands.feedCommand(turret, hood, spindexer, manualFeedOverride),
-                        intake.jiggleCommand())
-                .withName("trenchShotCommand"));
 
         // Shooter trim controls
         copilot.trimShooterUp.onTrue(

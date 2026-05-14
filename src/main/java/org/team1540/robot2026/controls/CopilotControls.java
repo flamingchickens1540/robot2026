@@ -8,6 +8,7 @@ import java.util.function.DoubleSupplier;
 public class CopilotControls {
     public static final CopilotControls XboxController = new CopilotControls(CopilotControllerType.XBOX, 1);
 
+
     public final GenericHID hid;
 
     public final Trigger zeroTurret; // Zero turret to encoders
@@ -35,6 +36,8 @@ public class CopilotControls {
 
     public final Trigger tuneShooter; // Run shooter tuning command
     public final Trigger tuningFeed; // Feed balls into shooter during tuning
+
+    public final Trigger disableBuddy;
 
     private CopilotControls(CopilotControllerType controllerType, int port) {
         switch (controllerType) {
@@ -66,6 +69,8 @@ public class CopilotControls {
 
                 tuneShooter = controller.y();
                 tuningFeed = controller.leftStick();
+
+                disableBuddy = controller.povLeft();
             }
             default -> throw new IllegalArgumentException("Unexpected controller type: " + controllerType);
         }

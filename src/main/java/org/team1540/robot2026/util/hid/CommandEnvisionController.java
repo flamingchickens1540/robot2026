@@ -5,6 +5,8 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
+import java.util.function.DoubleSupplier;
+
 public class CommandEnvisionController extends CommandGenericHID {
     private final EnvisionController hid;
 
@@ -168,6 +170,14 @@ public class CommandEnvisionController extends CommandGenericHID {
 
     public Trigger rightSideButton() {
         return povUp();
+    }
+
+    public double getLeftTriggerAxis(){
+        return getRawAxis(EnvisionController.Axis.LEFT_TRIGGER.id);
+    }
+
+    public double getRightTriggerAxis(){
+        return getRawAxis(EnvisionController.Axis.RIGHT_TRIGGER.id);
     }
 
     public Trigger leftTrigger(double threshold, EventLoop loop) {

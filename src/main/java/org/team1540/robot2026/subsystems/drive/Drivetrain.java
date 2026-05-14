@@ -434,9 +434,9 @@ public class Drivetrain extends SubsystemBase {
             BooleanSupplier fieldRelative) {
         return run(() -> {
                     ChassisSpeeds velocity = new ChassisSpeeds(
-                            translationPercent.get().getX() * MAX_LINEAR_SPEED_MPS,
-                            translationPercent.get().getY() * MAX_LINEAR_SPEED_MPS,
-                            omegaPercent.getAsDouble() * MAX_ANGULAR_SPEED_RAD_PER_SEC);
+                            translationPercent.get().getX() * MAX_LINEAR_SPEED_MPS/2,
+                            translationPercent.get().getY() * MAX_LINEAR_SPEED_MPS/2,
+                            omegaPercent.getAsDouble() * MAX_ANGULAR_SPEED_RAD_PER_SEC/3);
                     if (fieldRelative.getAsBoolean()) {
                         velocity = ChassisSpeeds.fromFieldRelativeSpeeds(
                                 velocity, rawGyroRotation.minus(fieldOrientationOffset));
