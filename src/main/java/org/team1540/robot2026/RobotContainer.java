@@ -25,6 +25,7 @@ import org.team1540.robot2026.commands.CharacterizationCommands;
 import org.team1540.robot2026.commands.FeedingCommands;
 import org.team1540.robot2026.commands.ShootingCommands;
 import org.team1540.robot2026.controls.CopilotControls;
+import org.team1540.robot2026.controls.DemoControls;
 import org.team1540.robot2026.controls.DriverControls;
 import org.team1540.robot2026.subsystems.climber.Climber;
 import org.team1540.robot2026.subsystems.drive.Drivetrain;
@@ -44,7 +45,7 @@ import org.team1540.robot2026.util.hid.JoystickUtil;
 import org.team1540.robot2026.util.logging.LoggedTracer;
 
 public class RobotContainer {
-    private final DriverControls driver = DriverControls.EnvisionController;
+    private final DemoControls driver = DemoControls.EnvisionController;
     private final CopilotControls copilot = CopilotControls.XboxController;
 
     final Drivetrain drivetrain;
