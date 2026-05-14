@@ -14,6 +14,7 @@ public class CopilotControls {
     public final Trigger zeroHood; // Zero hood to hard stop
     public final Trigger zeroIntake; // Zero intake to hard stop
 
+
     public final Trigger manualTurret; // Enable manual turret control
     public final DoubleSupplier manualTurretInput; // Manual turret control input;
 
@@ -22,12 +23,12 @@ public class CopilotControls {
 
     public final Trigger stowHood; // Stow hood
 
-    public final Trigger reverseSpindexer; // Reverse spindexer
-
     public final Trigger lockTurret; // Enable turret locked mode
 
-    public final Trigger closeShot; // Set shooter to close shot preset (next to hub)
-    public final Trigger trenchShot; // Set shooter to trench shot preset
+    public final Trigger zeroDriveOrientation; // Zero field orientation controls
+    public final Trigger pointMode; // Point the intake in the translation direction
+
+    public final Trigger stopTurret; // Stop turret movement and hold position
 
     public final Trigger trimShooterUp; // Increase shooter RPM setpoint
     public final Trigger trimShooterDown; // Decrease shooter RPM setpoint
@@ -53,12 +54,12 @@ public class CopilotControls {
 
                 stowHood = controller.a();
 
-                reverseSpindexer = controller.leftBumper();
+                pointMode = controller.leftBumper();
 
                 lockTurret = controller.rightStick();
 
-                closeShot = controller.rightTrigger();
-                trenchShot = controller.rightBumper();
+                zeroDriveOrientation = controller.rightTrigger();
+                stopTurret = controller.rightBumper();
 
                 trimShooterUp = controller.povUp();
                 trimShooterDown = controller.povDown();
