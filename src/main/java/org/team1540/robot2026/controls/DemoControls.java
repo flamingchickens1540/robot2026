@@ -38,8 +38,8 @@ public class DemoControls {
                 driveRotation = () -> enabled.getAsBoolean() ? 0.0 : -controller.getRightX()*0.5;
 
 
-                intake = enabled.or(controller.x());
-                shoot = enabled.or(controller.b());
+                intake = enabled.and(controller.x());
+                shoot = enabled.and(controller.b());
 
 
                 manualTurretInput = ()-> enabled.getAsBoolean() ? 0.0 : controller.getLeftTriggerAxis() - controller.getRightTriggerAxis();
@@ -55,8 +55,8 @@ public class DemoControls {
                 driveRotation = () -> enabled.getAsBoolean() ? 0.0 : -controller.getRightX()*0.5;
 
 
-                intake = enabled.or(controller.x());
-                shoot = enabled.or(controller.b());
+                intake = enabled.and(controller.x());
+                shoot = enabled.and(controller.b());
 
 
                 manualTurretInput = ()-> enabled.getAsBoolean() ? 0.0 : controller.getLeftTriggerAxis() - controller.getRightTriggerAxis();
