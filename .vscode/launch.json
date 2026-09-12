@@ -1,0 +1,25 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Current File",
+      "request": "launch",
+      "mainClass": "${file}"
+    },
+    {
+      "type": "java",
+      "name": "Main",
+      "request": "launch",
+      "mainClass": "org.team1540.robot2026.Main",
+      "projectName": "robot2026"
+    },
+    {
+      "type": "java",
+      "name": "PolynomialRegression",
+      "request": "launch",
+      "mainClass": "org.team1540.robot2026.util.math.PolynomialRegression",
+      "projectName": "robot2026"
+    }
+  ]
+}
