@@ -4,6 +4,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
+
 import org.littletonrobotics.junction.Logger;
 import org.team1540.robot2026.FieldConstants;
 import org.team1540.robot2026.RobotState;
@@ -29,6 +31,9 @@ public class FeedingCommands {
     }
 
     public static Command feedCommand(Turret turret, Hood hood, Spindexer spindexer, BooleanSupplier override) {
+        return feedCommand(turret, hood, spindexer, override, ()->1.0);
+    }
+    public static Command feedCommand(Turret turret, Hood hood, Spindexer spindexer, BooleanSupplier override, DoubleSupplier percent) {
         return spindexer
                 .runCommand(
                         () -> shouldFeed(turret, hood, override) ? 1.0 : 0.0,
