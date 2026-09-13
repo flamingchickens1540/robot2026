@@ -17,6 +17,9 @@ public class CopilotControls {
     public final Trigger manualTurret; // Enable manual turret control
     public final DoubleSupplier manualTurretInput; // Manual turret control input;
 
+    public final Trigger manualSpindexer;
+    public final DoubleSupplier manualSpindexerInput;
+
     public final Trigger manualIntake; // Enable manual intake control
     public final DoubleSupplier manualIntakeInput; // Manual intake control input
 
@@ -43,7 +46,7 @@ public class CopilotControls {
 
                 zeroTurret = controller.back();
                 zeroHood = controller.start();
-                zeroIntake = controller.leftTrigger();
+                zeroIntake = controller.povLeft();
 
                 manualTurret = controller.b();
                 manualTurretInput = controller::getLeftX;
@@ -65,6 +68,9 @@ public class CopilotControls {
 
                 tuneShooter = controller.y();
                 tuningFeed = controller.leftStick();
+
+                manualSpindexer = controller.y();
+                manualSpindexerInput = controller::getLeftTriggerAxis;
             }
             default -> throw new IllegalArgumentException("Unexpected controller type: " + controllerType);
         }

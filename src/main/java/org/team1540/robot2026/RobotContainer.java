@@ -4,7 +4,6 @@ import static edu.wpi.first.units.Units.Hertz;
 import static edu.wpi.first.units.Units.Seconds;
 
 import choreo.auto.AutoFactory;
-import edu.wpi.first.math.MathShared;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -16,7 +15,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
-import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
@@ -155,11 +153,7 @@ public class RobotContainer {
                                 .asProxy(),
                         () -> turretLockedMode)
                 .deadlineFor(
-                        Commands.either(//
                         FeedingCommands.feedCommand(turret, hood, spindexer, manualFeedOverride),
-                                        FeedingCommands.feedCommand(turret, hood, spindexer, manualFeedOverride,
-                                                ()-> 1.0-(copilot.manualTurret.getAsBoolean() ? 1.0 : Math.abs(copilot.manualTurretInput.getAsDouble()))),
-                                DriverStation::isAutonomous),
                         intake.jiggleCommand()
                                 .asProxy()
                                 .unless(intakeCmd::isScheduled)
@@ -236,6 +230,7 @@ public class RobotContainer {
                             turretManualAlert.set(false);
                         })
                         .withName("TurretManualControl"));
+        copilot.manualSpindexer.whileTrue(spindexer.runCommand(()->1-Math.abs(copilot.manualSpindexerInput.getAsDouble()), ()->0, ()->0));
         copilot.manualIntake.toggleOnTrue(intake.run(() -> {
                     intake.setPivotVoltage(
                             JoystickUtil.smartDeadzone(copilot.manualIntakeInput.getAsDouble(), 0.1) * 0.5 * 12.0);

@@ -31,12 +31,9 @@ public class FeedingCommands {
     }//
 
     public static Command feedCommand(Turret turret, Hood hood, Spindexer spindexer, BooleanSupplier override) {
-        return feedCommand(turret, hood, spindexer, override, ()->1.0);
-    }
-    public static Command feedCommand(Turret turret, Hood hood, Spindexer spindexer, BooleanSupplier override, DoubleSupplier percent) {
         return spindexer
                 .runCommand(
-                        () -> shouldFeed(turret, hood, override) ? percent.getAsDouble() : 0.0,
+                        () -> shouldFeed(turret, hood, override) ? 1.0 : 0.0,
                         () -> shouldFeed(turret, hood, override) ? 1.0 : 0.0,
                         () -> shouldFeed(turret, hood, override) ? 1.0 : 0.0)
                 .alongWith(Commands.run(() -> {
