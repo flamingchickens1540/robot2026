@@ -28,7 +28,7 @@ public class FeedingCommands {
 
     public static Command feedCommand(Turret turret, Hood hood, Spindexer spindexer) {
         return feedCommand(turret, hood, spindexer, () -> false);
-    }
+    }//
 
     public static Command feedCommand(Turret turret, Hood hood, Spindexer spindexer, BooleanSupplier override) {
         return feedCommand(turret, hood, spindexer, override, ()->1.0);

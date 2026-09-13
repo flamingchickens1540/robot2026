@@ -155,7 +155,7 @@ public class RobotContainer {
                                 .asProxy(),
                         () -> turretLockedMode)
                 .deadlineFor(
-                        Commands.either(
+                        Commands.either(//
                         FeedingCommands.feedCommand(turret, hood, spindexer, manualFeedOverride),
                                         FeedingCommands.feedCommand(turret, hood, spindexer, manualFeedOverride,
                                                 ()-> 1.0-(copilot.manualTurret.getAsBoolean() ? 1.0 : Math.abs(copilot.manualTurretInput.getAsDouble()))),
