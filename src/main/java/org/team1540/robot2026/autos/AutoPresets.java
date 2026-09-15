@@ -324,4 +324,44 @@ public class AutoPresets {
                                 ArrayList::addAll),
                 routine.cmd());
     }
+
+    public AutoRoutineData delayedStealBehindPartner(StartingSide startingSide) {
+        final String trajName = "DelayedStealBehindPartner";
+
+        String name = (startingSide == StartingSide.LEFT ? "Left" : "Right") + trajName;
+
+        AutoRoutine routine = autoFactory.newRoutine(name);
+        AutoTrajectory traj = routine.trajectory(trajName, 0);
+        AutoTrajectory stop = routine.trajectory(trajName, 1);
+        if (!startingSide.mirrored) {
+            traj = traj.mirrorY();
+            stop = stop.mirrorY();
+        }
+        routine.active()
+                .onTrue(traj.cmd()
+                        .alongWith(
+                                intake.zeroWhileRunningCommand().andThen(intake.commandRunIntake(1.0)),
+                                hood.zeroCommand().withTimeout(1.0)));
+        traj.chain(stop);
+        stop.active()
+                .onTrue(intake.commandToSetpoint(Intake.IntakeState.STOW).andThen(
+                        Commands.waitSeconds(1).andThen(ShootingCommands.hubAimCommand(turret, shooter, hood)
+                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.commandRunDepotIntake(1.0)))));
+
+        return new AutoRoutineData(
+                name,
+                startingSide,
+                traj.getInitialPose(),
+                List.of(SweepPath.DELAYED_STEAL_BEHIND_PARTNER),
+                Stream.of(traj, stop)
+                        .collect(
+                                ArrayList::new,
+                                (list, trajectory) -> list.addAll(
+                                        List.of(trajectory.getRawTrajectory().getPoses())),
+                                ArrayList::addAll),
+                routine.cmd()
+
+        );
+
+    }
 }

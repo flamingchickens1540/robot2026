@@ -348,6 +348,10 @@ public class RobotContainer {
                 "Right Madtown Sweep Over Bump Chezyish Hook",
                 () -> autoPresets.doubleSweepMadtownOverBumpHook(StartingSide.RIGHT));
         autoSelector.addAuto("Right Follow Center Cross Depot", autoPresets::rightFollowCenterCrossDepot);
+        autoSelector.addAuto("Right Delayed Steal Behind Partner",
+                ()->autoPresets.delayedStealBehindPartner(StartingSide.RIGHT));
+        autoSelector.addAuto("Left Delayed Steal Behind Partner",
+                ()->autoPresets.delayedStealBehindPartner(StartingSide.LEFT));
 
         // Characterization routines
         if (Constants.TUNING_MODE) {

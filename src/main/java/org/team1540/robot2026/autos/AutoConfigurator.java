@@ -58,7 +58,8 @@ public class AutoConfigurator {
         CENTER_PLOW_BUMP("CenterPlowBump", SweepType.PLOW),
         OPPOSING_PLOW_BUMP("OpposingPlowBump", SweepType.PLOW),
         MADTOWN_SWEEP_BUMP("MadtownSweep", SweepType.PLOW),
-        OPPOSING_STEAL("OpposingSteal", SweepType.STEAL);
+        OPPOSING_STEAL("OpposingSteal", SweepType.STEAL),
+        DELAYED_STEAL_BEHIND_PARTNER("DelayedStealBehindPartner", SweepType.STEAL);
 
         public final String trajectoryName;
         public final boolean firstSweepOnly; // Can this path only be selected as the first sweep
