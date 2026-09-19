@@ -14,7 +14,6 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
@@ -166,6 +165,7 @@ public class RobotContainer {
         // Drivetrain controls
         Trigger rateLimitActive = new Trigger(
                 () -> shootCmd.isScheduled() && robotState.getTargetingMode() == RobotState.TargetingMode.HUB);
+
         drivetrain.setDefaultCommand(
                 drivetrain.teleopDriveCommand(driver.driveX, driver.driveY, driver.driveRotation, rateLimitActive));
         driver.driveXMode.whileTrue(drivetrain.run(drivetrain::stopWithX).withName("DriveXMode"));
@@ -197,6 +197,9 @@ public class RobotContainer {
                 .ignoringDisable(true));
 
         /* Copilot controls */
+
+        // copilot.disableBuddy.onTrue(
+         //       drivetrain.teleopDriveCommand(buddy.driveX, buddy.driveY, buddy.driveRotation, rateLimitActive));
 
         // Zeroing controls
         copilot.zeroTurret.onTrue(turret.zeroCommand()
@@ -230,7 +233,8 @@ public class RobotContainer {
                             turretManualAlert.set(false);
                         })
                         .withName("TurretManualControl"));
-        copilot.manualSpindexer.whileTrue(spindexer.runCommand(()->1-Math.abs(copilot.manualSpindexerInput.getAsDouble()), ()->0, ()->0));
+        copilot.manualSpindexer.whileTrue(
+                spindexer.runCommand(() -> 1 - Math.abs(copilot.manualSpindexerInput.getAsDouble()), () -> 0, () -> 0));
         copilot.manualIntake.toggleOnTrue(intake.run(() -> {
                     intake.setPivotVoltage(
                             JoystickUtil.smartDeadzone(copilot.manualIntakeInput.getAsDouble(), 0.1) * 0.5 * 12.0);
@@ -328,6 +332,12 @@ public class RobotContainer {
         autoSelector.addAuto("Right Trench 1 Sweep", () -> autoPresets.singleSweep(StartingSide.RIGHT, false));
         autoSelector.addAuto("Right Trench 1 Sweep Sprint", () -> autoPresets.singleSweep(StartingSide.RIGHT, true));
 
+
+        autoSelector.addAuto("Left Trench 1 Sweep", () -> autoPresets.bumpSingleSweep(StartingSide.LEFT, false));
+        autoSelector.addAuto("Left Trench 1 Sweep Sprint", () -> autoPresets.bumpSingleSweep(StartingSide.LEFT, true));
+        autoSelector.addAuto("Right Trench 1 Sweep", () -> autoPresets.bumpSingleSweep(StartingSide.RIGHT, false));
+        autoSelector.addAuto("Right Trench 1 Sweep Sprint", () -> autoPresets.bumpSingleSweep(StartingSide.RIGHT, true));
+
         autoSelector.addAuto("Left Trench 2 Sweep", () -> autoPresets.doubleSweep(StartingSide.LEFT, false, false));
         autoSelector.addAuto(
                 "Left Trench 2 Sweep Sprint", () -> autoPresets.doubleSweep(StartingSide.LEFT, false, true));
@@ -348,10 +358,27 @@ public class RobotContainer {
                 "Right Madtown Sweep Over Bump Chezyish Hook",
                 () -> autoPresets.doubleSweepMadtownOverBumpHook(StartingSide.RIGHT));
         autoSelector.addAuto("Right Follow Center Cross Depot", autoPresets::rightFollowCenterCrossDepot);
-        autoSelector.addAuto("Right Delayed Steal Behind Partner",
-                ()->autoPresets.delayedStealBehindPartner(StartingSide.RIGHT));
-        autoSelector.addAuto("Left Delayed Steal Behind Partner",
-                ()->autoPresets.delayedStealBehindPartner(StartingSide.LEFT));
+        autoSelector.addAuto(
+                "Right Delayed Steal Behind Partner", () -> autoPresets.delayedStealBehindPartner(StartingSide.RIGHT));
+        autoSelector.addAuto(
+                "Left Delayed Steal Behind Partner", () -> autoPresets.delayedStealBehindPartner(StartingSide.LEFT));
+
+
+
+
+        autoSelector.addAuto("Left Trench 2 Sweep", () -> autoPresets.bumpDoubleSweep(StartingSide.LEFT, false, false));
+        autoSelector.addAuto(
+                "Left Trench 2 Sweep Sprint", () -> autoPresets.bumpDoubleSweep(StartingSide.LEFT, false, true));
+        autoSelector.addAuto("Left Trench 2 Sweep Hook", () -> autoPresets.bumpDoubleSweep(StartingSide.LEFT, true, false));
+        autoSelector.addAuto(
+                "Left Trench 2 Sweep Hook Sprint", () -> autoPresets.bumpDoubleSweep(StartingSide.LEFT, true, true));
+        autoSelector.addAuto("Right Trench 2 Sweep", () -> autoPresets.bumpDoubleSweep(StartingSide.RIGHT, false, false));
+        autoSelector.addAuto(
+                "Right Trench 2 Sweep Sprint", () -> autoPresets.bumpDoubleSweep(StartingSide.RIGHT, false, true));
+        autoSelector.addAuto(
+                "Right Trench 2 Sweep Hook", () -> autoPresets.bumpDoubleSweep(StartingSide.RIGHT, true, false));
+        autoSelector.addAuto(
+                "Right Trench 2 Sweep Hook Sprint", () -> autoPresets.bumpDoubleSweep(StartingSide.RIGHT, true, true));
 
         // Characterization routines
         if (Constants.TUNING_MODE) {

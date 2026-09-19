@@ -178,8 +178,101 @@ public class AutoPresets {
                 routine.cmd());
     }
 
+
+    public AutoRoutineData bumpSingleSweep(StartingSide startingSide, boolean sprint) {
+        final String trajName = "BumpSingleSweep";
+
+        String name = (startingSide == StartingSide.LEFT ? "Left" : "Right") + trajName + (sprint ? "Sprint" : "");
+        AutoRoutine routine = autoFactory.newRoutine(name);
+
+        AutoTrajectory traj = routine.trajectory(trajName, 0);
+        AutoTrajectory sprintTraj = routine.trajectory(trajName, 1);
+        if (startingSide.mirrored) {
+            traj = traj.mirrorY();
+            sprintTraj = traj.mirrorY();
+        }
+
+        resetPoseInSim(routine, sprintTraj);
+
+        routine.active()
+                .onTrue(traj.cmd()
+                        .alongWith(
+                                intake.zeroWhileRunningCommand().andThen(intake.commandRunIntake(1.0)),
+                                hood.zeroCommand().withTimeout(1.0)));
+        traj.done()
+                .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
+                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand())
+                        .withTimeout(sprint ? 5.5 : 10.0)
+                        .andThen(sprintTraj.spawnCmd().onlyIf(() -> sprint)));
+
+        return new AutoRoutineData(
+                name,
+                startingSide,
+                traj.getInitialPose(),
+                List.of(SweepPath.CLOSE_SWEEP),
+                Stream.of(traj, sprintTraj)
+                        .collect(
+                                ArrayList::new,
+                                (list, trajectory) -> list.addAll(
+                                        List.of(trajectory.getRawTrajectory().getPoses())),
+                                ArrayList::addAll),
+                routine.cmd());
+    }
+
     public AutoRoutineData doubleSweep(StartingSide startingSide, boolean hook, boolean sprint) {
         final String trajName = "DoubleSweep" + (hook ? "Hook" : "");
+
+        String name = (startingSide == StartingSide.LEFT ? "Left" : "Right") + trajName + (sprint ? "Sprint" : "");
+        AutoRoutine routine = autoFactory.newRoutine(name);
+
+        AutoTrajectory firstSweep = routine.trajectory(trajName, 0);
+        AutoTrajectory secondSweep = routine.trajectory(trajName, 1);
+        AutoTrajectory sprintTraj = routine.trajectory(trajName, 2);
+        if (startingSide.mirrored) {
+            firstSweep = firstSweep.mirrorY();
+            secondSweep = secondSweep.mirrorY();
+            sprintTraj = sprintTraj.mirrorY();
+        }
+
+        resetPoseInSim(routine, firstSweep);
+
+        routine.active()
+                .onTrue(firstSweep
+                        .cmd()
+                        .alongWith(
+                                intake.zeroWhileRunningCommand().andThen(intake.commandRunIntake(1.0)),
+                                hood.zeroCommand().withTimeout(1.0)));
+        firstSweep
+                .done()
+                .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
+                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand())
+                        .withTimeout(3.5)
+                        .andThen(secondSweep.spawnCmd()));
+        secondSweep.active().onTrue(intake.commandRunIntake(1.0));
+        secondSweep
+                .done()
+                .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
+                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.jiggleCommand())
+                        .withTimeout(sprint ? 5.5 : 10.0)
+                        .andThen(sprintTraj.spawnCmd().onlyIf(() -> sprint)));
+
+        return new AutoRoutineData(
+                name,
+                startingSide,
+                firstSweep.getInitialPose(),
+                List.of(SweepPath.CLOSE_SWEEP, hook ? SweepPath.CLOSE_HOOK : SweepPath.FAR_SWEEP),
+                Stream.of(firstSweep, secondSweep, sprintTraj)
+                        .collect(
+                                ArrayList::new,
+                                (list, trajectory) -> list.addAll(
+                                        List.of(trajectory.getRawTrajectory().getPoses())),
+                                ArrayList::addAll),
+                routine.cmd());
+    }
+
+
+    public AutoRoutineData bumpDoubleSweep(StartingSide startingSide, boolean hook, boolean sprint) {
+        final String trajName = "BumpDoubleSweep" + (hook ? "Hook" : "");
 
         String name = (startingSide == StartingSide.LEFT ? "Left" : "Right") + trajName + (sprint ? "Sprint" : "");
         AutoRoutine routine = autoFactory.newRoutine(name);
@@ -309,7 +402,9 @@ public class AutoPresets {
         traj.chain(depotTraj);
         traj.done()
                 .onTrue(ShootingCommands.hubAimCommand(turret, shooter, hood)
-                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.commandRunDepotIntake(1.0)));
+                        .alongWith(
+                                FeedingCommands.feedCommand(turret, hood, spindexer),
+                                intake.commandRunDepotIntake(1.0)));
 
         return new AutoRoutineData(
                 name,
@@ -344,9 +439,12 @@ public class AutoPresets {
                                 hood.zeroCommand().withTimeout(1.0)));
         traj.chain(stop);
         stop.active()
-                .onTrue(intake.commandToSetpoint(Intake.IntakeState.STOW).andThen(
-                        Commands.waitSeconds(1).andThen(ShootingCommands.hubAimCommand(turret, shooter, hood)
-                        .alongWith(FeedingCommands.feedCommand(turret, hood, spindexer), intake.commandRunDepotIntake(1.0)))));
+                .onTrue(intake.commandToSetpoint(Intake.IntakeState.STOW)
+                        .andThen(Commands.waitSeconds(1)
+                                .andThen(ShootingCommands.hubAimCommand(turret, shooter, hood)
+                                        .alongWith(
+                                                FeedingCommands.feedCommand(turret, hood, spindexer),
+                                                intake.commandRunDepotIntake(1.0)))));
 
         return new AutoRoutineData(
                 name,
@@ -359,9 +457,6 @@ public class AutoPresets {
                                 (list, trajectory) -> list.addAll(
                                         List.of(trajectory.getRawTrajectory().getPoses())),
                                 ArrayList::addAll),
-                routine.cmd()
-
-        );
-
+                routine.cmd());
     }
 }
