@@ -195,6 +195,7 @@ public class Robot extends LoggedRobot {
     public void autonomousInit() {
         autonomousCommand = robotContainer.getAutonomousCommand();
         CommandScheduler.getInstance().schedule(autonomousCommand);
+        System.out.println("Delay "+robotContainer.autoStartDelay.get());
     }
 
     @Override

@@ -72,7 +72,7 @@ public class RobotContainer {
     private final Alert turretManualAlert = new Alert("Turret is under manual control", Alert.AlertType.kWarning);
     private final Alert intakeManualAlert = new Alert("Intake is under manual control", Alert.AlertType.kWarning);
 
-    private final LoggedNetworkNumber autoStartDelay =
+    public final LoggedNetworkNumber autoStartDelay =
             new LoggedNetworkNumber("SmartDashboard/Auto/Starting Delay", 0.0);
 
     /**
@@ -178,7 +178,7 @@ public class RobotContainer {
 
         // Shoot/intake controls
         driver.intake.toggleOnTrue(intakeCmd);
-        driver.shoot.toggleOnTrue(shootCmd);
+        driver.shoot.whileTrue(shootCmd);
 
         // Misc controls
         driver.outtake.whileTrue(intake.commandRunIntake(-0.67)
