@@ -217,6 +217,7 @@ public class RobotContainer {
                 .withName("IntakeZeroCommand"));
 
         // Manual mechanism controls
+        /*
         copilot.manualTurret
                 .and(() -> !turretLockedMode)
                 .toggleOnTrue(turret.run(() -> {
@@ -230,6 +231,9 @@ public class RobotContainer {
                             turretManualAlert.set(false);
                         })
                         .withName("TurretManualControl"));
+
+
+         */
         copilot.manualSpindexer.whileTrue(spindexer.runCommand(()->1-Math.abs(copilot.manualSpindexerInput.getAsDouble()), ()->0, ()->0));
         copilot.manualIntake.toggleOnTrue(intake.run(() -> {
                     intake.setPivotVoltage(
