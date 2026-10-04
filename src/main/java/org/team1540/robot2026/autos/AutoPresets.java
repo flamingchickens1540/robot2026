@@ -364,4 +364,37 @@ public class AutoPresets {
         );
 
     }
+
+    public AutoRoutineData madtown(StartingSide startingSide){
+        final String trajName = "MadtownSweep";
+
+        String name = (startingSide == StartingSide.LEFT ? "Left" : "Right") + trajName;
+
+
+        AutoRoutine routine = autoFactory.newRoutine(name);
+        AutoTrajectory traj = routine.trajectory(trajName, 0);
+
+        resetPoseInSim(routine, traj);
+
+        routine.active()
+                .onTrue(traj.cmd()
+                        .alongWith(
+                                intake.zeroWhileRunningCommand().andThen(intake.commandRunIntake(1.0)),
+                                hood.zeroCommand().withTimeout(1.0)).beforeStarting(Commands.waitSeconds(5)));
+        return new AutoRoutineData(
+                name,
+                startingSide,
+                traj.getInitialPose(),
+                List.of(SweepPath.CENTER_PLOW),
+                Stream.of(traj)
+                        .collect(
+                                ArrayList::new,
+                                (list, trajectory) -> list.addAll(
+                                        List.of(trajectory.getRawTrajectory().getPoses())),
+                                ArrayList::addAll),
+                routine.cmd()
+
+        );
+
+    }
 }

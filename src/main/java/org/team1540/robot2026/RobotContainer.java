@@ -352,6 +352,8 @@ public class RobotContainer {
                 ()->autoPresets.delayedStealBehindPartner(StartingSide.RIGHT));
         autoSelector.addAuto("Left Delayed Steal Behind Partner",
                 ()->autoPresets.delayedStealBehindPartner(StartingSide.LEFT));
+        autoSelector.addAuto("Right custoum", ()->autoPresets.madtown(StartingSide.RIGHT));
+        autoSelector.addAuto("Left custoum", ()->autoPresets.madtown(StartingSide.RIGHT));
 
         // Characterization routines
         if (Constants.TUNING_MODE) {
